@@ -1,0 +1,95 @@
+
+div.reinforce-sampleapp-panel {
+    position:absolute;
+    left:0px;
+    right:0px;
+    top:0px;
+    bottom:0px;
+    color:var(--reinforce-sampleapp-item-text);
+    font-size:14px;
+}
+
+div.reinforce-sampleapp-obj {
+    position:relative;
+    margin:10px;
+    padding:5px;
+    background-color:var(--reinforce-sampleapp-item);
+    color:var(--reinforce-sampleapp-item-text);
+    font-size:14px;
+}
+
+div.reinforce-sampleapp-header {
+    position:relative;
+    display:flex;
+    flex-wrap:wrap;
+}
+
+div.reinforce-sampleapp-label {
+    position:relative;
+    margin:5px 10px;
+    color:var(--reinforce-sampleapp-c2);
+}
+
+div.reinforce-sampleapp-label2 {
+    position:relative;
+    width:100px;
+    margin:5px 10px;
+    font-size: 15px;
+    text-align: left;
+    color: var(--innovaphone-users-item-text);
+}
+
+div.reinforce-sampleapp-value {
+    position:relative;
+    margin:5px 0px;
+    /*background-color:var(--reinforce-sampleapp-input);*/
+    color:var(--reinforce-sampleapp-input-text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+div.reinforce-sampleapp-appicon {
+    background-size: cover;
+    position: absolute;
+    height: 50px;
+    left: 0px;
+    top: 0px;
+    width: 50px;
+}
+
+div.reinforce-sampleapp-button {
+    position:absolute;
+    width:120px;
+    height:25px;
+    background-color:var(--reinforce-sampleapp-button);
+    color:var(--reinforce-sampleapp-button-text);
+    text-align:center;
+    cursor:pointer;
+}
+
+input.reinforce-sampleapp-input {
+    width:100%;
+    box-sizing:border-box;
+    border:none;
+    margin:5px 0px;
+    padding: 5px 10px;
+    background-color:var(--reinforce-sampleapp-input);
+    color:var(--reinforce-sampleapp-input-text);
+}
+
+div.reinforce-sampleapp-choice {
+    box-sizing: border-box;
+    position:relative;
+    width:120px;
+    height:30px;
+    text-align:center;
+    background-color:var(--reinforce-sampleapp-button-bg);
+    margin:10px;
+    padding: 5px;
+}
+
+div.reinforce-sampleapp-choice:hover {
+    background-color:var(--reinforce-sampleapp-highlight-bg);
+}
+

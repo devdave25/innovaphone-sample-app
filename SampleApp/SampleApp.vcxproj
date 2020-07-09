@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SampleApp-main.cpp" />
+    <ClCompile Include="SampleApp\SampleApp.cpp" />
+    <ClCompile Include="SampleApp\SampleApp_tasks.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="SampleApp.mak" />
+    <None Include="SampleApp\apps\apps.mak" />
+    <None Include="SampleApp\apps\reinforce-sampleapp.css" />
+    <None Include="SampleApp\apps\reinforce-sampleapp.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="SampleApp\apps\reinforce-sampleapp.js" />
+    <None Include="SampleApp\apps\reinforce-sampleappadmin.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="SampleApp\apps\reinforce-sampleappadmin.js" />
+    <None Include="SampleApp\apps\reinforce-sampleapptexts.js" />
+    <None Include="SampleApp\apps\reinforce.sampleappmanager.css" />
+    <None Include="SampleApp\apps\reinforce.sampleappmanager.js" />
+    <None Include="SampleApp\apps\reinforce.sampleappmanagertexts.js" />
+    <None Include="SampleApp\SampleApp.mak" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SampleApp\SampleApp.h" />
+    <ClInclude Include="SampleApp\SampleApp_tasks.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="SampleApp\apps\reinforce-sampleapp.png" />
+    <Image Include="SampleApp\apps\reinforce-sampleappadmin.png" />
+    <Image Include="SampleApp\SampleApp.png" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{e0104876-bab2-4678-bf5b-ba325726d66e}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>LinuxMakefileProject</RootNamespace>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{FC1A4D80-50E9-41DA-9192-61C0DBAA00D2}</LinuxProjectType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ShowAllFiles>true</ShowAllFiles>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (Visual GDB)|ARM'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (Visual GDB)|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <LocalRemoteCopySources>false</LocalRemoteCopySources>
+    <BuildCommandLine>call sdk/common/build/buildnum SampleApp.mak arm</BuildCommandLine>
+    <CleanCommandLine>make -f SampleApp.mak clean-arm</CleanCommandLine>
+    <ExecutablePath>$(innovaphone-sdk)\app-platform-buildtls;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\bin</ExecutablePath>
+    <NMakeIncludeSearchPath>sdk;.;common\lap;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\arm-linux-gnueabi\include\c++\7.2.0;$(innovaphone-sdk)\app-platform-libs\8\armel\usr\include;$(innovaphone-sdk)\app-platform-libs\8\armel\usr\include\postgresql;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\lib\gcc\arm-linux-gnueabi\7.2.0\include;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\arm-linux-gnueabi\include\c++\7.2.0\arm-linux-gnueabi</NMakeIncludeSearchPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <SourcesToCopyRemotelyOverride>@(SourcesToCopyRemotely);@(DataFilesToCopyRemotely)</SourcesToCopyRemotelyOverride>
+    <ReBuildCommandLine>make -f SampleApp.mak clean-arm &amp;&amp; call sdk/common/build/buildnum SampleApp.mak arm</ReBuildCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <LocalRemoteCopySources>false</LocalRemoteCopySources>
+    <BuildCommandLine>call sdk/common/build/buildnum SampleApp.mak arm "DEBUG=1"</BuildCommandLine>
+    <CleanCommandLine>make -f SampleApp.mak clean-arm DEBUG=1</CleanCommandLine>
+    <ExecutablePath>$(innovaphone-sdk)\app-platform-buildtls;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\bin</ExecutablePath>
+    <NMakeIncludeSearchPath>sdk;.;common\lap;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\arm-linux-gnueabi\include\c++\7.2.0;$(innovaphone-sdk)\app-platform-libs\8\armel\usr\include;$(innovaphone-sdk)\app-platform-libs\8\armel\usr\include\postgresql;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\lib\gcc\arm-linux-gnueabi\7.2.0\include;$(innovaphone-sdk)\arm-7.2.0-linux-gnu\arm-linux-gnueabi\include\c++\7.2.0\arm-linux-gnueabi</NMakeIncludeSearchPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <SourcesToCopyRemotelyOverride>@(SourcesToCopyRemotely);@(DataFilesToCopyRemotely)</SourcesToCopyRemotelyOverride>
+    <ReBuildCommandLine>make -f SampleApp.mak clean-arm DEBUG=1 &amp;&amp; call sdk/common/build/buildnum SampleApp.mak arm "DEBUG=1"</ReBuildCommandLine>
+    <RemoteDebuggerCommand>/apps/sampleapp/sampleapp</RemoteDebuggerCommand>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalRemoteCopySources>false</LocalRemoteCopySources>
+    <BuildCommandLine>call sdk/common/build/buildnum SampleApp.mak x86_64</BuildCommandLine>
+    <CleanCommandLine>make -f SampleApp.mak clean-x86_64</CleanCommandLine>
+    <ExecutablePath>$(innovaphone-sdk)\app-platform-buildtls;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\bin;$(ExecutablePath)</ExecutablePath>
+    <NMakeIncludeSearchPath>sdk;.;common\lap;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\x86_64-linux-gnueabi\include\c++\7.2.0;$(innovaphone-sdk)\app-platform-libs\8\x86_64\usr\include;$(innovaphone-sdk)\app-platform-libs\8\x86_64\usr\include\postgresql;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\lib\gcc\x86_64-linux-gnueabi\7.2.0\include;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\x86_64-linux-gnueabi\include\c++\7.2.0\x86_64-linux-gnueabi</NMakeIncludeSearchPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <ReBuildCommandLine>make -f SampleApp.mak clean-x86_64 &amp;&amp; call sdk/common/build/buildnum SampleApp.mak x86_64</ReBuildCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalRemoteCopySources>false</LocalRemoteCopySources>
+    <BuildCommandLine>call sdk/common/build/buildnum SampleApp.mak x86_64 "DEBUG=1"</BuildCommandLine>
+    <CleanCommandLine>make -f SampleApp.mak clean-x86_64 DEBUG=1</CleanCommandLine>
+    <ExecutablePath>$(innovaphone-sdk)\app-platform-buildtls;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\bin;$(ExecutablePath)</ExecutablePath>
+    <NMakeIncludeSearchPath>sdk;.;common\lap;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\x86_64-linux-gnueabi\include\c++\7.2.0;$(innovaphone-sdk)\app-platform-libs\8\x86_64\usr\include;$(innovaphone-sdk)\app-platform-libs\8\x86_64\usr\include\postgresql;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\lib\gcc\x86_64-linux-gnueabi\7.2.0\include;$(innovaphone-sdk)\x86_64-7.2.0-linux-gnu\x86_64-linux-gnueabi\include\c++\7.2.0\x86_64-linux-gnueabi</NMakeIncludeSearchPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <ReBuildCommandLine>make -f SampleApp.mak clean-x86_64 DEBUG=1 &amp;&amp; call sdk/common/build/buildnum SampleApp.mak x86_64 "DEBUG=1"</ReBuildCommandLine>
+    <RemoteDebuggerCommand>/apps/sampleapp/sampleapp</RemoteDebuggerCommand>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <PostBuildEvent>
+      <Command>IF "%INNOVAPHONE-SDK-DEPLOY-APP%"=="YES" deploy-app --remoteMachine="$(RemoteTarget)" --appName=$(MSBuildProjectName) --appBinary="$(ProjectDir)arm-debug\SampleApp\sampleapp" --vsMode</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEvent>
+      <Command>IF "%INNOVAPHONE-SDK-DEPLOY-APP%"=="YES" deploy-app --remoteMachine="$(RemoteTarget)" --appName=$(MSBuildProjectName) --appBinary="$(ProjectDir)x86_64-debug\SampleApp\sampleapp" --vsMode</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <innovaphone>
+      <ProjectType>APP</ProjectType>
+      <SDKVersion>13r1</SDKVersion>
+    </innovaphone>
+  </ProjectExtensions>
+</Project>
