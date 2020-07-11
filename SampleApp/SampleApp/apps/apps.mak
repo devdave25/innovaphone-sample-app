@@ -3,7 +3,8 @@ APPWEBPATH = SampleApp/apps
 
 STARTHTMLS += \
 	$(APPWEBPATH)/reinforce-sampleappadmin.htm \
-	$(APPWEBPATH)/reinforce-sampleapp.htm
+	$(APPWEBPATH)/reinforce-sampleapp.htm \
+	$(APPWEBPATH)/contact-exporter.htm
 
 APPWEBSRC_NOZIP += \
 	$(APPWEBPATH)/reinforce-sampleappadmin.png \
@@ -17,6 +18,8 @@ APPWEBSRC_ZIP += \
 	$(APPWEBPATH)/reinforce.sampleappmanager.js \
 	$(APPWEBPATH)/reinforce.sampleappmanager.css \
 	$(APPWEBPATH)/reinforce.sampleappmanagertexts.js \
+	$(APPWEBPATH)/contact-exporter.js \
+	$(APPWEBPATH)/contact-exporter.css \
 
 APPWEBSRC = $(APPWEBSRC_ZIP) $(APPWEBSRC_NOZIP)
 

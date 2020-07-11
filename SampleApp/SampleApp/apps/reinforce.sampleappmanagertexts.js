@@ -2,7 +2,7 @@
 var reinforce = reinforce || {};
 reinforce.SampleAppManagerTexts = {
     en: {
-        pluginTitle: "sampleapp",
+        pluginTitle: "Sample App",
         count: "Count",
         countadmin: "Count Admin",
         title: "Name",
@@ -16,7 +16,7 @@ reinforce.SampleAppManagerTexts = {
         api: "Messages Api",
     },
     de: {
-        pluginTitle: "sampleapp",
+        pluginTitle: "Sample App",
         count: "Zähler",
         countadmin: "Zähler Admin",
         title: "Name",

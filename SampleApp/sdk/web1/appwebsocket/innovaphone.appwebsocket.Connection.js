@@ -72,7 +72,6 @@ innovaphone.appwebsocket.Connection = innovaphone.appwebsocket.Connection || fun
     }
 
     function onmessage(message) {
-        console.log("message:", message);
         var obj = JSON.parse(message.data);
         if (obj && obj.mt) {
             console.log("recv: " + message.data);
@@ -91,7 +90,7 @@ innovaphone.appwebsocket.Connection = innovaphone.appwebsocket.Connection || fun
                     }
                     else {
                         var login_info = instance.logindata ? instance.logindata.info : {};
-                        close(login_info && login_info.unlicensed ? "UNLICENSED" : "LOGIN_FAILURE");
+                        close(login_info.unlicensed ? "UNLICENSED" : "LOGIN_FAILURE");
                     }
                     break;
                 case "CheckBuildResult":

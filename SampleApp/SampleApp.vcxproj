@@ -27,6 +27,10 @@
     <None Include="Makefile" />
     <None Include="SampleApp.mak" />
     <None Include="SampleApp\apps\apps.mak" />
+    <None Include="SampleApp\apps\contact-exporter.css" />
+    <None Include="SampleApp\apps\contact-exporter.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="SampleApp\apps\reinforce-sampleapp.css" />
     <None Include="SampleApp\apps\reinforce-sampleapp.htm">
       <DeploymentContent>true</DeploymentContent>
@@ -50,6 +54,9 @@
     <Image Include="SampleApp\apps\reinforce-sampleapp.png" />
     <Image Include="SampleApp\apps\reinforce-sampleappadmin.png" />
     <Image Include="SampleApp\SampleApp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="SampleApp\apps\contact-exporter.js" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{e0104876-bab2-4678-bf5b-ba325726d66e}</ProjectGuid>

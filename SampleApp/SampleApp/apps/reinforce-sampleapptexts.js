@@ -6,6 +6,7 @@ reinforce.SampleAppTexts = {
         reset: "reset",
         contact: "contact",
         search: "search",
+        load: "load",
         export: "export",
     },
     de: {

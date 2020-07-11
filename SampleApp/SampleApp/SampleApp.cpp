@@ -46,12 +46,13 @@ SampleAppService::~SampleAppService()
 void SampleAppService::AppServiceApps(istd::list<AppServiceApp> * appList)
 {
     appList->push_back(new AppServiceApp("reinforce-sampleapp"));
-    appList->push_back(new AppServiceApp("reinforce-sampleappAdmin"));
+    appList->push_back(new AppServiceApp("reinforce-sampleappadmin"));
+    appList->push_back(new AppServiceApp("contact-exporter"));
 }
 
 void SampleAppService::AppInstancePlugins(istd::list<AppInstancePlugin> * pluginList)
 {
-    pluginList->push_back(new AppInstancePlugin("reinforce.SampleAppManager", "reinforce-sampleapp.png", "reinforce.SampleAppManagerTexts"));
+    pluginList->push_back(new AppInstancePlugin("reinforce.sampleappmanager", "reinforce-sampleapp.png", "reinforce.sampleappmanagertexts"));
 }
 
 class AppInstance * SampleAppService::CreateInstance(AppInstanceArgs * args)
