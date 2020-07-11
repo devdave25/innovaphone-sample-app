@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Ethernet</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Ethernet</h1>
+    <p>
+        Interface to get the MAC address of the first ethernet adapter.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/ethernet.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IEthernet">IEthernet</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#MAC_ADDRESS_SIZE">MAC_ADDRESS_SIZE</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleMAC">IEthernet::GetMACAddress</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+    <h3>Logging</h3>
+	To enable logging for IEthernet, the flag LOG_ETHERNET must be set in the managers diagnostic settings.
+	
+    <h1>Classes</h1>
+    <a name="IEthernet"><h2>IEthernet</h2></a>
+    <pre><code class="language-cpp">class IEthernet {
+public:
+    <a href="#GetMACAddress" style="text-decoration:none;">static bool GetMACAddress(byte * mac, class IInstanceLog * const log)</a>;
+};</code></pre>
+    
+    <h3>Public functions</h3>
+
+    <div id="GetMACAddress" class="fnhead">GetMACAddress (static function)</div>
+    <dl>
+        <dd>
+            The function writes the MAC address of the first ethernet adapter into the byte array of size MAC_ADDRESS_SIZE.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">byte * <b>mac </b></td><td>A <code>byte</code> pointer to store the MAC address bytes. It needs to be of size <code>MAC_ADDRESS_SIZE</code> (6 bytes)</td></tr>
+            <tr><td class="param">IInstanceLog * <b>log </b></td><td>An <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> pointer to the logging interface.</td></tr>
+            </table>
+            <h4><a name="ExampleGenerateUUID">Code Example</a> </h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">byte mac[MAC_ADDRESS_SIZE];
+IEthernet::GetMACAddress(mac, log);
+                </code></pre>
+        </dd>
+    </dl>
+
+    <h1>Data types</h1>
+    <h2 id="MAC_ADDRESS_SIZE">MAC_ADDRESS_SIZE</a></h2>
+    <pre><code class="laguage-cpp">#define MAC_ADDRESS_SIZE    6</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">#define MAC_ADDRESS_SIZE</code> is used to define the size of the byte * mac array.
+</body>
+</html>

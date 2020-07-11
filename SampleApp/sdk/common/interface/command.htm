@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - command implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Commands</h1>
+    <p>
+        Interface for asyncronously operating on commands. You can write to STDIN, read from STDOUT and STDERR.
+	</p>
+    <p>
+        Note: currently the implementation is done in a separate thread for each new command, <br />
+        as there is no possibility to read or write asynchronously from file descriptors.
+    </p>
+    
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/command.h<br><br></td></tr>
+        <tr><td><b>Public functions</b></td><td>
+                                                <a href="#CreateCommandProvider">CreateCommandProvider</a><br>
+                                                <br>
+                                            </td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#ICommandProvider">ICommandProvider</a><br>
+                                       <a href="#ICommand">ICommand</a><br>
+                                      </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                          <a href="#CommandExample">Command</a><br>
+                                      </td></tr>
+	</table>
+    
+    <!--- Block with the functions -->
+    <h1>Functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="C++">
+    class ICommandProvider * CreateCommandProvider(class IIoMux * iomux);
+</code></pre>
+    <h3>Overview</h3>
+    This function will create an ICommandProvider instance. This instance can be used to create ICommand objects.<br />
+    <br><br>
+    <div class="fnhead" id="CreateCommandProvider">CreateCommandProvider</div>
+
+    <dl><dd>
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IIoMux * <b>iomux</b></td><td>The <a href="../os/iomux.htm">iomux</a> instance which is to be used.</td></tr>
+            </table>
+        <h4>Return value</h4>
+        The ICommandProvider instance. That instance can be freed as soon as it no longer is used by calling the C++ delete operator.
+    </dd></dl>
+	
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+	<a name="ICommandProvider"><h2>ICommandProvider</h2></a>
+    <pre><code class="C++">class ICommandProvider {
+public:
+    <a href="#CreateCommand" style="text-decoration:none">virtual class ICommand * CreateCommand(class IInstanceLog * const log, class UTask * user, const char * command, int expectedExitCode, size_t initialReadLength = 0) = 0;</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <a name="CreateCommand"><div class="fnhead">virtual class ICommand * CreateCommand</div></a>
+    <dd>
+        Creates an ICommand instance.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+            <tr><td class="param">class UTask * <b>user</b></td><td>The <a href="task.htm#UTask">UTask</a> instance which will receive TaskProgress/TaskComplete/TaskFailed callbacks.</td></tr>
+            <tr><td class="param">const char * <b>command</b></td><td>The actual command which will be executed.</td></tr>
+            <tr><td class="param">int <b>expectedExitCode</b></td><td>The expected exit code. Use a negative value to ignore the exit code.</td></tr>
+            <tr><td class="param">size_t <b>initialReadLength</b></td><td>You can specify a number to directly start reading the command output.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+        The ICommand instance. That instance can be freed as soon as it called TaskFailed/TaskComplete, not before!
+    </dd>
+    
+    <h1>Classes</h1>
+	<a name="ICommand"><h2>ICommand</h2></a>
+    <p>
+        ICommand is derived from ITask, so the ITask/UTask mechanisms are used for progress and completion.<br />
+        The ITask::Start function is called inside CreateCommand, so it is not needed to call this function on your own.
+    </p>
+    <p>
+        The buffer of the read data is maintained within this class.<br/>
+        STDERR is automatically redirected and can be fetched afterwards with Error(). Note that max 8192 bytes are fetched from STDERR, the remaining data is discarded.
+        <h3>General handling</h3>
+        The TaskProgress progress parameter is used differently, depending on a previous Read or Write. Valid values are:
+        <ul>
+            <li>COMMAND_PROGRESS_READ</li>
+            <li>COMMAND_PROGRESS_WRITE</li>
+        </ul>
+        <ul>
+            <li>The <i>TaskComplete</i> callback is triggered when the process has terminated and all data has been read or after ICommand::Close() has been called.<br /></li>
+            <li>The <i>TaskFailed</i> callback is triggered when something failed. In this case the command has already terminated.</li>
+            <li>The <i>TaskProgress(this, COMMAND_PROGRESS_READ)</i> callback is triggered after a previous Read(...) call when the data is available. You can retrieve the data with Get() afterwards.</li>
+            <li>The <i>TaskProgress(this, COMMAND_PROGRESS_WRITE)</i> callback is triggered after a previous Write(...) call when the data has been written.</li>
+        </ul>
+    </p>
+    <pre><code class="C++">class ICommand : public ITask {
+public:
+    <a href="#ICommandWrite" style="text-decoration:none">virtual void Write(byte * data, size_t length, bool last = false) = 0;</a>
+    <a href="#ICommandRead" style="text-decoration:none">virtual void Read(size_t length) = 0;</a>
+    <a href="#ICommandGet" style="text-decoration:none">virtual void Get(const byte * & data, size_t & length) = 0;</a>
+    <a href="#ICommandClose" style="text-decoration:none">virtual void Close() = 0;</a>
+    <a href="#ICommandError" style="text-decoration:none">virtual const char * Error() = 0;</a>
+    <a href="#ICommandGetExitCode" style="text-decoration:none">virtual int GetExitCode() = 0;</a>
+};</code></pre>
+    
+    <h3>Public functions</h3>
+    <a name="ICommandWrite"><div class="fnhead">void Write</div></a>
+    <dd>
+        Initiates writing of data to STDIN. May be called after TaskProgress from the previous block.<br />
+        You mustn't call several writes without waiting for the TaskProgress callback which indicates that the data has been written.<br />
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">byte * <b>data</b></td><td>A pointer to a byte array.</td></tr>
+            <tr><td class="param">size_t <b>length</b></td><td>The length of the data to write.</td></tr>
+            <tr><td class="param">bool <b>last</b></td><td>Set true if this is the last write call, which closes STDIN.</td></tr>
+        </table>
+    </dd>
+    <a name="ICommandRead"><div class="fnhead">void Read</div></a>
+    <dd>
+        Initiates reading of the next block. May be called after TaskProgress from the previous block.
+        You mustn't call several reads without waiting for the TaskProgress callback which indicates that the data has been read.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">size_t <b>length</b></td><td>The length of the data to read.</td></tr>
+        </table>
+    </dd>
+    <a name="ICommandGet"><div class="fnhead">void Get</div></a>
+    <dd>
+        Gets a pointer to the read block of data. May be called after the TaskProgress for the read operation. 
+        The pointer is valid until the next call to Read. I the length is not equal to the length of a previous Read call, the end of the stream is reached and you'll get a TaskComplete/TaskFailed afterwards.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const byte * & <b>data</b></td><td>Pointer reference to the data buffer.</td></tr>
+            <tr><td class="param">size_t & <b>length</b></td><td>The available size in the data buffer.</td></tr>
+        </table>
+    </dd>
+    <a name="ICommandClose"><div class="fnhead">void Close</div></a>
+    <dd>
+        Terminates the process if it is still running. You do not need to call Close() if you do not want to kill the process before it ends on its own.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ICommandError"><div class="fnhead">const char * Error</div></a>
+    <dd>
+        Returns the output of STDERR or NULL if nothing has been written to STDERR.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+        <h4>Return value</h4>
+        The const char * error string.
+    </dd>
+    <a name="ICommandGetExitCode"><div class="fnhead">int GetExitCode()</div></a>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+        <h4>Return value</h4>
+        The int exit code of the command.
+    </dd>
+
+    <!-- Block with the examples -->
+    <h1>Examples</h1>
+	<a name="CommandExample"><h2>Command</h2></a>
+    <pre><code class="C++">
+// in main.cpp
+class ICommandProvider * provider = CreateCommandProvider(iomux);
+    
+// another cpp file
+class Test : public UTask {
+    class ICommand * command;
+public:
+    Test(class ICommandProvider * provider, class IInstanceLog * log) {
+        this->command = provider::CreateCommand(log, this, "/usr/bin/...", 0);
+        byte * data = ...;
+        this->command->Write(data, dataLen, true);  // we write one data buffer and wait for TaskProgress
+    }
+    
+    void TaskProgress(class ITask * task, dword progress = 0) {
+        if(progress == COMMAND_PROGRESS_WRITE) {    // just one write op, so read now
+            this->command->Read(1000);              // read 1000 bytes    
+        }
+        else if(progress == COMMAND_PROGRESS_READ) {
+            size_t length = 0;
+            const byte * data = NULL;
+            this->command->Get(data, length);
+            // do something with the data
+            if(length == 1000) {                    // more data available
+                this->command->Read(1000);
+            }
+            // else wait for TaskComplete/Failed
+        }
+    }
+    
+    void TaskComplete(class ITask * task) {
+        delete this->command;   // this->command == task
+        this->command = nullptr;
+    }
+    
+    void TaskFailed(class ITask * task) {
+        debug->printf("%i %s", this->command->GetExitCode(), this->command->Error());
+        delete this->command;   // this->command == task
+        this->command = nullptr;
+    }
+}
+
+    </code></pre>
+</body>
+</html>

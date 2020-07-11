@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - PBX API</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>PBX API</h1>
+    <p>
+        IPbxApi is a task-oriented interface that allows app services to access PBX data and functionality.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/pbx.h<br><br></td></tr>
+        <tr>
+            <td><b>Public functions</b></td>
+            <td>
+                <a href="#CreatePbxApi">CreatePbxApi</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IPbxApi">IPbxApi</a><br>
+                <a href="#IPbxApiPresenceSubscription">IPbxApiPresenceSubscription</a><br>
+                <a href="#IPbxApiPresence">IPbxApiPresence</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!--- Block with the functions -->
+    <h1>Functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="C++">extern class IPbxApi * CreatePbxApi(class IJsonApiConnection * conn);
+</code></pre>
+    <a name="CreatePbxApi"><div class="fnhead" style="margin-top:5px">CreatePbxApi</div>
+    This function creates a IPbxApi object that will be connected to a given IJsonApiConnection, typically an AppWebsocket.
+    <dd>
+        <h4>Return value</h4>
+        The IPbxApi instance. The object is owned by the IJsonApiConnection and is deleted automatically when the connection is closed. So the application should never delete it.
+    </dd>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <h2 id="IPbxApi">IPbxApi</h2>
+    <pre><code class="C++">class IPbxApi {
+public:
+    virtual ~IPbxApi() {};
+    <a href="#CreateSetPresence">virtual class ITask * CreateSetPresence(const char * guid, const char * sip, const char * contact, const char * activity, const char * note) = 0;</a>
+    <a href="#CreatePresenceSubscription">virtual class IPbxApiPresenceSubscription * CreatePresenceSubscription(const char * sip, const char * num, const char * sourceSip = 0) = 0;</a>
+    <a href="#CreateGetNodeInfo">virtual class IPbxApiTaskGetNodeInfo * CreateGetNodeInfo(const char * pbx, const char * domain) = 0;</a>
+};</code></pre>
+    <h3>Overview</h3>
+    The interface of the PBX API. It provides functions to create several tasks that can be used to communicate with the PBX.
+    <h3>Public functions</h3>
+    <div id="CreateSetPresence" class="fnhead">CreateSetPresence</div>
+    <dd>
+        Creates an ITask that sets the presence for a given contact of a given user.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>guid</b></td>
+                <td>
+                    The GUID of the affected user object. (guid or sip must be specified)
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>sip</b></td>
+                <td>
+                    The SIP URI of the affected user object. (guid or sip must be specified)
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>contact</b></td>
+                <td>
+                    The contact string of the presence (e.g. tel:)
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>activity</b></td>
+                <td>
+                    A SIP activity string (e.g. away, busy, lunch, vacation, dnd, ...). If not set the activity will be displayed as "available".
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>note</b></td>
+                <td>
+                    A free text describing details about the activity.
+                </td>
+            </tr>
+        </table>
+        <h4>Return value</h4>
+        An ITask object that implements the presence change.
+    </dd>
+    <div id="CreatePresenceSubscription" class="fnhead">CreatePresenceSubscription</div>
+    <dd>
+        Creates a presence subscription for a given SIP URI or phone number.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>sip</b></td>
+                <td>
+                    The SIP URI of the monitored user. (sip or num must be specified)
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>number</b></td>
+                <td>
+                    The phone number of the monitored user. (sip or num must be specified)
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>sourceSip</b></td>
+                <td>
+                    Can be specified if the monitoring should be done on behalf of a specific user. Otherwise the subscription is done on behalf of the app object of the app instance.
+                </td>
+            </tr>
+        </table>
+        <h4>Return value</h4>
+        An <a href="#IPbxApiPresenceSubscription">IPbxApiPresenceSubscription</a> object that implements the presence subscription.
+    </dd>
+
+	<div id="CreateGetNodeInfo" class="fnhead">CreateGetNodeInfo</div>
+	<dd>
+		Creates an ITask that retrieves some node configuration info.
+		<h4>Parameters</h4>
+		<table style="margin-left:-12px">
+			<tr>
+                <td class="param">const char * <b>pbx</b></td>
+				<td>
+					The pbx argument as received within a PbxInfo message.
+				</td>
+			</tr>
+			<tr>
+                <td class="param">const char * <b>domain</b></td>
+				<td>
+					The domain argument as received within a PbxInfo message.
+				</td>
+			</tr>
+		</table>
+		<h4>Return value</h4>
+		An <a href="#IPbxApiTaskGetNodeInfo">IPbxApiTaskGetNodeInfo</a> object.
+	</dd>
+
+
+    <h2 id="IPbxApiPresenceSubscription">IPbxApiPresenceSubscription</h2>
+    <pre><code class="C++">class IPbxApiPresenceSubscription : public ITask {
+public:
+    virtual ~IPbxApiPresenceSubscription() {}
+    <a href="#Start">virtual void Start(class UTask * user) = 0;</a>
+    <a href="#Stop">virtual void Stop() = 0;</a>
+    <a href="#IsUp">virtual bool IsUp() = 0;</a>
+    <a href="#GetSip">virtual const char * GetSip() = 0;</a>
+    <a href="#GetDn">virtual const char * GetDn() = 0;</a>
+    <a href="#GetNum">virtual const char * GetNum() = 0;</a>
+    <a href="#GetEmail">virtual const char * GetEmail() = 0;</a>
+    <a href="#GetPresence">virtual class IPbxApiPresence * GetPresence() = 0;</a>
+};</code></pre>
+    <h3>Overview</h3>
+    This class implements a presence subscription using the ITask interface. It produces a TaskProgress callback on each update with one of the following values:
+    <dl>
+        <dt>PBX_API_PROGRESS_SUBSCIPTION</dt>
+        <dd>
+            The state of the presence subscription changed. This could be if the presence subscription goes up or down or if the remote endpoint information changed.
+        </dd>
+        <dt>PBX_API_PROGRESS_PRESENCE</dt>
+        <dd>
+            The presence information has changed.
+        </dd>
+    </dl>
+    <h3>Public functions</h3>
+    <div id="Start" class="fnhead">Start</div>
+    <dd>
+        Starts the presence subscription. The specified UTask will get the TaskProgress callback on any changes or TaskFailed on a fatal error.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class UTask * <b>user</b></td>
+                <td>
+                    The UTask object that shall receive the callbacks.
+                </td>
+            </tr>
+        </table>
+    </dd>
+    <div id="Stop" class="fnhead">Stop</div>
+    <dd>
+        Stops the presence subscription. The UTask will get the TaskComplete callback, when the presence subscription has terminated.
+    </dd>
+    <div id="IsUp" class="fnhead">IsUp</div>
+    <dd>
+        Tells if the presence monitor is up or down. All the other info is just available, if the presence monitor is up.
+        <h4>Return value</h4>
+        <code>true</code> if the presence monitor is up. <code>false</code> if it is down.
+    </dd>
+    <div id="GetSip" class="fnhead">GetSip</div>
+    <dd>
+        <h4>Return value</h4>
+        The SIP URI of the monitored endpoint.
+    </dd>
+    <div id="GetCn" class="fnhead">GetCn</div>
+    <dd>
+        <h4>Return value</h4>
+        The common name of the monitored endpoint.
+    </dd>
+    <div id="GetDn" class="fnhead">GetDn</div>
+    <dd>
+        <h4>Return value</h4>
+        The display name of the monitored endpoint.
+    </dd>
+    <div id="GetNum" class="fnhead">GetNum</div>
+    <dd>
+        <h4>Return value</h4>
+        The phone number of the monitored endpoint.
+    </dd>
+    <div id="GetEmail" class="fnhead">GetEmail</div>
+    <dd>
+        <h4>Return value</h4>
+        The email address of the monitored endpoint.
+    </dd>
+    <div id="GetPresence" class="fnhead">GetPresence</div>
+    <dd>
+        <h4>Return value</h4>
+        A pointer to an IPbxApiPresence object that contains the list of presence entries, or null if there are none.
+    </dd>
+
+
+    <h2 id="IPbxApiPresence">IPbxApiPresence</h2>
+    <pre><code class="C++">class IPbxApiPresence {
+public:
+    <a href="#GetContact">virtual const char * GetContact() = 0;</a>
+    <a href="#GetStatus">virtual const char * GetStatus() = 0;</a>
+    <a href="#GetActivity">virtual const char * GetActivity() = 0;</a>
+    <a href="#GetNote">virtual const char * GetNote() = 0;</a>
+    <a href="#GetNext">virtual class IPbxApiPresence * GetNext() = 0;</a>
+};</code></pre>
+    <h3>Overview</h3>
+    The user can have a list of presence entries that consist of a contact ("tel:"), a status ("open" or "closed"), an activity ("away", "busy", etc) and a note.
+    The IPbxApiPresence object represents a single entry with a pointer to the next entry in the list.
+    Please note that object is volatile. The application should not store any pointers to it but copy the needed information.
+    <h3>Public functions</h3>
+    <div id="GetContact" class="fnhead">GetContact</div>
+    <dd>
+        <h4>Return value</h4>
+        The contact string of the presence entry (e.g. "tel:") or NULL.
+    </dd>
+    <div id="GetStatus" class="fnhead">GetStatus</div>
+    <dd>
+        <h4>Return value</h4>
+        The status string of the presence entry ("open", "closed") or NULL.
+    </dd>
+    <div id="GetActivity" class="fnhead">GetActivity</div>
+    <dd>
+        <h4>Return value</h4>
+        The activity string of the presence entry ("away", "busy", etc) or NULL.
+    </dd>
+    <div id="GetNote" class="fnhead">GetNote</div>
+    <dd>
+        <h4>Return value</h4>
+        The note string of the presence entry or NULL.
+    </dd>
+    <div id="GetNext" class="fnhead">GetNext</div>
+    <dd>
+        <h4>Return value</h4>
+        The next IPbxApiPresence object in the list or NULL if there is none.
+    </dd>
+
+	<h2 id="IPbxApiTaskGetNodeInfo">IPbxApiTaskGetNodeInfo</h2>
+	<pre><code class="C++">class IPbxApiTaskGetNodeInfo : public ITask {
+public:
+	<a href="#GetName">virtual const char * GetName() = 0;</a>
+	<a href="#GetPrefixIntl">virtual const char * GetPrefixIntl() = 0;</a>
+	<a href="#GetPrefixNtl">virtual const char * GetPrefixNtl() = 0;</a>
+	<a href="#GetPrefixSubs">virtual const char * GetPrefixSubs() = 0;</a>
+	<a href="#GetAreaCode">virtual const char * GetAreaCode() = 0;</a>	
+	<a href="#GetCountryCode">virtual const char * GetCountryCode() = 0;</a>
+};</code></pre>
+	<h3>Overview</h3>
+	A PBX node's configuration can be read upon completion.
+	<h3>Public functions</h3>
+	<div id="GetName" class="fnhead">GetName</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's name.
+	</dd>
+	<div id="GetPrefixIntl" class="fnhead">GetPrefixIntl</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's prefix for international numbers.
+	</dd>
+	<div id="GetPrefixNtl" class="fnhead">GetPrefixNtl</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's prefix for national numbers.
+	</dd>
+	<div id="GetPrefixSubs" class="fnhead">GetPrefixSubs</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's prefix for subscriber numbers.
+	</dd>
+	<div id="GetAreaCode" class="fnhead">GetAreaCode</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's configured area code, e.g. 30 for Berlin.
+	</dd>
+	<div id="GetCountryCode" class="fnhead">GetCountryCode</div>
+	<dd>
+		<h4>Return value</h4>
+		The node's configured country code, e.g. 49 for germany.
+	</dd>
+
+</body>
+</html>

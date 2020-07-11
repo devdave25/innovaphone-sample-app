@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - AppWebsocketLogin</title>
+    <script src="../../../web1/common/innovaphone.common.crypto.js"></script>
+    <script src="appwebsocketlogin.js"></script>
+</head>
+
+<body>
+    <input id="addr" placeholder="addr"/>
+    <input id="usr" placeholder="usr"/>
+    <input id="pwd" placeholder="pwd"/>
+    <button onclick="new AppWebsocketLogin(document.getElementById('addr').value, document.getElementById('usr').value, document.getElementById('pwd').value, document.getElementById('out'))">send</button>
+    <div id="out"/>
+</body>
+
+</html>

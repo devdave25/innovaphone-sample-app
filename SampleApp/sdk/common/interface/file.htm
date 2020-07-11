@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - File Implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>File</h1>
+    <p>
+        Interface for basic file and directory operations.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/file.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#FileSystem">FileSystem</a><br>
+                <a href="#IFileWrite">IFileWrite</a><br>
+                <a href="#IFileRead">IFileRead</a><br>
+                <a href="#IDirectory">IDirectory</a><br>
+                <a href="#IDirectoryEntry">IDirectoryEntry</a><br>                
+                <a href="#IElfBinary">IElfBinary</a><br>
+                <a href="#elf_architecture_t">enum elf_architecture_t</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                class FileSystem<br>
+                <a href="#ExampleOpenWriteFile">&nbsp&nbsp FileSystem::OpenWriteFile</a><br>
+                <a href="#ExampleOpenReadFile">&nbsp&nbsp FileSystem::OpenReadFile</a><br>
+                <a href="#ExampleOpenDirectory">&nbsp&nbsp FileSystem::OpenDirectory</a><br>
+                <a href="#ExampleOpenElfBinary">&nbsp&nbsp FileSystem::OpenElfBinary</a><br>
+                <a href="#ExampleWriteWholeFile">&nbsp&nbsp FileSystem::WriteWholeFile</a><br>
+                <a href="#ExampleScanFile">&nbsp&nbsp FileSystem::ScanFile</a><br>
+                <a href="#ExampleRename">&nbsp&nbsp FileSystem::Rename</a><br>
+                <a href="#ExampleCreateDirectory">&nbsp&nbsp FileSystem::CreateDirectory</a><br>
+                <a href="#ExampleChangeMode">&nbsp&nbsp FileSystem::ChangeMode</a><br>
+                <a href="#ExampleGetFileSystemTotalSize">&nbsp&nbsp FileSystem::GetFileSystemTotalSize</a><br>
+                <a href="#ExampleIFileWrite">class IFileWrite</a><br>
+                <a href="#ExampleIDirectory">class IDirectory</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <a name="FileSystem"><h2>FileSystem</h2></a>
+    <pre><code class="language-cpp">class FileSystem {
+public:
+    <a href="#OpenWriteFile" style="text-decoration:none;">static class IFileWrite * OpenWriteFile(const char * fileName, bool append, class IInstanceLog * log)</a>;
+    static class IFileRead * <a href="#OpenReadFile" style="text-decoration:none;">OpenReadFile</a>(const char * fileName, class IInstanceLog * log);
+    static class IDirectory * <a href="#OpenDirectory" style="text-decoration:none;">OpenDirectory</a>(const char * directoryName, class IInstanceLog * log);
+    static class IElfBinary * <a href="#OpenElfBinary" style="text-decoration:none;">OpenElfBinary</a>(const char * bin, class IInstanceLog * log);
+    static bool <a href="#ReadWholeFile" style="text-decoration:none;">ReadWholeFile</a>(const char * filename, char * readBuffer, size_t size, class IInstanceLog * log);
+    static bool <a href="#WriteWholeFile" style="text-decoration:none;">WriteWholeFile</a>(const char * filename, const char * writeBuffer, size_t size, class IInstanceLog * log);
+    static bool <a href="#ScanFile" style="text-decoration:none;">ScanFile</a>(class IInstanceLog * log, const char * filename, const char * format, ...);
+    static bool <a href="#FileExists" style="text-decoration:none;">FileExists</a>(const char * filename, class IInstanceLog * log);
+    static time_t <a href="#GetLastWriteTime" style="text-decoration:none;">GetLastWriteTime</a>(const char * filename, class IInstanceLog * log);
+    static off_t <a href="#GetFileSize" style="text-decoration:none;">GetFileSize</a>(const char * filename, class IInstanceLog * log);
+    static off_t <a href="#GetFileBlockSize" style="text-decoration:none;">GetFileBlockSize</a>(const char * filename, class IInstanceLog * log);
+    static bool <a href="#Rename" style="text-decoration:none;">Rename</a>(const char * oldName, const char * newName, class IInstanceLog * log);
+    static bool <a href="#RemoveFile" style="text-decoration:none;">RemoveFile</a>(const char * filename, class IInstanceLog * log);
+    static bool <a href="#CreateDirectory" style="text-decoration:none;">CreateDirectory</a>(const char * absolutePath, int mode, class IInstanceLog * log);
+    static bool <a href="#RemoveDirectory" style="text-decoration:none;">RemoveDirectory</a>(const char * directoryPath, class IInstanceLog * log);
+    static bool <a href="#ChangeOwner" style="text-decoration:none;">ChangeOwner</a>(const char * path, const char * newOwner, const char * newGroup, class IInstanceLog * log);
+    static bool <a href="#ChangeMode" style="text-decoration:none;">ChangeMode</a>(const char * path, int mode, class IInstanceLog * log);
+    static ulong64 <a href="#GetFileSystemTotalSize" style="text-decoration:none;">GetFileSystemTotalSize</a>(const char * path, class IInstanceLog * log);
+    static ulong64 <a href="#GetFileSystemUsedSpace" style="text-decoration:none;">GetFileSystemUsedSpace</a>(const char * path, class IInstanceLog * log);
+    static bool <a href="#CheckSystemUser" style="text-decoration:none;">CheckSystemUser</a>(const char * user, const char * group, class IInstanceLog * log);
+    static char * <a href="#GetFileSystemUser" style="text-decoration:none;">GetFileSystemUser</a>(const char * filepath, class IInstanceLog * log);
+};</code></pre>
+    <h3>Overview</h3>
+    The basic class to perform read/write and create/rename/remove operations on linux files and directories. It also offers some functions to obtain information about file/block sizes, last write time of files
+     and system users, and some other functions to maniplulate file owners or modes.
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the Manager App diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="OpenWriteFile">OpenWriteFile (static function)</div>
+    <dl><dd>
+        The main function to use to open a file for write operation. An empty file is created and opened for writinf if append is false; otherwise the file is opened for the writing at the end of the file.
+        If the file is opened successfully, an object of class <a href="#IFileWrite">IFileWrite</a> is returned. In case of error, a null pointer is returned.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>fileName</b></td><td>The absolute full path of the file</td></tr>
+                <tr><td class="param">bool <b>append</b></td><td>Specifies whether a file is to be opened for append oor write operation</td></tr>
+                <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            The IFileWrite instance created. It must be freed by the C++ operator delete, if no longer needed.
+            <h4 id="ExampleOpenWriteFile">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">class IFileWrite * file = FileSystem::OpenWriteFile("/path/file.txt", false, log_instance);
+if(file) {
+....
+  write operation
+...
+delete file;
+}
+                </code></pre>
+        </dd></dl>
+    <div class="fnhead">OpenReadFile (static function)</div>
+    <dl><dd>
+        The main function to open an exisitng file for a read operation. On success, an object of the class <a href="#IFileRead">IFileRead</a> is returned which can be used to read the content of the file; otherwise a
+        null pointer is returned.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>fileName</b></td><td>The absolute full path of the file</td></tr>
+                <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            The IFileRead instance created. It must be freed by the C++ operator delete, if no longer be used.
+            <h4 id="ExampleOpenReadFile">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">class IFileRead * file = FileSystem::OpenReadFile("/path/file.txt", log_instance);
+if(file) {
+....
+  read operation
+...
+delete file;
+}
+                </code></pre>
+        </dd></dl>
+    <div class="fnhead" id="OpenDirectory">OpenDirectory (static function)</div>
+    <dl><dd>
+            The main function to use to open a directory corresponding to <i>directoryName</i>. An object of class <a href="#IDirectory">IDirectory</a> is returned on success and a null pointer on failure.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>directoryName</b></td><td>The absolute full name of the directory</td></tr>
+                <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            The created IDirectory instance. It must be freed by the C++ operator delete, if no longer be used.
+            <h4 id="ExampleOpenDirectory">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">class IDirectory * dir = FileSystem::OpenDirectory("/dir/", log_instance);
+if(dir) {
+....
+  perform action
+...
+delete dir;
+}
+                </code></pre>
+        </dd></dl>
+
+    <div class="fnhead" id="OpenElfBinary">OpenElfBinary (static function)</div>
+    <dl>
+        <dd>
+            The function is used to open a binary file <i>bin</i>. An object of class <a href="#IElfBinary">IElfBinary</a> is returned on success and a null pointer on failure. This object can be used
+            to get some information about an ELF (Executable and Linkable Format) binary.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>bin</b></td><td>The absolute full name of the binary</td></tr>
+                <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            The created IElfBinary instance. It must be freed by the C++ operator delete, if no longer be used.
+            <h4 id="ExampleOpenDirectory">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">class IElfBinary * bin = FileSystem::OpenElfBinary(binary, log_instance);
+if(bin) {
+....
+  perform action
+...
+delete bin;
+}
+                </code></pre>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="ReadWholeFile">ReadWholeFile (static function)</div>
+    <dl>
+        <dd>
+            Opens and reads the whole file into a buffer with a defined size. The file is closed afterwards.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+                <tr><td class="param">char * <b>readBuffer</b></td><td>The buffer in which the file is read to</td></tr>
+                <tr><td class="param">size_t <b>size</b></td><td>The size of the read buffer which must be big enough</td></tr>
+                <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            If the read is successfull true is returned; otherwise false.
+        </dd></dl>
+
+    <div class="fnhead" id="WriteWholeFile">WriteWholeFile (static function)</div>
+    <dl><dd>
+        Opens a file with an absolute path and writes the whole content of the write buffer into the file.
+        The file is closed afterwards.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">char * <b>writeBuffer</b></td><td>The buffer to be written to the file</td></tr>
+            <tr><td class="param">size_t <b>size</b></td><td>The size of the write buffer.</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        If the write is successfull true is returned; otherwise false.
+            <h4 id="ExampleWriteWholeFile">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">char * buffer = malloc(BIG_ENOUGH_SIZE);
+FileSystem::WriteWholeFile("/path/important_file.txt", buffer, strlen(buffer), log_instance);
+free(buffer);
+                </code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="ScanFile">ScanFile (static function)</div>
+    <dl><dd>
+        Scans a file given as an absolute path, based on a set of characters specified in a format string. 
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">const char * <b>format</b></td><td>A string containing a set of characters that specifies how characters are extracted from the file (C string following the same specifications as in the C function <i>scanf</i>.)</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        If scanning the file is successfull, the file is closed and true is returned; otherwise false.
+            <h4 id="ExampleScanFile">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">long long unsigned time;
+int id;
+char s_string[128];
+FileSystem::ScanFile(log_instance, "/path/file_to_scan", "%*32[^:]:%llu %*s %d %s", &time, &id, s_string);</code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="FileExists">FileExists (static function)</div>
+    <dl><dd>
+        Checks if a file exists.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        If a file exists true is returned; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="GetLastWriteTime">GetLastWriteTime (static function)</div>
+    <dl><dd>
+        Returns the time of the last write operation performed on a file specified by an absolute path.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success the time in seconds is retured; otherwise -1.
+    </dd></dl>
+
+    <div class="fnhead" id="GetFileSize">GetFileSize (static function)</div>
+    <dl><dd>
+        Returns the current size of the file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success the size of the file is retured; otherwise -1.
+    </dd></dl>
+
+    <div class="fnhead" id="GetFileBlockSize">GetFileBlockSize (static function)</div>
+    <dl><dd>
+        Returns the current block size of the file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success the block size of the file is retured; otherwise -1.
+    </dd></dl>
+
+    <div class="fnhead" id="Rename">Rename (static function)</div>
+    <dl><dd>
+        Renames a file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>oldName</b></td><td>The current name of the file (absolute path)</td></tr>
+            <tr><td class="param">const char * <b>newName</b></td><td>The new name of the file (absolute path)</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+            <h4 id="ExampleRename">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">if (FileSystem::FileExists("/path/myPbx.txt", log_instance)) {
+    FileSystem::Rename("/path/myPbx.txt", "/path/myApps.txt", log_instance);
+}</code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="RemoveFile">RemoveFile (static function)</div>
+    <dl><dd>
+        Removes a file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The absolute path of the file to be removed</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="CreateDirectory">CreateDirectory (static function)</div>
+    <dl><dd>
+        Creates a directory.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>absolutePath</b></td><td>The absolute path of the directory to be created</td></tr>
+            <tr><td class="param">int <b>mode</b></td><td>The mode to set the file permission bits</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+
+        <h4 id="ExampleCreateDirectory">Code Example</h4>
+        <pre class="sample" style="height:auto;"><code class="language-cpp">//mode 0755 defined as rwxr-xr-x 
+FileSystem::CreateDirectory("/home/new", 0755, log)</code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="RemoveDirectory">RemoveDirectory (static function)</div>
+    <dl><dd>
+        Removes a directory. If the directory is not empty, all included directories and files are deleted as well.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>directoryPath</b></td><td>The absolute path of the directory to be removed</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="ChangeOwner">ChangeOwner (static function)</div>
+    <dl><dd>
+        Changes the owner and group of the directory specified by an absolute path.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>path</b></td><td>The absolute path of the directory</td></tr>
+            <tr><td class="param">const char * <b>newOwner</b></td><td>The new owner of the directory</td></tr>
+            <tr><td class="param">const char * <b>newGroup</b></td><td>The new group of the directory</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="ChangeMode">ChangeMode (static function)</div>
+    <dl><dd>
+        Changes the mode of a file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>path</b></td><td>The absolute path of the directory to be removed</td></tr>
+            <tr><td class="param">int <b>mode</b></td><td>The new mode of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success true is retured; otherwise false.
+        <h4 id="ExampleChangeMode">Code Example</h4>
+        <pre class="sample" style="height:auto;"><code class="language-cpp">FileSystem::ChangeMode("/directory", 0744, log);</code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="GetFileSystemTotalSize">GetFileSystemTotalSize (static function)</div>
+    <dl><dd>
+        Returns the total size of the file system in bytes.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>path</b></td><td>The absolute path of the directory to be removed</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success the size is returned in bytes; otherwise -1.
+        <h4 id="ExampleGetFileSystemTotalSize">Code Example</h4>
+        <pre class="sample" style="height:auto;"><code class="language-cpp">ulong64 totalSize = FileSystem::GetFileSystemTotalSize("/mnt/sda1", log);</code></pre>
+    </dd></dl>
+
+    <div class="fnhead" id="GetFileSystemUsedSpace">GetFileSystemUsedSpace (static function)</div>
+    <dl><dd>
+        Returns the total used space of the file system in bytes.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>path</b></td><td>The absolute path of the directory to be removed</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success the size is returned in bytes; otherwise -1.
+    </dd></dl>
+
+    <div class="fnhead" id="CheckSystemUser">CheckSystemUser (static function)</div>
+    <dl><dd>
+        Checks if a system user and group exist.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>user</b></td><td>The system user</td></tr>
+            <tr><td class="param">const char * <b>group</b></td><td>The system group</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        If the user and group are available to use, true is returned; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="GetFileSystemUser">GetFileSystemUser (static function)</div>
+    <dl><dd>
+        Returns the system user of a file.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filepath</b></td><td>The absolute path of the file</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        On success, returns the system user; otherwise 0.
+    </dd></dl>
+
+    <a name="IFileWrite"><h2>IFileWrite</h2></a>
+    <pre><code class="language-cpp">class IFileWrite {
+public:
+    ~IFileWrite() {};
+    <a href="#IsOpen" style="text-decoration:none;">bool IsOpen()</a>;
+    <a href="#Write" style="text-decoration:none;">bool Write(const void * buffer, size_t len)</a>;
+    <a href="#Flush" style="text-decoration:none;">void Flush()</a>;
+    <a href="#Close" style="text-decoration:none;">bool Close()</a>;
+};</code></pre>
+    <h3>Overview</h3>
+    An instance of this class is created after a call to FileSystem::OpenWriteFile
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the managers diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IsOpen">IsOpen</div>
+    <dl><dd>
+        Checks if the file is opened.
+
+        <h4>Return value</h4>
+        Returns true if the file is opened successfully; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="Write">Write</div>
+    <dl><dd>
+        Writes the buffer with a size len into the file.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const void * <b>buffer</b></td><td>The buffer to be written</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The length of the buffer</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        Returns true if the write operation was successful; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="Flush">Flush (static function)</div>
+    <dl><dd>
+        Flushes the stream opened for writing any unwritten data
+
+    </dd></dl>
+
+    <div class="fnhead" id="Close">Close</div>
+    <dl><dd>
+        Close the file after writing is finished. After the write operation is completed, a call to Close() should be performed explicitly.
+        <h4>Return value</h4>
+        Returns true if the the file was closed successfully; otherwise false.
+    </dd></dl>
+
+    <h3 id="ExampleIFileWrite">Code Example</h3>
+    <pre class="sample" style="height:auto;"><code class="language-cpp">bool append = false;
+class IFileWrite * file = FileSystem::OpenWriteFile("file.txt", append, log);
+file->Write(buffer, strlen(buffer));
+file->Close();
+delete file;
+</code></pre>
+
+    <a name="IFileRead"><h2>IFileRead</h2></a>
+    <pre><code class="language-cpp">class IFileRead {
+public:
+    virtual ~IFileRead() {};
+    <a href="#IsOpenR" style="text-decoration:none;">bool IsOpen()</a>;
+    <a href="#Read" style="text-decoration:none;">size_t Read(void * buffer, size_t len)</a>;
+    <a href="#CloseR" style="text-decoration:none;">bool Close()</a>;
+};</code></pre>
+    <h3>Overview</h3>
+    An instance of this class is created after a call to FileSystem::OpenReadFile
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the managers diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IsOpenR">IsOpen</div>
+    <dl><dd>
+        Checks if the file is opened.
+
+        <h4>Return value</h4>
+        Returns true if the file is opened successfully; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="Read">Read</div>
+    <dl><dd>
+        Reads the file into the buffer.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">void * <b>buffer</b></td><td>The buffer to read the file into</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The length of the buffer</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        Returns the count of the written bytes in the buffer.
+    </dd></dl>
+
+    <div class="fnhead" id="CloseR">Close</div>
+    <dl><dd>
+        Close the file after writing is finished. After the last read operation is completed, a call to Close() should be performed explicitly.
+        <h4>Return value</h4>
+        Returns true if the the file was closed successfully; otherwise false.
+    </dd></dl>
+
+    <a name="IDirectory"><h2>IDirectory</h2></a>
+    <pre><code class="language-cpp">class IDirectory {
+public:
+    ~IDirectory() {};
+    <a href="#IsOpenD" style="text-decoration:none;">bool IsOpen() const</a>;
+    <a href="#ReadNext" style="text-decoration:none;">class IDirectoryEntry * ReadNext()</a>;
+    <a href="#CloseD" style="text-decoration:none;">bool Close()</a>;
+};</code></pre>
+    <h3>Overview</h3>
+    An instance of this class is created after a call to FileSystem::OpenDirectory. The directory is opened and the first entry is ready to be read.
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the managers diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IsOpenD">IsOpen</div>
+    <dl><dd>
+        Checks if the directory is opened.
+
+        <h4>Return value</h4>
+        Returns true if the directory is opened successfully; otherwise false.
+    </dd></dl>
+
+    <div class="fnhead" id="ReadNext">ReadNext</div>
+    <dl><dd>
+        Starts reading the first entry of the directory. This function iterates through the whole directory till end of the directory is reached or if an error occurs.
+
+        <h4>Return value</h4>
+        An instance of class DirectoryEntry is returned specifying whether the entry is a regular file or a directory. NULL is returned on error or if the end of directory is reached.
+    </dd></dl>
+
+    <div class="fnhead" id="CloseD">Close</div>
+    <dl><dd>
+        Closes the associated directory. A call to Close() should be done explicitly after reading is done.
+        <h4>Return value</h4>
+        Returns true if the the directory was closed successfully; otherwise false.
+    </dd></dl>
+
+    <h3 id="ExampleIDirectory">Code Example</h3>
+    <pre class="sample" style="height:auto;"><code class="language-cpp">class IDirectory * dir = FileSystem::OpenDirectory("/directory", log);
+class IDirectoryEntry * entry;
+while ((entry = dir->ReadNext())) {
+    ......
+    ......
+    delete entry;
+}
+dir->Close();
+delete dir;
+</code></pre>
+
+    <a name="IDirectoryEntry"><h2>IDirectoryEntry</h2></a>
+    <pre><code class="language-cpp">class IDirectoryEntry {
+public:
+    ~IDirectoryEntry() {};
+    <a href="#GetName" style="text-decoration:none;">const char * GetName() const</a> ;
+    <a href="#IsFile" style="text-decoration:none;">bool IsFile() const</a> ;
+};</code></pre>
+    <h3>Overview</h3>
+    An instance of this class is created after every ReadNext() function call. After this object is no longer needed, it should be deleted.
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the managers diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="GetName">GetName</div>
+    <dl><dd>
+        Reads the name of the directory entry.
+
+        <h4>Return value</h4>
+        Returns the name read.
+    </dd></dl>
+
+    <div class="fnhead" id="IsFile">IsFile</div>
+    <dl><dd>
+        Checks if the directory entry is a regular file.
+
+        <h4>Return value</h4>
+        Returns true if the read directory entry is a regular file or false if the entry is a directory.
+    </dd></dl>
+
+    <a name="IElfBinary"><h2>IElfBinary</h2></a>
+    <pre><code class="language-cpp">class IElfBinary {
+public:
+    ~IElfBinary() {};
+    <a href="#IsOpenElf" style="text-decoration:none;">bool IsOpen()</a> ;
+    <a href="#IsElfBinary" style="text-decoration:none;">bool IsElfBinary()</a> ;
+    <a href="#IsExecutable" style="text-decoration:none;">bool IsExecutable()</a> ;
+    <a href="#GetArchitecture" style="text-decoration:none;">elf_architecture_t GetArchitecture()</a> ;
+    <a href="#ElfClose" style="text-decoration:none;">bool Close()</a> ;
+};</code></pre>
+    <h3>Overview</h3>
+    An instance of this class is created after a call to FileSystem::OpenElfBinary(). After this object is no longer needed, it should be deleted.
+
+    <h3>Logging</h3>
+    To enable logging for File interface, the flag LOG_FILE must be set in the managers diagnostic settings.
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IsOpenElf">IsOpen</div>
+    <dl>
+        <dd>
+            Check if the binary file is opened.
+
+            <h4>Return value</h4>
+            Returns true if the file is successfully opened.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IsElfBinary">IsElfBinary</div>
+    <dl>
+        <dd>
+            Checks whether the file is a valid ELF binary. The header of the binary is read the magic number is checked.
+
+            <h4>Return value</h4>
+            Returns true if the binary is a valid ELF binary.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IsExecutable">IsExecutable</div>
+    <dl>
+        <dd>
+            Checks whether the file is an executible ELF binary. 
+
+            <h4>Return value</h4>
+            Returns true if the binary is executable; otherwise false.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="GetArchitecture">GetArchitecture</div>
+    <dl>
+        <dd>
+            Returns the architecture of the ELF binary. The types checked are ARM and X86_64 only.
+
+            <h4>Return value</h4>
+            Returns the architecture in the enum elf_architecture_t.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="ElfClose">Close</div>
+    <dl>
+        <dd>
+            Closes the binary file.
+
+            <h4>Return value</h4>
+            Returns true if the the directory was closed successfully; otherwise false.
+        </dd>
+    </dl>
+
+    <a name="elf_architecture_t"><h2>enum elf_architecture_t</h2></a>
+    <pre><code class="language-cpp">typedef enum {
+    ELF_UNKOWN,
+    ELF_ARM,
+    ELF_X86_64
+} elf_architecture_t;
+</code></pre>
+</body>
+</html>

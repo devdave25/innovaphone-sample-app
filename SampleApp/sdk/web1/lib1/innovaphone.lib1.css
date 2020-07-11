@@ -1,0 +1,55 @@
+@font-face {
+    font-family: "titillium";
+    src: url('../fonts/titilliumweb-regular.ttf') format('truetype');
+}
+
+html
+{
+    font-family: titillium, 'Open Sans', sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: normal;
+}
+
+input
+{
+    font-family: titillium, 'Open Sans', sans-serif;
+}
+
+body, p
+{
+    margin: 0px;
+    padding: 0px;
+    border-width: 0px;
+}
+
+::-ms-clear
+{
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+.lib1-icon20px {
+    background-position-x: 0px !important;
+}
+
+.lib1-icon20px:hover {
+    background-position-x: -20px !important;
+}
+
+.lib1-icon20pxactive {
+    background-position-x: -40px !important;
+}
+
+.lib1-icon20pxactive:hover {
+    background-position-x: -20px !important;
+}
+
+.lib1-hover-show:hover .lib1-hover-hidden {
+    display:block;
+}
+
+.lib1-hover-hidden {
+    display:none;
+}

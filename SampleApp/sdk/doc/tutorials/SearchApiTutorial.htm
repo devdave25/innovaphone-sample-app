@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Tutorial: Search API</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript">
+        function toggleSpoiler(id) {
+            var e = document.getElementById(id);
+            if (e.style.display == "none") e.style.display = "";
+            else e.style.display = "none";
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Tutorial: Search API</h1>
+
+    <p>
+        In this tutorial you will learn how to use the Search API in an app.
+    </p>
+    <p>
+        We will build a small app that allows entering a search string and displaying number informations of corresponding users. A few entries can be fed into the Contacts database by uploading the accompanying file ContactsEntries.utf8.
+    </p>
+    <p>
+        Search results are going to be displayed as retrieved by the Users App and by the Contacts App. 
+    </p>
+
+    <h2>Conventions</h2>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name NewApp1 and the company name Company. For testing we use the user admin.
+        Your filenames might be different according to your settings.
+    </p>
+
+    <h2>Conclusion</h2>
+    <p>
+        Here is the code of the full example app.
+        <pre>
+		<code class="language-js">
+
+/// <reference path="../../sdk/web1/lib1/innovaphone.lib1.js" />
+/// <reference path="../../sdk/web1/appwebsocket/innovaphone.appwebsocket.Connection.js" />
+/// <reference path="../../sdk/web1/ui1.lib/innovaphone.ui1.lib.js" />
+
+var Company = Company || {};
+Company.NewApp1 = Company.NewApp1 || function (start, args) {
+	this.createNode("body", "overflow:hidden;");
+	var that = this;
+
+	var colorSchemes = {
+		dark: {
+			"--bg": "#191919",
+			"--button": "#303030",
+			"--text-standard": "#f2f5f6",
+		},
+		light: {
+			"--bg": "white",
+			"--button": "#e0e0e0",
+			"--text-standard": "#4a4a49",
+		}
+	};
+	var schemes = new innovaphone.ui1.CssVariables(colorSchemes, start.scheme);
+	start.onschemechanged.attach(function () { schemes.activate(start.scheme) });
+
+	var texts = new innovaphone.lib1.Languages(Company.NewApp1Texts, start.lang);
+
+	var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+
+	var searchApi, searchId=0|0, curSearchId;
+
+	app.checkBuild = true;
+	app.onconnected = app_connected;
+	that.addEvent("keyup", onKeyUp);
+
+
+	var input = this.add(new innovaphone.ui1.Input("margin: 5px; background-color: var(--button); color: var(--text-standard); font-size: 16px; border: none;"));
+	var results = this.add(new innovaphone.ui1.Div("width:100%; height:100%;overflow:auto;display:flex;flex-direction:row;flex-wrap:wrap;"));
+	input.addEvent("keyup", onKeyUp);
+	input.container.focus();
+
+	function app_connected(domain, user, dn, appdomain) {
+	     searchApi = start.consumeApi("com.innovaphone.search");
+		 searchApi.onmessage.attach(onmessage);
+	}
+
+	function onmessage(consumer, obj) {
+		var provider, relevance, src = obj.src || obj.msg.source;
+		switch(obj.msg.mt) {
+		case "SearchInfo":
+			if(src==curSearchId) {
+				provider = searchApi.model[obj.provider];
+				relevance = obj.msg.relevance || (provider.model ? provider.model.relevance : null);
+				addResult(obj.msg.contact, obj.msg.dn, obj.msg.cn, provider.title, relevance, obj.msg.link);
+			}
+			break;
+		case "SearchResult":
+			break;
+		}
+	}
+
+	function onKeyUp(event) {
+		switch (event.key) {
+			case "Escape": case "Esc":
+				input.setValue(null);
+				input.container.focus();
+				results.clear();
+				break;
+			default:
+				search();
+				break;
+		}
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	}
+
+	function addResult(contact, dn, cn, providerTitle, relevance, link) {	
+		var entry = new Company.Entry(contact, dn, cn, providerTitle, relevance, link);
+		results.add(entry);
+	}
+
+	function search() {
+		var val = input.getValue();
+		if(searchApi && val&&val.length) {
+				results.clear();
+                ++searchId;
+				curSearchId = ""+searchId;
+                searchApi.send({ mt: "Search", type: "contact", search: val }, "*", curSearchId);
+		}	
+	}
+}
+Company.NewApp1.prototype = innovaphone.ui1.nodePrototype;
+
+
+Company.Entry = Company.Entry || function (contact, dn, cn, providerTitle, relevance, link) {
+	var that = this;
+
+	that.createNode("div", "margin:5px;flex:1 1 0; width:200; max-height:150px;display:flex; flex-direction:column; flex-wrap:nowrap;", null, null);
+	that.add(new innovaphone.ui1.Node("div", "white-space:nowrap;", dn||cn, null));
+	addNumber("T: ", contact.telephonenumber)
+	addNumber("M: ", contact.mobile)
+	addNumber("H: ", contact.homephone)
+	addNumber("E: ", contact.extension)
+	addNumber("S: ", contact.sip)
+
+	function addNumber(hdr, numbers) {
+		if(numbers) {
+			numbers.forEach(function(num) {
+				that.add(new innovaphone.ui1.Node("div", "white-space:nowrap;", hdr+num, null));			
+			})
+		}
+	}
+};
+Company.Entry.prototype = innovaphone.ui1.nodePrototype;		
+		</code>
+		</pre>
+    </p>
+    <p>
+        We did an introduction to the basic usage of the Search API.
+        <ul>
+            <li>start.consumeApi can be used to create an API consumer object.</li>
+            <li>The send function of the API consumer object is used to send messages to API providers.</li>
+            <li>The onmessage event of the API consumer object is used to receive messages from API providers.</li>
+        </ul>
+    </p>
+    <p>
+        Read the documentation to discover more functionality of the API framework.
+        <ul>
+            <li>API providers publish models that contain useful information. For example the phone API model contains the current phone calls of the user. Take a look at the API Monitor app to see those models.</li>
+            <li>Your app can also provide APIs that can then be used by other apps.</li>
+        </ul>
+    </p>
+
+    <h2>Useful documentation</h2>
+    <ul>
+        <li><a href="../../web1/lib1/lib1.htm#clientapis">Lib1 - Client APIs</a></li>
+        <li><a href="../../web1/com.innovaphone.search/lib1_api_search.htm">com.innovaphone.search</a></li>
+    </ul>
+</body>
+</html>

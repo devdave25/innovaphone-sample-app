@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - process implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>IProcess</h1>
+    <p>
+        An interface to create new child processes, kill processes and inspect the existance of a process.
+        Each static function has a class IInstanceLog * const log pointer, which is used for instance related<br />
+        logs dependent of the log flag LOG_PROCESS.
+    </p>
+    
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/process.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+           <a href="#IProcess">IProcess</a><br>
+          </td></tr>
+	</table>
+    
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+	<a name="IProcess"><h2>IProcess</h2></a>    
+    <pre><code class="C++">class IProcess {
+public:
+    <a href="#IProcessSpawn" style="text-decoration:none">static int Spawn(const char *filename, int argc, char ** argv, class IInstanceLog * const log);</a>				
+    <a href="#IProcessKill" style="text-decoration:none">static int Kill(int pid, int signalNr, class IInstanceLog * const log);</a>											
+    <a href="#IProcessProcessExist" style="text-decoration:none">static bool ProcessExist(int pid, class IInstanceLog * const log);</a>
+    <a href="#IProcessGetOwnPID" style="text-decoration:none">static int GetOwnPID(class IInstanceLog * const log);</a>
+    <a href="#IProcessGetParentPID" style="text-decoration:none">static int GetParentPID(class IInstanceLog * const log);</a>
+    <a href="#IProcessSetProcessGroupID" style="text-decoration:none">static bool SetProcessGroupID(int pid, int pgid, class IInstanceLog * const log);</a>
+    <a href="#IProcessGetOwnName" style="text-decoration:none">static void GetOwnName(char * buffer, size_t len, class IInstanceLog * const log);</a>
+    <a href="#IProcessSystem" style="text-decoration:none">static int System(class IInstanceLog * const log, const char * command, ...);</a>
+};
+</code></pre>
+
+    <h3>Public static functions</h3>
+    <a name="IProcessSpawn"><div class="fnhead">int Spawn(const char *filename, int argc, char ** argv, class IInstanceLog * const log)</div></a>
+    <dd>
+        Spawns a new child process based on the filename and the set of arguments determined by char **argv.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>filename</b></td><td>The actual command which will be executed.</td></tr>
+            <tr><td class="param">int <b>argc</b></td><td>The number of arguments.</td></tr>
+            <tr><td class="param">char ** <b>argv</b></td><td>An array of char * arguments. Note that the first argument is the process filename itself again.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         On success it returns the process id of the spawned process, otherwise 0 is returned.
+    </dd>
+    
+    <a name="IProcessKill"><div class="fnhead">int Kill(int pid, int signalNr, class IInstanceLog * const log)</div></a>
+    <dd>
+        Sends the specified kill code to a process.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>pid</b></td><td>The process PID.</td></tr>
+            <tr><td class="param">int <b>signalNr</b></td><td>The signal number, e.g. 9 (SIG_KILL).</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         If the kill is successful 1 is returned; otherwise 0 is returned (int).
+    </dd>
+    
+    <a name="IProcessProcessExist"><div class="fnhead">bool ProcessExist(int pid, class IInstanceLog * const log)</div></a>
+    <dd>
+        Checks if a process still exists or not.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>pid</b></td><td>The process PID.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         true if the process still exists, otherwise false.
+    </dd>
+    
+    <a name="IProcessGetOwnPID"><div class="fnhead">int GetOwnPID(class IInstanceLog * const log)</div></a>
+    <dd>
+        Returns the own process ID.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         The process ID (int).
+    </dd>
+    
+    <a name="IProcessGetParentPID"><div class="fnhead">int GetParentPID(class IInstanceLog * const log)</div></a>
+    <dd>
+        Returns the parent process ID from the own process.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         The parent process ID (int).
+    </dd>
+    
+    <a name="IProcessSetProcessGroupID"><div class="fnhead">bool SetProcessGroupID(int pid, int pgid, class IInstanceLog * const log)</div></a>
+    <dd>
+        Sets the process group ID of the specified process.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>pid</b></td><td>The process PID.</td></tr>
+            <tr><td class="param">int <b>pgid</b></td><td>The group ID.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         Returns true on success, otherwise false.
+    </dd>
+    
+    <a name="IProcessGetOwnName"><div class="fnhead">void GetOwnName(char * buffer, size_t len, class IInstanceLog * const log)</div></a>
+    <dd>
+        Writes the own process name to the given buffer.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>buffer</b></td><td>The buffer in which the name will be written.</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The size of the buffer.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+        </table>
+    </dd>
+    
+    <a name="IProcessSystem"><div class="fnhead">int System(class IInstanceLog * const log, const char * command, ...)</div></a>
+    <dd>
+        Makes use of the standard system function and runs the specified command.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance which is to be used.</td></tr>
+            <tr><td class="param">const char * <b>command</b></td><td>The command to run (e.g. "date -s \"1970-01-02 01:01:00\"").</td></tr>
+            <tr><td class="param">...</td><td>Parameters which are used inside command (e.g. %s etc.). The internally used buffer length is 1024 bytes!</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+         The exit code of the system call (int).
+    </dd>
+    </body>
+</html>

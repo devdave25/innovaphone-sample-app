@@ -1,0 +1,480 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Media interface</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Media interface</h1>
+    <p>
+        Interface for media data (audio, video and appsharing).
+    </p>
+    <p>
+        Create Media Channels.
+    </p>
+    <p>
+        Jitter Buffer.
+    </p>
+    <p>
+        Send and receive media data. (RTP/SCTP)
+    </p>
+    <p>
+        Protect media data. (Encryption/decryption, SRTP/DTLS)
+    </p>
+    <p>
+        Handling media devices. (Webcams, Microphones, Headsets)
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/media.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IMedia">IMedia</a><br>
+                <a href="#UMedia">UMedia</a><br>
+                <a href="#IMediaEndpoint">IMediaEndpoint</a><br>
+                <a href="#UMediaEndpoint">UMediaEndpoint</a><br>
+                <a href="#IMediaIoChannel">IMediaIoChannel</a><br>
+                <a href="#UMediaIoChannel">UMediaIoChannel</a><br>
+                <a href="#IDeviceIo">IDeviceIo</a><br>
+                <a href="#UDeviceIo">UDeviceIo</a><br>
+                <a href="#IAudioIoChannel">IAudioIoChannel</a><br>
+                <a href="#IAudioIo">IAudioIo</a><br>
+                <a href="#UAudioIo">UAudioIo</a><br>
+                <a href="#IVideoIoChannel">IVideoIoChannel</a><br>
+                <a href="#IVideoIo">IVideoIo</a><br>
+                <a href="#UVideoIo">UVideoIo</a><br>
+                <a href="#IAppSharingIoChannel">IAppSharingIoChannel</a><br>
+                <a href="#IAppSharingIo">IAppSharingIo</a><br>
+                <a href="#UAppSharingIo">UAppSharingIo</a><br>
+                <a href="#IJitterBuffer">IJitterBuffer</a><br>
+                <a href="#ISrtpSession">ISrtpSession</a><br>
+                <a href="#IMediaContainer">IMediaContainer</a><br>
+                <a href="#UMediaContainer">UMediaContainer</a><br>
+                <a href="#IWebcam">IWebcam</a><br>
+                <a href="#UWebcam">UWebcam</a><br>
+                <a href="#IWebcamProvider">IWebcamProvider</a><br>
+                <a href="#UWebcamProvider">UWebcamProvider</a><br>
+                <a href="#IMediaEncoder">IMediaEncoder</a><br>
+                <a href="#UMediaEncoder">UMediaEncoder</a><br>
+                <a href="#IMediaDecoder">IMediaDecoder</a><br>
+                <a href="#UMediaDecoder">UMediaDecoder</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="IMedia"><h2>IMedia</h2></a>
+    <pre><code class="C++">class IMedia {
+public:
+    virtual ~IMedia() {};
+    virtual void Initialize(ISocketProvider * udpSocketProvider, ISocketProvider * tcpSocketProvider, class ISocketContext * socketContext, byte * certificateFingerprint, word minPort, word maxPort, const char * stunServers, const char * turnServers, const char * turnUsername, const char * turnPassword, enum MediaType media, bool stunSlow, bool turnOnly) = 0;
+    virtual void Connect(class MediaConfig *remoteMediaConfig, bool iceControlling) = 0;
+    virtual void RtpSend(const void * buf, size_t len, dword timestamp) = 0;
+    virtual void SctpSend(const void * buf, size_t len) = 0;
+    virtual void Recv(void * buf, size_t len, bool recvPartial = false) = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Media interface for connecting ICE/DTLS and send/receive media data.
+
+    <!-- Block with the classes -->
+    <a name="UMedia"><h2>UMedia</h2></a>
+    <pre><code class="C++">class UMedia {
+public:
+    virtual void MediaInitializeComplete(IMedia * const media, class MediaConfig *localMediaConfig) {};
+    virtual void MediaConnectResult(IMedia * const media, bool error) {};
+    virtual void MediaRtpSendResult(IMedia * const media) {};
+    virtual void MediaSctpSendResult(IMedia * const media) {};
+    virtual void MediaRtpRecvResult(IMedia * const media, void * buf, size_t len, dword timestamp) {};
+    virtual void MediaSctpRecvResult(IMedia * const media, void * buf, size_t len) {};
+    virtual void MediaCloseComplete(IMedia * const media) {};
+    virtual void MediaEventReceived(IMedia * const media, enum MediaEndpointEvent event) {};
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that receives updates from the media interface.
+
+    <a name="IMediaEndpoint"><h2>IMediaEndpoint</h2></a>
+    <pre><code class="C++">class IMediaEndpoint {
+public:
+    virtual ~IMediaEndpoint() {};
+    virtual void Recv(char * buf, int len, dword timestamp, short sequenceNumberDiff, bool marker) = 0;
+    virtual void Send(char * buf, int len, dword timestamp) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that will receive the media data.
+
+    <a name="UMediaEndpoint"><h2>UMediaEndpoint</h2></a>
+    <pre><code class="C++">class UMediaEndpoint {
+public:
+    virtual void RtpRecvResult(char * buf, int len, dword timestamp) {};
+    virtual void RtpSendResult() {};
+    virtual void RtpSend(char * buf, int len, dword timestamp, bool marker = false) = 0;
+    virtual void RtcpSend(char * buf, int len) = 0;
+    virtual void SctpRecvResult(char * buf, int len) {};
+    virtual void SctpSendResult() {};
+    virtual void SctpSend(char * buf, int len) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that will receive updates from media endpoint.
+
+    <a name="IMediaIoChannel"><h2>IMediaIoChannel</h2></a>
+    <pre><code class="C++">class IMediaIoChannel {
+public:
+    virtual ~IMediaIoChannel() {};
+    virtual void Open() = 0;
+    virtual void RtpRecv(void * buf, size_t len, dword timestamp) = 0;
+    virtual void RtpSendResult() {};
+    virtual void SctpRecv(void * buf, size_t len) = 0;
+    virtual void SctpSendResult() {};
+    virtual void Close() = 0;
+    virtual void EventRecv(enum MediaEndpointEvent event) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class which defines a media channel.
+
+    <a name="UMediaIoChannel"><h2>UMediaIoChannel</h2></a>
+    <pre><code class="C++">class UMediaIoChannel {
+public:
+    virtual void MediaIoRtpSend(const void * buf, size_t len, dword timestamp) = 0;
+    virtual void MediaIoSctpSend(const void * buf, size_t len) = 0;
+    virtual void MediaIoCloseComplete(class IMediaIoChannel * const mediaIoChannel) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that will receive updates from media channel.
+
+    <a name="IDeviceIo"><h2>IDeviceIo</h2></a>
+    <pre><code class="C++">class IDeviceIo {
+public:
+    virtual void QueryDevices(void * context) = 0; // Calls DeviceAdded() for all present devices.
+    virtual const char * StartDevice(void * context, const char *deviceId, int deviceMode) = 0;
+    virtual void StopDevice(void * context, const char *deviceId) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class for handling i/o devices.
+
+    <a name="UDeviceIo"><h2>UDeviceIo</h2></a>
+    <pre><code class="C++">class UDeviceIo {
+public:
+    virtual void MediaIoDeviceAdded(void * context, const char *deviceId, int deviceType, unsigned deviceCapabilities, const char *deviceName) = 0;
+    virtual void MediaIoDeviceRemoved(void * context, const char *deviceId) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that will receive updates from device interface.
+
+    <a name="IAudioIoChannel"><h2>IAudioIoChannel</h2></a>
+    <pre><code class="C++">class IAudioIoChannel : public IMediaIoChannel {
+public:
+    static class IAudioIoChannel * Create(class IAudioIo * audioIo, class UMediaIoChannel * const user);
+    static unsigned AvailableCoderCount();
+    static enum AudioCoder AvailableCoder(unsigned coderNumber);
+    virtual ~IAudioIoChannel() {};
+    virtual void Initialize(enum AudioCoder coder, bool sc, unsigned mediaPacketizationMs, unsigned execInterval8khz,
+        unsigned execJitter8khz, unsigned pullSampleRate, unsigned putSampleRate) = 0;
+    virtual bool Pull() = 0;
+    virtual const short *PulledSamples() = 0;
+    virtual const short *FeedbackSamples() = 0;
+    virtual void PutSamples(const short *buffer) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that handles an audio channel, derived from IMediaIoChannel.
+
+    <a name="IAudioIo"><h2>IAudioIo</h2></a>
+    <pre><code class="C++">class IAudioIo : public IDeviceIo {
+public:
+    static class IAudioIo * Create(class IIoMux * const iomux, class IAudioPhone * const audioPhone, unsigned execInterval8khz);
+    virtual ~IAudioIo() {};
+    virtual class IAudioPhone *Initialize(class UAudioIo * const user, class UDeviceIo * const deviceIoUser) = 0;
+    virtual void AudioExec(class IAudioExec *audioExec) = 0;
+    virtual void StartMonitoring(const char *deviceId, int deviceMode) = 0;
+    virtual void StopMonitoring(const char *deviceId) = 0;
+    virtual void StartHookDevice(const char *deviceId) = 0;
+    virtual void StopHookDevice(const char *deviceId) = 0;
+    virtual void SendHookKey(const char *deviceId, byte key) = 0;
+    virtual void StartDualTones(dword toneFlags, unsigned toneCount, const struct AudioIoDualTone *tones) = 0;
+    virtual void StopDualTones() = 0;
+    virtual class IAudioIoChannel *CreateChannel(class UMediaIoChannel * const user) = 0;
+    virtual void InitializeChannel(class IAudioIoChannel *audioIoChannel, enum AudioCoder coder, bool sc, unsigned mediaPacketizationMs) = 0;
+    virtual void ChannelOpened(class IAudioIoChannel *audioIoChannel) = 0;
+    virtual void ChannelClosed(class IAudioIoChannel *audioIoChannel) = 0;
+    virtual void ChannelDestroyed(class IAudioIoChannel *audioIoChannel) = 0;
+    virtual void Close(class UAudioIo * user) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will handle audio i/o devices, derived from IDeviceIo.
+
+    <a name="UAudioIo"><h2>UAudioIo</h2></a>
+    <pre><code class="C++">class UAudioIo {
+public:
+    virtual void HookKeyReceived(const char *deviceId, byte key) = 0;
+    virtual void CloseAudioIoComplete() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the audio interface.
+
+    <a name="IVideoIoChannel"><h2>IVideoIoChannel</h2></a>
+    <pre><code class="C++">class IVideoIoChannel : public IMediaIoChannel {
+public:
+    static class IVideoIoChannel * Create(class IIoMux * const iomux, class IVideoIo * videoIo, class UMediaIoChannel * const user, class IInstanceLog * log);
+    static unsigned AvailableCoderCount();
+    static enum VideoCoder AvailableCoder(unsigned coderNumber);
+    virtual ~IVideoIoChannel() {};
+    virtual void Initialize(void * context, const char * channelId, enum VideoCoder coder, ConnectionType connType) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that handles a video channel, derived from IMediaIoChannel.
+
+    <a name="IVideoIo"><h2>IVideoIo</h2></a>
+    <pre><code class="C++">class IVideoIo : public IDeviceIo {
+public:
+    static class IVideoIo * Create(class IIoMux * const iomux, class IInstanceLog * log);
+    virtual ~IVideoIo() {};
+    virtual void Initialize(class UVideoIo * const user, class UDeviceIo * const deviceIoUser) = 0;
+    virtual void AddLocalContainer(void * context, void * container, enum MediaType coder) = 0;
+    virtual void RemoveLocalContainer(void * container, enum MediaType coder) = 0;
+    virtual void AddRemoteContainer(void * context, void * container, const char * channelId, enum MediaType coder) = 0;
+    virtual void RemoveRemoteContainer(void * container, enum MediaType coder) = 0;
+    virtual void StartVideoEncoder(void * context, const char * channelId, int codec) = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will handle video i/o devices, derived from IDeviceIo.
+
+    <a name="UVideoIo"><h2>UVideoIo</h2></a>
+    <pre><code class="C++">class UVideoIo {
+public:
+    virtual void CloseVideoIoComplete() = 0;
+    virtual void MediaIoVideoContainerSend(const void * buf, size_t len, dword timestamp, const void * context, bool local, enum MediaType type) = 0;
+    virtual void MediaIoVideoContainerInit(const void * context, bool local, enum MediaType type) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the video i/o interface.
+
+    <a name="IAppSharingIoChannel"><h2>IAppSharingIoChannel</h2></a>
+    <pre><code class="C++">class IAppSharingIoChannel : public IMediaIoChannel {
+public:
+    static class IAppSharingIoChannel * Create(class IIoMux * const iomux, class IAppSharingIo * appSharingIo, class UMediaIoChannel * const user, class IInstanceLog * log, const char * dn);
+    static unsigned AvailableCoderCount();
+    static enum AppSharingCoder AvailableCoder(unsigned coderNumber);
+    virtual ~IAppSharingIoChannel() {};
+    virtual void Initialize(void * context, const char * channelId, enum AppSharingCoder coder) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that handles a appsharing channel, derived from IMediaIoChannel.
+
+    <a name="IAppSharingIo"><h2>IAppSharingIo</h2></a>
+    <pre><code class="C++">class IAppSharingIo : public IDeviceIo {
+public:
+    static class IAppSharingIo * Create(class IIoMux * const iomux, class IInstanceLog * log);
+    virtual ~IAppSharingIo() {};
+    virtual void Initialize(class UAppSharingIo * const user, class UDeviceIo * const deviceIoUser) = 0;
+    virtual void SignalingMessage(void * context, void * buffer, int len) = 0;
+    virtual void SubscribeApplications() = 0;
+    virtual void UnsubscribeApplications() = 0;
+    virtual void ShareApplication(unsigned int id) = 0;
+    virtual void UnshareApplication(unsigned int id) = 0;
+    virtual void UnshareAllApplications() = 0;
+    virtual void GiveControlToUser(unsigned int userId) = 0;
+    virtual void RemoveControlFromUser(unsigned int userId) = 0;
+    virtual void AddRemoteContainer(void * context, void * container, const char * channelId, enum MediaType coder) = 0;
+    virtual void RemoveRemoteContainer(void * container, enum MediaType coder) = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will handle appsharing i/o devices, derived from IDeviceIo.
+
+    <a name="UAppSharingIo"><h2>UAppSharingIo</h2></a>
+    <pre><code class="C++">class UAppSharingIo {
+public:
+    virtual void AddAppSharingApplication(unsigned int id, const char * name, const char * desc, const char * icon,  const char * thumbnail) = 0;
+    virtual void RemoveAppSharingApplication(unsigned int id) = 0;
+    virtual void UpdateAppSharingApplication(unsigned int id, const char * name, const char * desc, const char * icon,  const char * thumbnail) = 0;
+    virtual void CloseAppSharingIoComplete() = 0;
+    virtual void MediaIoAppSharingContainerSend(const void * buf, size_t len, dword timestamp, const void * context, bool local, enum MediaType type) = 0;
+    virtual void RequestAppSharingControl(unsigned int userId) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the appsharing i/o interface.
+
+    <a name="IJitterBuffer"><h2>IJitterBuffer</h2></a>
+    <pre><code class="C++">class IJitterBuffer {
+public:
+    static IJitterBuffer * Create(class UJitterBuffer * user);
+    virtual ~IJitterBuffer() {};
+    virtual unsigned Configure(enum AudioCoder coder, unsigned mediaPacketizationMs, unsigned pullInterval8khz,
+        unsigned minBufferMs, unsigned initialBufferMs, unsigned maxBufferMs) = 0;
+    virtual void Adjust(unsigned initialBufferMs) = 0;
+    virtual unsigned GetDelay() = 0;
+    virtual void Push(const void * buf, size_t len, dword timestamp) = 0;
+    virtual bool Pull(bool discard) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for a jitter buffer.
+
+    <a name="UJitterBuffer"><h2>UJitterBuffer</h2></a>
+    <pre><code class="C++">class UJitterBuffer {
+public:
+    virtual void JitterBufferPulled(IJitterBuffer * const jitterBuffer, const void * buf, size_t len) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the jitterbuffer interface.
+
+    <a name="ISrtpSession"><h2>ISrtpSession</h2></a>
+    <pre><code class="C++">class ISrtpSession {
+public:
+    static ISrtpSession * Create(byte * srtpMasterkey, byte * srtpMastersalt, const char * profile);
+    virtual ~ISrtpSession() {};
+    virtual byte * Protect(byte * header, int hLen, byte * payload, int pLen, int * olen) = 0;
+    virtual int Unprotect(char * srtpPacket, int len) = 0;
+    virtual byte * SrtcpProtect(byte * rtcpPacket, int pLen, int * olen) = 0;
+    virtual int SrtcpUnprotect(char * srtcpPacket, int len) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will protect and unprotect media data.
+
+    <a name="IMediaContainer"><h2>IMediaContainer</h2></a>
+    <pre><code class="C++">class IMediaContainer {
+public:
+    virtual ~IMediaContainer() {};
+    virtual void PutSample(char * buf, int len, dword timestamp) = 0;
+    virtual void Initialize(void) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will define a media container (webm, mp4).
+
+    <a name="UMediaContainer"><h2>UMediaContainer</h2></a>
+    <pre><code class="C++">class UMediaContainer {
+public:
+    virtual void ContainerSample(char * buf, int len) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the IMediaContainer interface.
+
+    <a name="IWebcam"><h2>IWebcam</h2></a>
+    <pre><code class="C++">class IWebcam {
+public:
+    virtual ~IWebcam() {};
+    virtual struct VideoFrameFormat * Start() = 0;
+    virtual void Stop() = 0;
+    virtual void Close() = 0;
+    virtual const char * GetWebcamId() = 0;
+    virtual const char * GetWebcamName() = 0;
+    virtual void FullIntraRequest() {};
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will define a webcam.
+
+    <a name="UWebcam"><h2>UWebcam</h2></a>
+    <pre><code class="C++">class UWebcam {
+public:
+    virtual void WebcamVideoFormat(class IWebcam * const webcam, const struct VideoFrameFormat * format) = 0;
+    virtual void WebcamSample(class IWebcam * const webcam, const void * buf, int len, dword timestamp, dword duration, const struct VideoFrameFormat * format) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the IWebcam interface.
+
+    <a name="IWebcamProvider"><h2>IWebcamProvider</h2></a>
+    <pre><code class="C++">class IWebcamProvider {
+public:
+    static class IWebcamProvider * Create(class IIoMux * const iomux, class UWebcamProvider * const webcamProviderUser, class UWebcam * const webcamUser, class IInstanceLog * const log);
+    virtual ~IWebcamProvider() {};
+    virtual void QueryDevices(void * context) = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that implements a webcam provider.
+
+    <a name="UWebcamProvider"><h2>UWebcamProvider</h2></a>
+    <pre><code class="C++">class UWebcamProvider {
+public:
+    virtual void WebcamLost(class IWebcam * const webcam, void * context) = 0;
+    virtual void WebcamAdded(class IWebcam * const webcam, void * context) = 0;
+    virtual void WebcamClosed(class IWebcam * const webcam) = 0;
+    virtual void WebcamProviderCloseResult() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the webcam provider.
+
+    <a name="IMediaEncoder"><h2>IMediaEncoder</h2></a>
+    <pre><code class="C++">class IMediaEncoder {
+public:
+    static class IMediaEncoder * Create(class IIoMux * const iomux, class UMediaEncoder * const user, class IInstanceLog * log, enum VideoCoder coder);
+    virtual ~IMediaEncoder() {};
+    virtual bool Initialize(struct VideoFrameFormat * const format) = 0;
+    virtual void Encode(const void * buf, int len, dword timestamp, dword duration, const struct VideoFrameFormat * f) = 0;
+    virtual bool FullIntraRequest() = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that implements a media encoder.
+
+    <a name="UMediaEncoder"><h2>UMediaEncoder</h2></a>
+    <pre><code class="C++">class UMediaEncoder {
+public:
+    virtual void EncodeResult(class IMediaEncoder * encoder, const void * buf, int len, dword timestamp, dword duration) = 0;
+    virtual void MediaEncoderCloseResult(class IMediaEncoder * encoder) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the media encoder.
+
+    <a name="IMediaDecoder"><h2>IMediaDecoder</h2></a>
+    <pre><code class="C++">class IMediaDecoder {
+public:
+    static class IMediaDecoder * Create(class IIoMux * const iomux, class UMediaDecoder * const user, class IInstanceLog * log, enum VideoCoder coder);
+    virtual ~IMediaDecoder() {};
+    virtual void Decode(const void *buf, int len, dword timestamp) = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that implements a media decoder.
+
+    <a name="UMediaDecoder"><h2>UMediaDecoder</h2></a>
+    <pre><code class="C++">class UMediaDecoder {
+public:
+    virtual void DecodeResult(class IMediaDecoder * decoder, const void * buf, int len, dword timestamp, dword duration, struct VideoFrameFormat * f) = 0;
+    virtual void MediaDecoderCloseResult(class IMediaDecoder * decoder) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Interface that will receive updates from the media decoder.
+
+</body>
+</html>

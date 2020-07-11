@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - AppWebsocket</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>AppWebsocket</h1>
+
+    <p>
+        The AppWebsocket protocol is the base protocol for all communication between Apps and their
+        App Services and bewtween App Services. It is also used for the new PBX Apis like PbxSignal,
+        EpSignal, Replication, ...
+	</p>
+    <p>
+        It provides the following services:
+        <ul>
+            <li>
+                Authentication
+            </li>
+            <li>
+                Matching of Responses to Requests by the "src" Mechanism
+            </li>
+            <li>
+                Addressing of different APIs within one session, with the "api" mechanism
+            </li>
+        </ul>
+    </p>
+
+    <h2>Table of content</h2>
+    <ul>
+        <li><a href="#BaseMessage">Basic message format</a></li>
+        <li><a href="#messages">AppWebsocket messages</a></li>
+    </ul>
+
+	<a name="BaseMessage"><h2>Basic message format</h2></a>
+
+	<pre><code class="json">{
+    "mt": string,
+    "api": string,
+    "src": string
+}</code></pre><br/>
+
+    <p>
+        The base message format consists of the three properties mt, api and src.
+    </p>
+
+    <dl>
+        <dt>mt</dt>
+        <dd>
+            The type of the message. These types are defined seperatly for each api if the service
+            uses different api. For the base protocol of an service the api property is not used, in
+            this case the definition of mt is done by the service, with the exception that there are
+            some reserved values for mt for the AppWebsocket protocol itself (see below).
+        </dd>
+        <dt>api</dt>
+        <dd>
+            Used to address an specific api within an AppWebsocket session. A service (e.g. Messages),
+            defines its own mt values, but on the same AppWebsocket connection also a standard protocol
+            like PbxSignal shall be used. The messages related to this protocol are then marked
+            with an api property of PbxSignal.
+        </dd>
+        <dt>src</dt>
+        <dd>
+            This property is used for the src mechanism. An AppWebsocket protocol has typically a
+            server and a client side. The client sends requests and the server responds to these
+            requests. If the client sets the src property in a request, server echoes back the src
+            property in the responses to the request.
+        </dd>
+        <dd>
+            Another mechanism often used is the the client subscribes to some information with a
+            request. To ackknowedge the subscription a response is sent with the same src property.
+            When the subscription is active indication messages are sent from the server containing
+            subscribed information. All these indication messages use the same src as the subscription
+            message.
+        </dd>
+        <dd>
+            The Javascript AppWebsocket library supports the src mechanism to allow object local
+            handling of specific responses or indications.
+        </dd>
+    </dl>
+
+	<a name="messages"><u>AppWebsocket Messages</u></a>
+
+	<ul>
+		<li><a href="#AppChallenge">AppChallenge</a> - Request a challenge for authentication</li>
+		<li><a href="#AppChallengeResult">AppChallengeResult</a> - Response to AppChallenge</li>
+		<li><a href="#AppLogin">AppLogin</a> - Login</li>
+		<li><a href="#AppLoginResult">AppLoginResult</a> - Response to  AppLogin</li>
+		<li><a href="#CheckBuild">CheckBuild</a> - Check for current build</li>
+		<li><a href="#CheckBuildResult">CheckBuildResult</a> - Response to CheckBuild</li>
+		<li><a href="#AppInfo">AppInfo</a> - Request information about the App Service</li>
+		<li><a href="#AppInfoResult">AppInfo</a> - Response to AppInfo</li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - recurring definitions</div>
+
+	<a name="AppChallenge"><h2>AppChallenge</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppChallenge"
+}</code></pre>
+
+    <p>
+        With this message the client requests a challenge for the login. The challenge is a random
+        string which is included in the digest calculation of the login together with
+        shared secret (password) and other parameters. With this mechanism an an adequately
+        random string, replay attacks are not possible.
+    </p>
+	
+	<a name="AppChallengeResult"><h2>AppChallengeResult</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppChallengeResult",
+    "challenge": string
+}</code></pre>
+
+    <p>
+        Returns the challenge to the client.
+    </p>
+
+    <dl>
+        <dt>challenge</dt>
+        <dd>
+    	    A random string with a maximum of 16 characters. Only non-control character with a single
+            byte representation in UTF-8 shall be used. Innovaphone implementations only use 0-9.
+        </dd>
+    </dl>
+
+	<a name="AppLogin"><h2>AppLogin</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppLogin",
+    "app": string,
+    "domain": string,
+    "sip": string,
+    "guid": hexstring,
+    "dn": string,
+    "digest": hexstring,
+    "pbxObj": string,
+    "info": <a href="#info">Info</a>
+}</code></pre>
+
+    <p>
+        The login message, which contains parameters, which are included in the digest calculation,
+        so that they cannot be changed by an intermediate system.
+    </p>
+    <dl>
+        <dt>app</dt>
+        <dd>
+            The service as it is uniquely identified on the server system. For Apps communicating
+            with their App Service, the name of the initially loaded HTML file (without the .htm
+            file extension) is used. The App Service can use this property to define which
+            operations are allowed on this session. This way by granting access to a given App
+            to a user on the PBX, the user can only access what is defined for this App.
+        </dd>
+        <dd>
+            In case the login is done to a PBX Api, which is assigned to an App Object, this property should
+            contain the Name of the App object. The properties 'domain', 'sip', 'guid' or 'dn' need not to be
+            set in this case.
+        </dd>
+        <dt>domain</dt>
+        <dd>
+            The domain of the logged in user
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            The sip user part of the logged in user.
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            The GUID of the user, if available
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name of the user, if available
+        </dd>
+        <dt>digest</dt>
+        <dd>
+            The digest calculated to verify the knowledge of the shared secret. It is calculated as
+            SHA256 hash over the string
+            <pre><code class="json">&lt;app&gt;:&lt;domain&gt;:&lt;sip&gt;:&lt;guid&gt;:&lt;dn&gt;:&lt;info&gt;:&lt;challenge&gt;:&lt;password&gt;</code></pre>
+        </dd>
+        <dt>pbxObj</dt>
+        <dd>
+            Used for some Apis on the PBX to address a PBX Object. Not included in the digest calculation
+        </dd>
+        <dt>info</dt>
+        <dd>
+            A Json Object with additional information. For the digest calculation this must be json
+            encoded without any unnecessary white space and no unnecessary escaping. This is the
+            encoding done by the json_io library of the SDK, by the Javascript JSON.stringify function
+            or by PHP json_encode($input, JSON_UNESCAPED_UNICODE)
+        </dd>
+    </dl>
+
+	<a name="AppLoginResult"><h2>AppLoginResult</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppLoginResult",
+    "ok": bool
+}</code></pre>
+
+    <p>
+        Response to AppLogin. If the login was successful, the property ok is present with a value
+        of true;
+    </p>
+
+	<a name="CheckBuild"><h2>CheckBuild</h2></a>
+
+	<pre><code class="json">{
+    "mt": "CheckBuild",
+    "url": string
+}</code></pre>
+
+    <p>
+        Used to verify that the App loaded in the browser has the current version. A mismatch can
+        happen when the App is loaded from a cache on the client side.
+    </p>
+
+    <dl>
+        <dt>url</dt>
+        <dd>
+            The complete URL of the initial App HTML file. The server checks for a build number
+            included in the path as last component before the filename. If no build number
+            is present, or the build number does not match the local build number, the url
+            is modified for the current build and sent back.
+            To check if a build number is present, the last path component is chech if it only
+            contains 0-9, a-f or A-F. If it is a build number the build number in the path
+            is replaced by the current build number. If no build number is present, the build
+            number is inserted.
+        </dd>
+    </dl>
+
+	<a name="CheckBuildResult"><h2>CheckBuildResult</h2></a>
+
+	<pre><code class="json">{
+    "mt": "CheckBuildResult",
+    "url": string
+}</code></pre>
+
+    <p>
+        Used to send back the current URL.
+    </p>
+
+	<a name="AppInfo"><h2>AppInfo</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppInfo",
+    "app": string
+}</code></pre>
+
+    <p>
+        After login to an App Service, this message is used to request more information. The PBX
+        uses this message for api information stored at the App Object in the PBX. This way the
+        myApps client knows the Apis availabe and can load the App when the Api is requested by
+        another App
+    </p>
+
+    <dl>
+        <dt>app</dt>
+        <dd>
+            The App identified by the name of the initially loaded html file.
+        </dd>
+    </dl>
+
+	<a name="AppInfoResult"><h2>AppInfoResult</h2></a>
+
+	<pre><code class="json">{
+    "mt": "AppInfo",
+    "info": <a href="#app-info">AppInfo</a>
+}</code></pre>
+
+    <p>
+        An Json object with information about the App Service is returned
+    </p>
+
+    <dl>
+        <dt>app</dt>
+        <dd>
+            The App identified by the name of the initially loaded html file.
+        </dd>
+    </dl>
+
+	<a name="Objects"><h2>Objects</h2></a>
+
+    <a name="info"><div class="fnhead">Info</div></a>
+
+    <pre><code class="json">{
+    "appobj": string,
+    "appdn": string,
+    "appurl": string,
+    "cn": string",
+    "unlicensed": bool,
+    "apps": [<a href="#info-app">App</a>,...]"
+}</code></pre>
+
+    <p>
+        The info object is generated by the PBX when the App is requesting a login for an App Service.
+        It contains more information about the user.
+    </p>
+
+    <dl>
+        <dt>appobj</dt>
+        <dd>
+            The sip/h323 id of the App Object in the PBX which grants the access
+        </dd>
+        <dt>appdn</dt>
+        <dd>
+            The display name of the App Object in the PBX which grants the access
+        </dd>
+        <dt>appdn</dt>
+        <dd>
+            The URL configured at the App Object in the PBX which grants the access. This can be used to determine the URL under which the app services is accessible.
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            The cn (Long Name) of the user logging in
+        </dd>
+        <dt>unlicensed</dt>
+        <dd>
+            Present and true if the App is running in an unlicensed mode.
+        </dd>
+        <dt>apps</dt>
+        <dd>
+            Array of Apps to which this user has granted access
+        </dd>
+    </dl>
+
+    <a name="info-app"><div class="fnhead">App</div></a>
+
+    <pre><code class="json">{
+    "name": string
+}</code></pre>
+
+    Info about the App.
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The sip/h323 identifier of the App Object
+        </dd>
+    </dl>
+
+    <a name="app-info"><div class="fnhead">AppInfo</div></a>
+
+    <pre><code class="json">{
+    "hidden": bool,
+    "apis": object
+}</code></pre>
+
+    <p>
+        Info about the App Service
+    </p>
+
+    <dl>
+        <dt>hidden</dt>
+        <dd>
+            If present and true, this App is loaded hidden by the client, when one of its
+            APIs is requested. Hidden means that no user interface is displayed and the App does
+            not show up on the task bar.
+        </dd>
+        <dt>apis</dt>
+        <dd>
+            An object containing object properties for each API provided by the App. The name
+            of the property is the unique name of the API (e.g. com.innovaphone.manager:{}). The
+            content of this object is available in myApps in the api model in a property named
+            as the provider of the api.
+        </dd>
+    </dl>
+</body>
+</html>

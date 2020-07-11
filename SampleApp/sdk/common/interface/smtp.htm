@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Simple Mail Transfer Protocol implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>SMTP</h1>
+    <p>
+        Smtp interface provides the service to send emails using the Simple Mail Transfer Protocol.
+        To create an ISmtp instance, at first an instance of ISmtpProvider, ISocketProvider (TCP) and ISocketProvider (TLS) must be created.
+        This need to be done by calling CreateSmtpProvider(), CreateTCPSocketProvider() and CreateTLSSocketProvider(tcpSocketProvider).
+        An ISmtpProvider can be used to create multiple ISmtp instances. To read more about the ISocket, please check:
+        <a href="../interface/socket.htm">ISocket</a>.
+    </p>
+    <p>
+        When a new TaskSmtpSend is started, the connection with the SMTP server is established using TCP.
+        If the server allows STARTTLS, the connection will be upgraded to TLS. Otherwise TCP will continue to be used.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/smtp.h<br /><br /></td></tr>
+        <tr>
+            <td><b>Public functions</b></td>
+            <td>
+                <a href="#CreateSmtpProvider">CreateSmtpProvider</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#ISmtpProvider">ISmtpProvider</a><br>
+                <a href="#ISmtp">ISmtp</a><br>
+                <a href="#ISmtpSend">ISmtpSend</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Code Examples</b></td>
+            <td>
+                <a href="#ExampleInitialize">Initialize the Provider</a><br>
+                <a href="#ExampleCreate">Create the ISmtp instance</a><br>
+                <a href="#ExampleSend">Send Emails</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!--- Block with the functions -->
+    <h1>Functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="C++">class ISmtpProvider * CreateSmtpProvider();
+</code></pre>
+    <div id="CreateSmtpProvider" class="fnhead">CreateSmtpProvider</div>
+    <dd>
+        Creates an instance of the ISmtpProvider.
+        <h4>Return value</h4>
+        The actual ISmtpProvider instance. That instance can be freed as soon as it no longer is used by calling the C++ delete operator.
+    </dd>
+
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <h2 id="ISmtpProvider">ISmtpProvider</h2>
+    <pre><code class="C++">class ISmtpProvider {
+public:
+    virtual ~ISmtpProvider() {}
+    virtual class ISmtp * CreateSmtp(class IIoMux * iomux, class ISocketProvider * tcpSocketProvider, class ISocketProvider * tlsSocketProvider, class IInstanceLog * const log) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    This class provides ISmtp instance to manage the task to send emails.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">CreateSmtpProvider</div>
+    <dd>
+        Returns a new ISmtp instance.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The IIoMux instance the smtp will be registered to.</td></tr>
+            <tr><td class="param">class ISocketProvider * <b>tcpSocketProvider</b></td><td>The <a href="../interface/socket.htm#CreateTCPSocketProvider">socket provider</a> for the TCP connection.</td></tr>
+            <tr><td class="param">class ISocketProvider * <b>tlsSocketProvider</b></td><td>The <a href="../interface/socket.htm#CreateTLSSocketProvider">socket provider</a> for the TLS connection.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        An <a href="#ISmtp">ISmtp</a> instance  that can be used to manage the task to send emails.
+        <h4>Remarks</h4>
+        The application should store a pointer to it.
+    </dd>
+
+
+    <h2 id="ISmtp">ISmtp</h2>
+    <pre><code class="C++">class ISmtp {
+public:
+    virtual ~ISmtp() {}
+    virtual class ISmtpSend * CreateSend(const char *from, const char *fromName, const char *subject, const char *host, const char *server, const char *userSmtp, const char *password) = 0;
+    virtual void SendChunk(const char *attachmentChunk, int sChunk, bool lastChunk, dword fileIndex) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    This class provides ISmtpSend task to send an email.
+    <h3>Public functions</h3>
+    <div class="fnhead">CreateSend</div>
+    <dd>
+        Returns a new SMTP Provider.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>from</b></td><td>The sender's email address.</td></tr>
+            <tr><td class="param">const char * <b>fromName</b></td><td>The sender's name.</td></tr>
+            <tr><td class="param">const char * <b>subject</b></td><td>The subject for the email.</td></tr>
+            <tr><td class="param">const char * <b>host</b></td><td>The host name from the SMPT server.</td></tr>
+            <tr><td class="param">const char * <b>server</b></td><td>The SMTP server.</td></tr>
+            <tr><td class="param">const char * <b>userSmtp</b></td><td>The sender's user, if authentication is required.</td></tr>
+            <tr><td class="param">const char * <b>password</b></td><td>The sender's password, if authentication is required.</td></tr>
+
+        </table>
+        <h4>Return value</h4>
+        An <a href="#ISmtpSend">ISmtpSend</a> task that can be used to send an email.
+    </dd>
+    <div class="fnhead">SendChunk</div>
+    <dd>
+        Returns a new SMTP Provider.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>attachmentChunk</b></td><td>The chunk of the file that will be attached.</td></tr>
+            <tr><td class="param">int <b>sChunk</b></td><td>The size of the chunk.</td></tr>
+            <tr><td class="param">bool <b>lastChunk</b></td><td>This indicates if this is the last chunk of the attachment (true) or there are still more (false).</td></tr>
+            <tr><td class="param">dword <b>fileIndex</b></td><td>The number that identifies the attached file (starting on 0 and ending with the number of files been attached minus 1).</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        This must be called inside TaskProgress if at least one file has been attached to the email.
+    </dd>
+
+
+    <h2 id="ISmtpSend">ISmtpSend</h2>
+    <pre><code class="C++">class ISmtpSend : public ITask {
+public:
+    virtual void AddAttachment(const char *attachmentUrl) = 0;
+    virtual void AddTo(const char *rcpt) = 0;
+    virtual void AddCc(const char *rcpt) = 0;
+    virtual void AddBcc(const char *rcpt) = 0;
+    virtual void AddBody(const char *data, const char *format, const char *charset) = 0;
+    virtual void Start(class UTask * user) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    This class implements the task to send an email.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">AddAttachment</div>
+    <dd>
+        Adds a new attachment to the email.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>attachmentUrl</b></td><td>The filename of the attachment that will be sent.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        It should be called once per attachment.
+    </dd>
+    <div class="fnhead">AddTo</div>
+    <dd>
+        Adds a new receiver to the recipients list.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>rcpt</b></td><td>The receiver's email address.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        It should be called at least once before Start(). The email will be sent to every rcpt if they are reachable (for example, it could be unreachable if your SMTP server is on "Relay Access denied" mode).
+        If none of the receivers is reachable, the email will not be sent.
+    </dd>
+    <div class="fnhead">AddCc</div>
+    <dd>
+        Adds a new receiver to the recipients list. The email will be sent as a Carbon Copy to this receiver.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>rcpt</b></td><td>The receiver's email address.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        It should be called at least once before Start(). The email will be sent to every rcpt if they are reachable (for example, it could be unreachable if your SMTP server is on "Relay Access denied" mode).
+        If none of the receivers is reachable, the email will not be sent.
+    </dd>
+    <div class="fnhead">AddBcc</div>
+    <dd>
+        Adds a new receiver to the recipients list. The email will be sent as a Blind Carbon Copy to this receiver.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>rcpt</b></td><td>The receiver's email address.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        It should be called at least once before Start(). The email will be sent to every rcpt if they are reachable (for example, it could be unreachable if your SMTP server is on "Relay Access denied" mode).
+        If none of the receivers is reachable, the email will not be sent.
+    </dd>
+    <div class="fnhead">AddBody</div>
+    <dd>
+        Adds the body to the email.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>data</b></td><td>The text that will be sent on the body.</td></tr>
+            <tr><td class="param">const char * <b>format</b></td><td>The text format i.e., text/html or text/plains.</td></tr>
+            <tr><td class="param">const char * <b>charset</b></td><td>The text charset i.e., ISO-8859-1 or UTF-8.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        This function must be called at least one. If the email should not have a body, this function must still be called with and empty string as body and valid format and charset values.
+    </dd>
+    <div class="fnhead">Start</div>
+    <dd>
+        Starts the task that sends the email.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class UTask * <b>user</b></td><td>Used for the callbacks for task completion.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        Several ISmtpSend tasks can be called at once and the emails will be queued.
+    </dd>
+
+
+    <h1> Code Examples </h1>
+    <h2 id="ExampleInitialize">Initialize the Provider</h2>
+    <pre class="sample" style="height:150px;"><code class="language-cpp">#include "common/interface/smtp.h"
+...
+ISmtpProvider * smtpProvider = CreateSmtpProvider();
+...
+AppService * service = new AppService(iomux, localSocketProvider, tcpSocketProvider, tlsSocketProvider, ..., smtpProvider, &serviceArgs);
+...
+delete smtpProvider;</code></pre>
+
+    <h2 id="ExampleCreate">Create the ISmtp instance</h2>
+    <pre class="sample" style="height:250px;"><code class="language-cpp">app::app(IIoMux * const iomux, ISocketProvider * localSocketProvider, IWebserverPluginProvider * const webserverPluginProvider, IDatabaseProvider * databaseProvider, class Service * service, ISmtpProvider * smtpProvider, AppInstanceArgs * args) :
+AppInstance(service, args)
+{
+    this->smtp = smtpProvider->CreateSmtp(iomux, tcpSocketProvider, tlsSocketProvider, this, "145.253.157.7");
+    this->logFlags |= LOG_SMTP; // to show the flags generated by the SMTP class
+}
+app::~app()
+{
+    if (webserverPlugin) delete webserverPlugin;
+    if (smtp) delete smtp;
+}</code></pre>
+
+    <h2 id="ExampleSend">Send Emails</h2>
+    <pre class="sample" style="height:700px;"><code class="language-cpp">SendEmail::SendEmail(class App * app): taskSmtp(this, &SendEmail::SmtpSendComplete, &SendEmail::SmtpSendFailed, &SendEmail::SmtpSendProgress)
+{        
+    ...
+}
+SendEmail::~SendEmail()
+{
+    ...
+}
+void SendEmail::Send()
+{
+    ISmtpSend * emailTask = appInstance->smtp->CreateSend("sender@innovaphone.com", "SenderName", "Subject", "sophos", "sophos.innovaphone.com", "usersmtp", "password");
+    emailTask->AddTo("receiver@innovaphone.com");
+    emailTask->AddTo("otherreceiver@innovaphone.com");
+    emailTask->AddBody("Body of the email...", "text/html", "ISO-8859-1");
+    emailTask->AddAttachment("test.txt");
+    emailTask->AddAttachment("Fish.png");
+    emailTask->AddAttachment("rfc821.pdf");
+    bufferrb = (char*)malloc(sizeof(char) * 4096);
+    emailTask->Start(&taskSmtp);
+}
+void SendEmail::SmtpSendComplete(class TaskSmtpSend * task)
+{
+    ...
+}
+void SendEmail::SmtpSendFailed(class TaskSmtpSend * task)
+{
+    ...
+}
+void SendEmail::SmtpSendProgress(class TaskSmtpSend * task, dword progress)
+{
+    //SmtpSendProgress will be called for every attachment added. For each attachment it will be called until lastChunk will be set as true.
+    //progress indicates the number of the attachment requested by the task.
+    //It starts with "0" for the first filename added.
+    
+    appInstance->smtp->SendChunk(ReadFiles(progress), len, lastChunk, progress);  
+}
+char * SendEmail::ReadFiles(dword file) //Example function to get the attachments chunks.
+{
+    char * path = (char*)"";
+    switch (file)
+    {
+    case 0:
+        path = (char*)"/path/test.txt";
+        break;
+    case 1:
+        path = (char*)"/path/Fish.png";
+        break;
+    case 2:
+        path = (char*)"/path/rfc821.pdf";
+        break;
+    default:
+        break;
+    }
+    if (!opened)
+    {
+        opened = true;
+        pFile = fopen(path, "rb");   
+        fseek(pFile, 0, SEEK_END);
+        lSize = ftell(pFile);
+        rewind(pFile);
+        lastChunk = false;
+        bytesRead = 0;
+    }
+    if (!feof(pFile))
+    {
+        len = 0;
+        len = fread(bufferrb, 1, 4096, pFile);
+        bytesRead += len;
+        if (bytesRead >= lSize) lastChunk = true;
+    }
+    if (lastChunk)
+    {
+        opened = false;
+        fclose(pFile);
+    }
+    return bufferrb;
+}
+</code></pre>
+
+
+</body>
+</html>

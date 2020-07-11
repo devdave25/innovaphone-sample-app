@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - devices api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.devices</h1>
+
+    <p>
+        The com.innovaphone.devices api enables apps to find and configure specific devices.
+	</p>
+
+	<a name="consumeApi"><h2>consumeApi</h2></a>
+    
+    <p>
+        The client consumeApi function is used to access the Api:
+    </p>
+
+	<pre><code class="json">
+var devicesApi = start.consumeApi("com.innovaphone.devices");
+devicesApi.onmessage.attach(onmessage); // onmessage is called for responses from the API
+</code></pre><br/>
+
+    <h2>Messages</h2></a>
+    <a href="#GetGateways" style="text-decoration:none;">GetGateways</a><br/>
+    <a href="#GetAppPlatforms" style="text-decoration:none;">GetAppPlatforms</a><br/>
+    <a href="#GetPhones" style="text-decoration:none;">GetPhones</a><br/>
+    <a href="#GetDects" style="text-decoration:none;">GetDects</a><br/>
+    <a href="#GetDevice" style="text-decoration:none;">GetDevice</a><br/>
+    <a href="#GetDevicePhones" style="text-decoration:none;">GetDevicePhones</a><br/>
+    <a href="#RemoveDevicePhone" style="text-decoration:none;">RemoveDevicePhone</a><br/>    
+    <a href="#HttpGet" style="text-decoration:none;">HttpGet</a><br/>    
+    
+    <a name="GetGateways"><h3>GetGateways</h3></a>
+
+    <p>
+        Retrieves all gateways and IPVAs.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetGateways" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwIds </b></td><td>A comma separated list of hardware IDs (e.g. "009033010101,009033010102") (optional).</td></tr>
+        <tr><td class="param">boolean <b>justFxs </b></td><td>If true, just returns devices with FXS support (optional).</td></tr>
+    </table>
+
+    <h3>GetGatewaysResult</h3>    
+    <p>
+        The result message for the GetGateways request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>gateways </b></td><td>An array of <a href="#DeviceObject">device objects</a>.</td></tr>
+        <tr><td class="param">boolean <b>last </b></td><td>If true, no more GetGatewaysResult messages are to be expected, otherwise more will follow with further devices.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="DeviceObject"><h4>Device object</h4></a>
+    <table style="margin-left:-12px">
+        <tr><td class="param">number <b>id </b></td><td>A unique ID for this device.</td></tr>
+        <tr><td class="param">string <b>hwId </b></td><td>The hardware ID.</td></tr>
+        <tr><td class="param">string <b>name </b></td><td>The name of the device, if configured.</td></tr>
+        <tr><td class="param">number <b>domainId </b></td><td>The domain ID.</td></tr>
+        <tr><td class="param">string <b>product </b></td><td>The product name, e.g. IP811.</td></tr>
+        <tr><td class="param">string <b>version </b></td><td>The software and hardware version, e.g. 13r1 dvl [13.A110/13A146/200]</td></tr>
+        <tr><td class="param">string <b>type </b></td><td>The hardware type (possible types are <b>GW,VA,PHONE,DECT,APP_PLATFORM</a>).</td></tr>
+        <tr><td class="param">boolean <b>pbxActive </b></td><td>If true, the PBX is enabled on this device.</td></tr>
+        <tr><td class="param">boolean <b>online </b></td><td>If true, this device is currently online.</td></tr>
+        <tr><td class="param">boolean <b>hasLeaseLicenses </b></td><td>If true, this device has rental licenses.</td></tr>
+        <tr><td class="param">string <b>uri </b></td><td>The URI under which this device is accessible during the current session.</td></tr>
+    </table>
+    <h5>Example</h5>
+    <pre><code class="javascript">
+{
+    "mt":"GetGatewaysResult",
+    "last":true,
+    "gateways":[
+        {
+            "id":1,
+            "hwId":"0090334100be",
+            "name":"Kari2",
+            "domainId":2,
+            "product":"IP811",
+            "version":"13r1 dvl [13.A110/13A146/200]",
+            "type":"GW",
+            "pbxActive":true,
+            "online":true,
+            "uri":"http://172.16.14.38/devices/passthrough/0090334100be/fa0550ed-e360-41fb-9714-b212f10ef20c/"
+        }
+    ]
+}
+</code></pre>
+
+    <a name="GetAppPlatforms"><h3>GetAppPlatforms</h3></a>
+
+    <p>
+        Retrieves all App Platforms.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetAppPlatforms" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwIds </b></td><td>A comma separated list of hardware IDs (e.g. "029033010101,029033010102") (optional).</td></tr>
+    </table>
+
+    <h3>GetAppPlatformsResult</h3>    
+    <p>
+        The result message for the GetAppPlatforms request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>appPlatforms </b></td><td>An array of <a href="#DeviceObject">device objects</a>.</td></tr>
+        <tr><td class="param">boolean <b>last </b></td><td>If true, no more GetAppPlatformsResult messages are to be expected, otherwise more will follow with further devices.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="GetPhones"><h3>GetPhones</h3></a>
+
+    <p>
+        Retrieves all phones.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetPhones" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwIds </b></td><td>A comma separated list of hardware IDs (e.g. "029033010101,029033010102") (optional).</td></tr>
+    </table>
+
+    <h3>GetPhonesResult</h3>    
+    <p>
+        The result message for the GetPhones request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>phones </b></td><td>An array of <a href="#DeviceObject">device objects</a>.</td></tr>
+        <tr><td class="param">boolean <b>last </b></td><td>If true, no more GetPhonesResult messages are to be expected, otherwise more will follow with further devices.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="GetDects"><h3>GetDects</h3></a>
+
+    <p>
+        Retrieves all phones.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetDects" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwIds </b></td><td>A comma separated list of hardware IDs (e.g. "029033010101,029033010102") (optional).</td></tr>
+    </table>
+
+    <h3>GetDectsResult</h3>    
+    <p>
+        The result message for the GetDects request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>dects </b></td><td>An array of <a href="#DeviceObject">device objects</a>.</td></tr>
+        <tr><td class="param">boolean <b>last </b></td><td>If true, no more GetDectsResult messages are to be expected, otherwise more will follow with further devices.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="GetDevice"><h3>GetDevice</h3></a>
+
+    <p>
+        Retrieves a specific device.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetDevice", hwId: "009033010101" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwId </b></td><td>A hardware ID.</td></tr>
+    </table>
+
+    <h3>GetDeviceResult</h3>    
+    <p>
+        The result message for the GetDevice request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">object <b>device </b></td><td>A <a href="#DeviceObject">device object</a>.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="GetDevicePhones"><h3>GetDevicePhones</h3></a>
+
+    <p>
+        Retrieves the provisioned phones of an FXS device.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "GetDevicePhones", hwId: "009033010101" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwId </b></td><td>A hardware ID.</td></tr>
+    </table>
+
+    <h3>GetDevicePhonesResult</h3>    
+    <p>
+        The result message for the GetDevicePhones request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>phones </b></td><td>An array of strings, while each string is a provisioned FXS interface.</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="RemoveDevicePhone"><h3>RemoveDevicePhone</h3></a>
+
+    <p>
+        Removes a provisioned FXS phone from a gateway.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "RemoveDevicePhone", hwId: "009033010101", id: "TEL1" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwId </b></td><td>A hardware ID.</td></tr>
+        <tr><td class="param">string <b>id </b></td><td>The id/name of the interface retrieved in the array of the <a href="#GetDevicePhones">GetDevicePhonesResult</a> message.</td></tr>
+    </table>
+
+    <h3>RemoveDevicePhoneResult</h3>    
+    <p>
+        The result message for the RemoveDevicePhone request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="HttpGet"><h3>HttpGet</h3></a>
+
+    <p>
+        Executes an HTTP GET request and returns the result.
+    </p>
+    <pre><code class="javascript">devicesApi.send({ mt: "HttpGet", "uri": device.uri + "log.txt" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>uri </b></td><td>The absolute URI starting with the uri retrieved inside the <a href="#DeviceObject">device object</a>.</td></tr>
+    </table>
+
+    <h3>HttpGetResult</h3>    
+    <p>
+        The result message for the HttpGet request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+    </table>
+</body>
+</html>

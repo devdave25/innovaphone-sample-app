@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - EpSignal protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <p>
+        The RCC protocol is available on AppWebsocket connections to innovaphone PBX objects, if
+        the object is enabled for the RCC api.
+	</p>
+    <p>
+        The protocol allows the monitoring of users based on group configuration or based on
+        explicit configuration, which can be deployed in config templtes. For monitored users
+        all calls are indicated
+    </p>
+    <p>
+        For the monitored users call control functions are available, including call initiation,
+        call connect, forwarding, transfer, hold, retrieve, park and more.
+    </p>
+    <p>
+        The protocol is designed based on the <a href="../pbx/soap.htm">PBX SOAP API</a>
+    </p>
+
+	<h1><a name="General structure">General structure</a></h1>
+
+	<pre><code class="json">{
+    "api": "RCC",
+    "src": string,
+    "mt": string,
+}</code></pre><br/>
+
+    <dl>
+        <dt>api</dt>
+        <dd>
+            To address this interface the value "RCC" has tp be used for the api property
+        </dd>
+        <dt>src</dt>
+        <dd>
+            The AppWebsocket src mechanism is supported on the interface. So a src
+            property may be used
+        </dd>
+        <dt>mt</dt>
+        <dd>
+            The message type identifies the requested operation
+        </dd>
+    </dl>
+
+	<h1><a name="Operations">Operations</a></h1>
+
+    <p>
+        Operations are perfored with a message exchange with message sent to the PBX wit a mt identifying
+        the operation and a result message, with the same mt but "Result" added. For example
+        Initialize/InitializeResult. The src property from the original message is sent back in the
+        Result message
+    </p>
+    <p>
+        There are messages sent assynchronously from the PBX. These messages end on "Info". Such messages
+        are only sent if requested by a operation initiated by the application. The src property in these
+        messages is set to the src sent in the requesting message.
+    </p>
+
+	<h2><a name="Initialize">Initialize</a></h2>
+
+    <p>
+        This operation is used to monitor which users are visible to the applications. There are two
+        modes available.
+    </p>
+    <dl>
+        <dt>Users by group</dt>
+        <dd>
+            This mode is set by sending the boolean property "grp" set tru true in the Initialize message.
+            All users which are members in groups, in which the object used to connect to the PBX is active
+            member, are visible.
+        </dd>
+        <dd>
+            Visible members are automatically sent before the InitializeResult message and update are sent
+            whenever the users or groups are changed afterwards.
+        </dd>
+        <dd>
+            This mode is useful for a limited number of users, e.g. 50
+        </dd>
+        <dt>Users by explicit configuration</dt>
+        <dd>
+            This mode is available, if an App object is used to connect to the PBX. All users which
+            have configured access to this App are visible.
+        </dd>
+        <dd>
+            All users are sent before the InitializeResult message. Only a limited number of users
+            is sent within one timer tick of 20ms. By default this limit is 50. Because of this
+            updates to users may already sent while the initial list is still transmitted.
+        </dd>
+    </dl>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>grp:bool</dt>
+        <dd>
+            Switches on the users by group mode in case of an App object
+        </dd>
+        <dt>limit:integer</dt>
+        <dd>
+            Limits the number of users sent with a 20ms timer tick. Maximum is 50.
+        </dd>
+    </dl>
+
+    <div class="fnhead">UserInfo</div>
+
+    <p>
+        This message is used to send update to users
+    </p>
+	
+    <dl>
+        <dt>update:string</dt>
+        <dd>
+            Present if not the initial transmition. A value of "del" indicates a deleted user.
+        </dd>
+        <dt>guid:string</dt>
+        <dd>
+            Hexstring of the users guid
+        </dd>
+        <dt>cn:string</dt>
+        <dd>
+            common name
+        </dd>
+        <dt>dn:string</dt>
+        <dd>
+            display name
+        </dd>
+        <dt>h323:string</dt>
+        <dd>
+            H.323 Id/SIP URI
+        </dd>
+        <dt>e164:string</dt>
+        <dd>
+            Extension number
+        </dd>
+        <dt>node:string</dt>
+        <dd>
+            Numbering Node
+        </dd>
+        <dt>pbx:string</dt>
+        <dd>
+            PBX
+        </dd>
+        <dt>pseudo:string</dt>
+        <dd>
+            Type of user
+        </dd>
+        <dt>regs[<a href="#regInfo">regInfo]</a></dt>
+    </dl>
+
+	<h2><a name="Devices">Devices</a></h2>
+
+    <p>
+        Retrieve the list of devices of a given user
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>cn:string</dt>
+        <dd>
+            common name of the user
+        </dd>
+    </dl>
+
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>devices:[<a href="#device">device</a>]</dt>
+        <dd>
+            Array of the devices.
+        </dd>
+    </dl>
+
+	<h2><a name="UserInitialize">UserInitialize</a></h2>
+
+    <p>
+        Start monitoring of a user
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>cn:string</dt>
+        <dd>
+            common name of the user
+        </dd>
+        <dt>xfer:bool</dt>
+        <dd>
+            Monitor transfered calls as well
+        </dd>
+        <dt>disc:bool</dt>
+        <dd>
+            Clear calls to phone with DISC instead of RELEASE. This way the call remains active as long
+            as the phone is not onhook.
+        </dd>
+        <dt>hw:string</dt>
+        <dd>
+            Select a specifix device to monitor
+        </dd>
+    </dl>
+
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>user:integer</dt>
+        <dd>
+            The handle which can be used for the other User... requests.
+        </dd>
+    </dl>
+
+    <div class="fnhead">CallInfo</div>
+
+    <p>
+        This message is used to sent updates for calls
+    </p>
+
+    <dl>
+        <dt>user:integer</dt>
+        <dd>
+            Handle of the user
+        </dd>
+        <dt>call:integer</dt>
+        <dd>
+            Handle of the call
+        </dd>
+        <dt>conf:string</dt>
+        <dd>
+            Conference Id of the call. This is a guid which identifies all call legs belonging to the same call
+        </dd>
+        <dt>state:integer</dt>
+        <dd>
+            State
+        </dd>
+        <dt>peer:<a href="#connector">connector</a></dt>
+        <dd>
+            Identifies the peer of the call, which may be called or calling party
+        </dd>
+        <dt>no:[<a href="#connector">connector</a>]</dt>
+        <dd>
+            More endpoints related to the same call, like diverting, transfering, ...
+        </dd>
+        <dt>msg</dt>
+        <dd>
+            Name of signaling message related to this update
+        </dd>
+        <dt>info:[object]</dt>
+        <dd>
+            <dl>
+                <dt>type</dt>
+                <dt>vali</dt>
+                <dt>vals</dt>
+            </dl>
+        </dd>
+    </dl>
+
+	<h2><a name="UserEnd">UserEnd</a></h2>
+
+    <p>
+        End the monitoring of a user
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt></dt>
+    </dl>
+
+	<h2><a name="UserCall">UserCall</a></h2>
+
+    <p>
+        Initiate an outgoing call
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>user:integer</dt>
+        <dt>ftyNoCF:bool</dt>
+        <dd>
+            Send the call with a innovaphone proprietary facility to override any configured call diversion
+        </dd>
+        <dt>audio:bool</dt>
+        <dd>
+            Initiate an audio call instead of a voice call. On ISDN networks this prohibits the use of speech
+            compression, which would affect modem protocols.
+        </dd>
+        <dt>rc:integer</dt>
+        <dt>e164:string</dt>
+        <dt>cn:string</dt>
+        <dt>h323:string</dt>
+        <dt>srce164:string</dt>
+    </dl>
+
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dd>
+            Handle of the call, which can be used with the other requests to control calls.
+        </dd>
+    </dl>
+
+	<h2><a name="UserClear">UserClear</a></h2>
+
+    <p>
+        Clear a call
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>cause:integer</dt>
+    </dl>
+	
+    <h2><a name="UserConnect">UserConnect</a></h2>
+
+    <p>
+        Connect a call present at the phone
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+    </dl>
+	
+    <h2><a name="UserRc">UserRc</a></h2>
+
+    <p>
+        Send a remote control code to the phone
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>rc:integeer</dt>
+    </dl>
+	
+    <h2><a name="UserInfo">UserInfo</a></h2>
+
+    <p>
+        Send overlap dialing info
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>cdpn:string</dt>
+        <dt>key:string</dt>
+        <dt>dsp:string</dt>
+    </dl>
+	
+    <h2><a name="UserDTMF">UserDTMF</a></h2>
+
+    <p>
+        Send DTMF digits
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>recv:bool</dt>
+        <dt>dtmf:string</dt>
+    </dl>
+	
+    <h2><a name="UserUUI">UserUUI</a></h2>
+
+    <p>
+        Send User User Info
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>recv:bool</dt>
+        <dt>uui:string</dt>
+    </dl>
+
+	<h2><a name="UserTransfer">UserTransfer</a></h2>
+
+    <p>
+        Transfer to call legs
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>a:integer</dt>
+        <dt>b:integer</dt>
+    </dl>
+	
+    <h2><a name="UserMediaTransfer">UserMediaTransfer</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>a:integer</dt>
+        <dt>b:integer</dt>
+        <dt>user:bool</dt>
+        <dt>peer:bool</dt>
+    </dl>
+	
+    <h2><a name="UserPickup">UserPickup</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>user:integer</dt>
+        <dt>call:integer</dt>
+        <dt>cn:string</dt>
+    </dl>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:interger</dt>
+        <dd>
+            The handle of the new resulting call
+        </dd>
+    </dl>
+	
+    <h2><a name="UserRedirect">UserRedirect</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>rc:integer</dt>
+        <dt>cn:string</dt>
+        <dt>h323:string</dt>
+        <dt>e164:string</dt>
+    </dl>
+
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>error:string</dt>
+        <dd>
+            Indicating an error if the operation failed
+        </dd>
+    </dl>
+	
+    <h2><a name="UserReroute">UserReroute</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>cn:string</dt>
+        <dt>h323:string</dt>
+        <dt>e164:string</dt>
+    </dl>
+	
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>error:string</dt>
+        <dd>
+            Indicating an error if the operation failed
+        </dd>
+    </dl>
+
+    <h2><a name="UserCtrlCall">UserCtrlCall</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>info</dt>
+    </dl>
+	
+    <h2><a name="UserCtComplete">UserCtComplete</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>e164:string</dt>
+        <dt>h323:string</dt>
+    </dl>
+	
+    <h2><a name="UserHold">UserHold</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>hold:bool</dt>
+    </dl>
+	
+    <h2><a name="UserRetrieve">UserRetrieve</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+    </dl>
+
+	<h2><a name="UserPark">UserPark</a></h2>
+
+    <p>
+
+    </p>
+
+    <div class="fnhead">Result</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dd>
+            The call handle of the parked call
+        </dd>
+    </dl>
+
+    <div class="fnhead">Properties</div>
+
+    <dl>
+        <dt>call:integer</dt>
+        <dt>cn:string</dt>
+        <dt>position:integer</dt>
+    </dl>
+
+	<h1><a name="Objects">Objects</a></h1>
+
+    <p>
+        Common data objects used by the different messages
+    </p>
+
+    <div class="fnhead"><a id="regInfo">regInfo</a></div>
+
+    <dl>
+        <dt>hw:string</dt>
+        <dd>
+            The hardware id identifying the registered device
+        </dd>
+    </dl>
+
+    <div class="fnhead"><a id="device">device</a></div>
+
+    <dl>
+        <dt>hw:string</dt>
+        <dd>
+            The hardware id identifying the device
+        </dd>
+        <dt>text:string</dt>
+        <dd>
+            Text which is display in the user interface whenever the device has to be identified
+            to the user
+        </dd>
+    </dl>
+
+    <div class="fnhead"><a id="connector">connector</a></div>
+
+    <p>
+        Common data object used for information to the endpoint of a connection
+    </p>
+
+    <dl>
+        <dt>type</dt>
+        <dd>
+            Type of the connector
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            The Long Name of the object/user
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name of the endpoint
+        </dd>
+        <dt>h323</dt>
+        <dd>
+            h323/sip id of the endpoint
+        </dd>
+        <dt>e164</dt>
+        <dd>
+            Number of the endpoint
+        </dd>
+        <dt>norm</dt>
+        <dd>
+            Normalized number
+        </dd>
+    </dl>
+</body>
+</html>

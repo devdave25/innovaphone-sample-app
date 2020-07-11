@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - myApps Protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Media Protocol</h1>
+
+    <p>
+        Ringer protocol is the websocket protocol used by the PhoneApp to talk to the native audio devices.
+    </p>
+
+
+    <u>Messages</u>
+    <p>
+        The following messages are defined:
+        <ul>
+            <li><a href="#StartRinging">StartRinging</a></li>
+        </ul>
+    </p>
+
+    <h2>Messages</h2>
+
+    <a name="StartRinging"></a><div class="fnhead">StartRinging</div>
+    <p>
+        Sent by the PhoneApp. Contains information about all the apps that the user has access to.
+    </p>
+<pre><code class="json">{
+    "mt": "StartRinging",
+    "mode": string,
+    "device": string,
+    "ringtone": string
+}</code></pre>
+    <dl>
+        <dt>device</dt>
+        <dd>
+            Device selected to play a ringtone.
+        </dd>
+        <dt>mode</dt>
+        <dd>
+            RingerModeAllowVibrate mode.
+        </dd>
+        <dt>ringtone</dt>
+        <dd>
+            Ringtone to play.
+        </dd>
+    </dl>
+
+</body>
+</html>

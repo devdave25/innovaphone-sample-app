@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.calllist (App API)</title>
+    <link rel="stylesheet" href="../lib1/innovaphone.lib1.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>com.innovaphone.calllist (App API)</h1>
+    <p>
+        This API is used for communication with call-list apps.
+    </p>
+    <div class="fixme">Write documentation</div>
+
+    <h2>API model</h2>
+    <h3>Service info</h3>
+    <p>
+        The API doesn't define any service info.
+    </p>
+    <h3>Provider model</h3>
+    <p>
+        <pre>
+{
+  "mt": "ApiModel",
+  "api": "com.innovaphone.calllist",
+  "model": {
+  }
+}
+        </pre>
+    </p>
+
+    <h2>API messages</h2>
+    <p>
+        All messages are JSON objects that have a mandatory attribute "mt" that specifies the message type.
+    </p>
+    <h3>Requests</h3>
+    <dl>
+        <dt>Subscribe</dt>
+        <dd>
+            Caller declares that it is interested in call list entries.<p />
+            Call list app will provide the requested amount of available call list entries.<p />
+            Call list app wil also provide new entries at runtime.
+        </dd>
+        <dd>
+            <dl>
+                <dt>count</dt>
+                <dd>Number of currently available entries that are to be returned immediately.</dd>
+            </dl>
+        </dd>
+        <dd>Example:<pre>
+{
+    "mt": "Subscribe",
+    "count": 20
+}
+</pre></dd>
+    </dl>
+    <h3>Responses</h3>
+    <dl>
+        <dt>Update</dt>
+        <dd>
+            Call list app sends this message in direct response to "Subscribe" message.<p />
+            Call list app sends this message every time a new entries has been added.
+        </dd>
+        <dd>
+            <dl>
+                <dt>entries</dt>
+                <dd>Array of call list entries.</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:<pre>
+{
+    "mt": "Update",
+    "entries": [
+        {
+          "cdr": 21173,
+          "sip": "tac",
+          "id": "c06ab5ee-cc1c-5c01-8a68-009033420759",
+          "dir": "o",
+          "node": "root",
+          "phys": "",
+          "cause": 0,
+          "time": 1545391345000,
+          "alert-duration": 12,
+          "call-duration": 0,
+          "conn-duration": 0,
+          "billing-duration": 0,
+          "call": "int",
+          "remote": {
+            "number": "40",
+            "sip": "rh",
+            "dn": "Ralf Hütter"
+          },
+          "status": "al"
+        },
+        {
+          "cdr": 20713,
+          "sip": "tac",
+          "id": "2d61b691-9c1b-5c01-ed7a-009033420759",
+          "dir": "i",
+          "node": "root",
+          "phys": "berlin",
+          "cause": 0,
+          "time": 1545313426000,
+          "alert-duration": 7,
+          "call-duration": 2814,
+          "conn-duration": 2814,
+          "billing-duration": 0,
+          "call": "int",
+          "remote": {
+            "number": "683",
+            "sip": "fs",
+            "dn": "Florian Schneider"
+          },
+          "status": "co"
+        },
+    ]
+}
+</pre>
+        </dd>
+        <dd>
+            Details:
+            <ul>
+                <li><b>dir</b>: "i" (inbound call) or "o" (outbound call)</li>
+                <li><b>time</b>: UTC timestamp</li>
+                <li><b>cause</b>: the decimal disconnect reason of the call (see Reference:ISDN_Cause_Codes)</li>
+                <li><b>call</b>: "int" (internal call) or "ext" (external call)</li>
+                <li><b>status</b>: "co" (connected), "al" (alert), "er" (error) or "bu" (busy)</li>
+            </ul>
+        </dd>
+        <dt>Clear</dt>
+        <dd>
+            Call list app sends this message to subscriber when ever the call list (database) have been cleared.
+        </dd>
+        <dd>
+            Example:<pre>
+{
+    "mt": "Clear"
+}
+        </dd>
+    </dl>
+</body>
+</html>

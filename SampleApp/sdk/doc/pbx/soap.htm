@@ -1,0 +1,1506 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone App Platform</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>The innovaphone PBX SOAP Api</h1>
+    <p>
+        innovaphone®’s PBX web services (a.k.a <i>SOAP API</i>) will be enhanced in version 10.
+        As a result, a
+        <a href="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" rel="nofollow">new wsdl file version <i>pbx10_00.wsdl</i></a>
+        is published in the
+        <a href="http://www.innovaphone.com/wsdl" class="external text" title="http://www.innovaphone.com/wsdl" rel="nofollow">innovaphone web services directory http://www.innovaphone.com/wsdl</a>.
+    </p>
+    <p>
+        Starting with firmware version 9, the wsdl file versions implemented by the firmware (down to 9.00)
+        can be read directly from the box, e.g. using the <code>http://xx.xx.xx.xx/pbx10_00.wsdl</code> or
+        <code>http://xx.xx.xx.xx/pbx900.wsdl</code> URL.
+    </p>
+    <p>
+        Applications based on this wsdl will work with V10 PBX firmware only.
+        Applications written to the previous <i>pbx501.wsdl</i> and <i>pbx700.wsdl</i>,
+        <i>pbx800.wsdl</i> and <i>pbx900.wsdl</i> will continue to
+        work with V10 firmware.
+    </p>
+    <ul>
+        <li class="toclevel-1"><a href="#Overview"><span class="tocnumber">1</span> <span class="toctext">Overview</span></a></li>
+        <li class="toclevel-1">
+            <a href="#Definition_of_PBX_object_.28WSDL.29"><span class="tocnumber">2</span> <span class="toctext">Definition of PBX object (WSDL)</span></a>
+            <ul>
+                <li class="toclevel-2"><a href="#SOAP_URL"><span class="tocnumber">2.1</span> <span class="toctext">SOAP URL</span></a></li>
+            </ul>
+        </li>
+        <li class="toclevel-1">
+            <a href="#PBX_Objects_and_Methods"><span class="tocnumber">3</span> <span class="toctext">PBX Objects and Methods</span></a>
+            <ul>
+                <li class="toclevel-2">
+                    <a href="#Session"><span class="tocnumber">3.1</span> <span class="toctext">Session</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#Initialize.28string_user.2C_string_appl.2C_bool_.24v.2C_bool_.24v501.2C_bool_v700.2C_bool_v800.2C_bool_vx1000.2C_out_int_key.29"><span class="tocnumber">3.1.1</span> <span class="toctext">Initialize(string user, string appl, bool $v, bool $v501, bool v700, bool v800, bool vx1000, out int key)</span></a></li>
+                        <li class="toclevel-3"><a href="#Echo.28integer_session.2C_integer_key.29"><span class="tocnumber">3.1.2</span> <span class="toctext">Echo(integer session, integer key)</span></a></li>
+                        <li class="toclevel-3"><a href="#End.28integer_session.29"><span class="tocnumber">3.1.3</span> <span class="toctext">End(integer session)</span></a></li>
+                        <li class="toclevel-3"><a href="#Integer_Version.28out_string_gkId.2C_out_string_location.2C_out_string_firmware.2C_out_string_serial.29"><span class="tocnumber">3.1.4</span> <span class="toctext">Integer Version(out string gkId, out string location, out string firmware, out string serial)</span></a></li>
+                        <li class="toclevel-3"><a href="#AnyInfo_Poll.28integer_session.29"><span class="tocnumber">3.1.5</span> <span class="toctext">AnyInfo Poll(integer session)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#User"><span class="tocnumber">3.2</span> <span class="toctext">User</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#UserInfo"><span class="tocnumber">3.2.1</span> <span class="toctext">UserInfo</span></a></li>
+                        <li class="toclevel-3"><a href="#integer_UserInitialize.28integer_session.2C_string_user.2C_bool_xfer.2C_bool_disc.2C_string_hw.29"><span class="tocnumber">3.2.2</span> <span class="toctext">integer UserInitialize(integer session, string user, bool xfer, bool disc, string hw)</span></a></li>
+                        <li class="toclevel-3"><a href="#void_UserEnd.28integer_user.29"><span class="tocnumber">3.2.3</span> <span class="toctext">void UserEnd(integer user)</span></a></li>
+                        <li class="toclevel-3"><a href="#int_SetPresence.28inno:Presence_presence.2C_bool_im.2C_string_contact.2C_string_guid.2C_string_h323.29"><span class="tocnumber">3.2.4</span> <span class="toctext">int SetPresence(inno:Presence presence, bool im, string contact, string guid, string h323)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Device"><span class="tocnumber">3.3</span> <span class="toctext">Device</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#Device.5B.5D_Devices.28int_session.2C_string_user.29"><span class="tocnumber">3.3.1</span> <span class="toctext">Device[] Devices(int session, string user)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Call"><span class="tocnumber">3.4</span> <span class="toctext">Call</span></a>
+                    <ul>
+                        <li class="toclevel-3">
+                            <a href="#CallInfo"><span class="tocnumber">3.4.1</span> <span class="toctext">CallInfo</span></a>
+                            <ul>
+                                <li class="toclevel-4"><a href="#CallInfo_for_Boolean_Objects"><span class="tocnumber">3.4.1.1</span> <span class="toctext">CallInfo for Boolean Objects</span></a></li>
+                            </ul>
+                        </li>
+                        <li class="toclevel-3"><a href="#No_Record"><span class="tocnumber">3.4.2</span> <span class="toctext">No Record</span></a></li>
+                        <li class="toclevel-3"><a href="#Info_record"><span class="tocnumber">3.4.3</span> <span class="toctext">Info record</span></a></li>
+                        <li class="toclevel-3"><a href="#integer_UserCall.28integer_user.2C_string_cn.2C_string_e164.2C_string_h323.2C_int_reg.2C_InfoArray_info.2C_int_rc.2C_string_srce164.29"><span class="tocnumber">3.4.4</span> <span class="toctext">integer UserCall(integer user, string cn, string e164, string h323, int reg, InfoArray info, int rc, string srce164)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserConnect.28integer_call.29"><span class="tocnumber">3.4.5</span> <span class="toctext">UserConnect(integer call)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserTransfer_.28int_acall.2C_integer_bcall.29"><span class="tocnumber">3.4.6</span> <span class="toctext">UserTransfer (int acall, integer bcall)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserMediaTransfer_.28integer_acall.2C_integer_bcall.2C_boolean_user.2C_boolean_peer.29"><span class="tocnumber">3.4.7</span> <span class="toctext">UserMediaTransfer (integer acall, integer bcall, boolean user, boolean peer)</span></a></li>
+                        <li class="toclevel-3"><a href="#bool_UserRedirect.28integer_call.2C_string_cn.2C_string_e164.2C_string_h323.2C_InfoArray_info.29"><span class="tocnumber">3.4.8</span> <span class="toctext">bool UserRedirect(integer call, string cn, string e164, string h323, InfoArray info)</span></a></li>
+                        <li class="toclevel-3"><a href="#bool_UserReroute.28integer_call.2C_string_cn.2C_string_e164.2C_string_h323.29"><span class="tocnumber">3.4.9</span> <span class="toctext">bool UserReroute(integer call, string cn, string e164, string h323)</span></a></li>
+                        <li class="toclevel-3"><a href="#integer_UserPickup.28int_user.2C_string_cn.2C_integer_call.2C_string_group.2C_int_reg.2C_InfoArray_info.29"><span class="tocnumber">3.4.10</span> <span class="toctext">integer UserPickup(int user, string cn, integer call, string group, int reg, InfoArray info)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserClear.28integer_call.2C_integer_cause.2C_InfoArray_info.29"><span class="tocnumber">3.4.11</span> <span class="toctext">UserClear(integer call, integer cause, InfoArray info)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserCtComplete.28integer_call.2C_string_e164.2C_string_h323.29"><span class="tocnumber">3.4.12</span> <span class="toctext">UserCtComplete(integer call, string e164, string h323)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserHold.28integer_call.2C_bool_remote.29"><span class="tocnumber">3.4.13</span> <span class="toctext">UserHold(integer call, bool remote)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserRetrieve.28integer_call.29"><span class="tocnumber">3.4.14</span> <span class="toctext">UserRetrieve(integer call)</span></a></li>
+                        <li class="toclevel-3"><a href="#integer_UserPark.28integer_call.2C_string_cn.2C_integer_position.29"><span class="tocnumber">3.4.15</span> <span class="toctext">integer UserPark(integer call, string cn, integer position)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserDTMF.28integer_call.2C_bool_recv.2C_string_dtmf.29"><span class="tocnumber">3.4.16</span> <span class="toctext">UserDTMF(integer call, bool recv, string dtmf)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserUUI.28integer_call.2C_bool_recv.2C_string_uui.29"><span class="tocnumber">3.4.17</span> <span class="toctext">UserUUI(integer call, bool recv, string uui)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserInfo.28integer_call.2C_bool_recv.2C_string_cdpn.2C_string_key.2C_string_dsp.29"><span class="tocnumber">3.4.18</span> <span class="toctext">UserInfo(integer call, bool recv, string cdpn, string key, string dsp)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserRc.28integer_call.2C_integer_rc.29"><span class="tocnumber">3.4.19</span> <span class="toctext">UserRc(integer call, integer rc)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Messaging"><span class="tocnumber">3.5</span> <span class="toctext">Messaging</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#integer_UserMessage.28integer_user.2C_string_e164.2C_string_h323.2C_string_msg.2C_string_src_e164.2C_string_src_h323_.29"><span class="tocnumber">3.5.1</span> <span class="toctext">integer UserMessage(integer user, string e164, string h323, string msg, string src_e164, string src_h323 )</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Status_Retrieval"><span class="tocnumber">3.6</span> <span class="toctext">Status Retrieval</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#CallInfo.5B.5D_Calls.28integer_session.2C_string_user.29"><span class="tocnumber">3.6.1</span> <span class="toctext">CallInfo[] Calls(integer session, string user)</span></a></li>
+                        <li class="toclevel-3"><a href="#UserInfo.5B.5D_FindUser.28string_v501.2C_string_v700.2C_string_v800.2C_string_vx1000.2C_string_cn.2C_string_h323.2C_string_e164.2C_integer_count.2C_integer_next.2C_boolean_nohide.29"><span class="tocnumber">3.6.2</span> <span class="toctext">UserInfo[] FindUser(string v501, string v700, string v800, string vx1000, string cn, string h323, string e164, integer count, integer next, boolean nohide)</span></a></li>
+                        <li class="toclevel-3"><a href="#bool_UserFindDestination.28integer_user.2C_string_e164.2C_string_h323.2C_out_UserInfo_user.29"><span class="tocnumber">3.6.3</span> <span class="toctext">bool UserFindDestination(integer user, string e164, string h323, out UserInfo user)</span></a></li>
+                        <li class="toclevel-3"><a href="#string_License.28integer_session.2C_string_name.29"><span class="tocnumber">3.6.4</span> <span class="toctext">string License(integer session, string name)</span></a></li>
+                        <li class="toclevel-3"><a href="#string_LocationUrl.28string_v501.2C_string_v700.2C_string_v800.2C_string_vx1000.2C_string_location.2C_bool_tls.29"><span class="tocnumber">3.6.5</span> <span class="toctext">string LocationUrl(string v501, string v700, string v800, string vx1000, string location, bool tls)</span></a></li>
+                        <li class="toclevel-3"><a href="#string_UserLocalNum.28int_user.2C_string_num.29"><span class="tocnumber">3.6.6</span> <span class="toctext">string UserLocalNum(int user, string num)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Administration"><span class="tocnumber">3.7</span> <span class="toctext">Administration</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#string_Admin.28string_xml.29"><span class="tocnumber">3.7.1</span> <span class="toctext">string Admin(string xml)</span></a></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li class="toclevel-1"><a href="#Typical_design_of_a_PBX_SOAP_Application"><span class="tocnumber">4</span> <span class="toctext">Typical design of a PBX SOAP Application</span></a></li>
+        <li class="toclevel-1"><a href="#References"><span class="tocnumber">5</span> <span class="toctext">References</span></a></li>
+        <li class="toclevel-1"><a href="#Known_Problems"><span class="tocnumber">6</span> <span class="toctext">Known Problems</span></a></li>
+        <li class="toclevel-1"><a href="#System_Requirements"><span class="tocnumber">7</span> <span class="toctext">System Requirements</span></a></li>
+        <li class="toclevel-1"><a href="#Installation"><span class="tocnumber">8</span> <span class="toctext">Installation</span></a></li>
+        <li class="toclevel-1"><a href="#Configuration"><span class="tocnumber">9</span> <span class="toctext">Configuration</span></a></li>
+        <li class="toclevel-1"><a href="#Known_Issues"><span class="tocnumber">10</span> <span class="toctext">Known Issues</span></a></li>
+        <li class="toclevel-1"><a href="#Related_Articles"><span class="tocnumber">11</span> <span class="toctext">Related Articles</span></a></li>
+    </ul>
+
+    <a name="Overview"></a><h2> <span class="mw-headline">Overview</span></h2>
+    <p>
+        For an overview of the basic architecture, see the
+        <a href="/index.php?title=Reference:SOAP_API_%28pbx501.wsdl%29#Overview" title="Reference:SOAP API (pbx501.wsdl)">corresponding chapter in the pbx501.wsdl related article</a>.
+    </p>
+
+    <a name="Definition_of_PBX_object_.28WSDL.29"></a><h2> <span class="mw-headline"> Definition of PBX object (WSDL) </span></h2>
+    <p>
+        Within the SOAP framework there is a mechanism to formally decribe the definition of remote objects.
+        This is done by so called WSDL (Web Service Description Language) files.
+        This [<a href="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" rel="nofollow">wsdl file</a>]
+        defines the PBX web services  described in this document.
+    </p>
+    <p>
+        NB: while you can access and retrieve the WSDL file through this URL on runtime of your application,
+        we'd rather recommend to install a local copy with your application and use this on runtime.
+        This way, your application will be immune against failures of www.innovaphone.com.
+    </p>
+    <p>
+        <small>
+            There is also an [<a href="http://www.innovaphone.com/wsdl/pbx900.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx900.wsdl" rel="nofollow">old version of the wsdl</a>]
+            available which has less interface functions. This interface can still be accessed by legacy
+            applications and is activated on the PBX by calling the <b>Initialize</b>
+            Function with fewer arguments (<b>Integer Initialize(string user, string appl, out key)</b>).
+            It should not be used for new develoments though.
+        </small>
+    </p>
+
+    <a name="SOAP_URL"></a><h3> <span class="mw-headline"> SOAP URL </span></h3>
+    <p>
+        The SOAP service URI is <b>/PBX0/user.soap</b> for the standard PBX and <b>/PBX-<i>id</i>/user.soap</b>
+        for a dynamic PBX (where <i>id</i> corresponds to the <i>Id</i> field in the
+        <a href="/index.php?title=Reference9:PBX/Dyn-PBXs" title="Reference9:PBX/Dyn-PBXs">Reference10:PBX/Dyn-PBXs</a>
+        configuration dialog). SOAP is accessible via plain HTTP or HTTPS, so valid URLs might be
+        <code>http://172.16.0.1/PBX0/user.soap</code> or
+        <code>https://172.16.0.1/PBX0-mydynpbxid/user.soap</code>.
+    </p>
+
+    <a name="PBX_Objects_and_Methods"></a><h2> <span class="mw-headline">PBX Objects and Methods</span></h2>
+    <p>
+        This section contains a language agnostic description of the PBX API’s object model.
+        Despite of the fact that we are discussing an object model, the PBX API is in fact not an
+        object oriented API.  This is because SOAP itself is not really object oriented.
+        In particular, there is no object creation, activation or lifetime concept.
+        This is left up to the service designer. SOAP is more a message exchange mechanism than
+        an object method invocation mechanism. This is reflected in the API structure.
+    </p>
+    <p>
+        Specifically, objects are represented through handles, which are integers.
+        Objects are created and destroyed using dedicated methods and it’s the users responsibility
+        to manage the lifetime of all objects.
+    </p>
+    <p>
+        The syntax shown here actually is no valid syntax in any existing language.
+        Please refer to the various sample codes for working syntax.
+    </p>
+
+    <a name="Session"></a><h3> <span class="mw-headline">Session</span></h3>
+    <p>
+        All PBX API methods are executed in the context of a session. A session is created using
+        the <b>initialize</b> method and is identified by a handle.
+        This handle must be provided to all subsequent method calls.
+    </p>
+    <p>
+        A session is owned by the PBX API user, i.e. there is no way to have access to a session of
+        another application. Each session has a scope, which defines the view of the PBX the session user has.
+        The scope determines the set of PBX registrations seen by the session.
+    </p>
+    <p>
+        Scopes are defined and configured in the PBX and are bound to particular PBX users.
+        Thus, a session has a user attribute, which defines the scope. It includes all users
+        which are members of groups <b>user</b> is active member of. If <b>user</b> is not an active
+        member of any group, the scope is the user itself.
+    </p>
+
+    <a name="Initialize.28string_user.2C_string_appl.2C_bool_.24v.2C_bool_.24v501.2C_bool_v700.2C_bool_v800.2C_bool_vx1000.2C_out_int_key.29"></a><h4> <span class="mw-headline">Initialize(string user, string appl, bool $v, bool $v501, bool v700, bool v800, bool vx1000, out int key)</span></h4>
+    <p>
+        To access the current web services implementation, <b>v</b>, <b>v501</b>, <b>v700</b>,
+        <b>v800</b> and <b>vx10000</b> must be present and set to <b>true</b>.
+        These parameters actually convey the wsdl version used by the client.
+        Different versions of the interface use different parameter sets for the Initialize call.
+        Applications should always use the wsdl version current at the time of writing the application.
+    </p>
+    <p>
+        The method creates a session. The session will have the user <b>user</b>’s scope
+        (<b>user</b> is the <i>Long Name</i> of a PBX user). The session handle is returned and is 0 for
+        failure and positive for a valid session handle. <b>appl</b> specifies the name of the
+        calling application and is used for administrative purposes.
+        The output parameter <b>key</b> is a random number associated to the session.
+        It may be used in subsequent <b>Echo</b> operations.
+    </p>
+    <p>
+        When a session is created, <b>UserInfo</b> events for all PBX registrations in the scope
+        can be received by the <b>Poll</b> function.  Initially, one <b>UserInfo</b> per registration
+        within the session’s scope is received (the list is terminated by a <b>UserInfo</b>
+        with empty <b>cn</b> and may require multiple <b>Poll</b> calls to retrieve).
+        Subsequently, <b>UserInfo</b> events are received when a registrations state changes.
+    </p>
+    <p>
+        The underlying transport session (HTTP) must authenticate itself  either as <b>user</b>
+        (using the users long name and PBX password) or as the admin user (using the gateway administrator
+        account name and password) to perform an <b>Initialize</b> and any session related function.
+        Note that if you use a PBX user account, the user needs to have at least <i>Group/Call Forwards</i>
+        rights.
+    </p>
+    <p>
+        Note that the method to force the SOAP system you are using to authenticate to the PBX is
+        entirely up to the system itself. Some systems even do not support authentication at all.
+        If your SOAP implementation does not support digest authentication, make sure the gateway
+        accepts basic authentication by setting the “<i>allow HTTP basic authentication</i>”
+        in the “<i>General settings</i>”.
+    </p>
+    <p>
+        Note that although many HTTP connections may be used in a single session, at least one HTTP
+        connection must remain open during the lifetime of the session. When the last connection
+        disappears, the logical session is terminated after a short timeout.
+        Some SOAP libraries may per default always close the HTTP connection and reconnect on
+        subsequent SOAP calls, which will not work. The SOAP library should either be configured
+        to keep at least one HTTP connection alive or, if this is not an option, the application
+        should take care to always have a an active request pending (such as <b>Poll</b>).
+    </p>
+
+    <a name="Echo.28integer_session.2C_integer_key.29"></a><h4> <span class="mw-headline">Echo(integer session, integer key)</span></h4>
+    <p>
+        Verifies a session. You need to supply the <i>session</i> identifier and <i>key</i>
+        returned by a previous call to <b>Initialize</b>.  Returns nonzero if successful.
+    </p>
+
+    <a name="End.28integer_session.29"></a><h4> <span class="mw-headline">End(integer session)</span></h4>
+    <p>
+        Terminates the session referenced by <i>session</i>.  No further events will be received.
+    </p>
+
+    <a name="Integer_Version.28out_string_gkId.2C_out_string_location.2C_out_string_firmware.2C_out_string_serial.29"></a><h4> <span class="mw-headline">Integer Version(out string gkId, out string location, out string firmware, out string serial)</span></h4>
+    <p>
+        Returns the version number of the WSDL file the PBX supports. The first released WSDL file had
+        version number 500. The version described by this document has version number 501.
+        Also delivers information about the connected PBX (in <i>gkId</i>, <i>location</i>,
+        <i>firmware</i> and <i>serial</i>).
+    </p>
+
+    <a name="AnyInfo_Poll.28integer_session.29"></a><h4> <span class="mw-headline">AnyInfo Poll(integer session)</span></h4>
+    <p>
+        Returns pending events for the session referenced by <i>session</i>. <i>AnyInfo</i> is a struct
+        with four arrays as members: <i>user</i>, <i>call</i>, <i>reg</i> and <i>info</i>.
+        <i>user</i> is an array of type <i>UserInfo</i> and call is an array of type CallInfo.
+        The other two arrays <i>reg</i> and <i>info</i> are currently not used.
+    </p>
+    <p>
+        After a successful '<i>Initialize()</i> there will be a <i>UserInfo</i> event for each defined
+        and visible user in the system. This allows the application to synchronize on the state of
+        all visible users.  The list will be terminated by an <i>UserInfo</i> event for a user
+        with an empty <i>cn</i> which normally cannot happen since a user entry must have a cn.
+    </p>
+
+    <a name="User"></a><h3> <span class="mw-headline">User</span></h3>
+    <p>
+        A user represents a configured object within the PBX (a “PBX user”). The PBX API provides the
+        <b>UserInitialize</b> method to obtain a handle to the user.
+    </p>
+
+    <a name="UserInfo"></a><h4> <span class="mw-headline">UserInfo</span></h4>
+    <p>
+        The user’s properties are stored in a <i>UserInfo</i> structure, which has the following elements:
+    </p>
+    <ul>
+        <li>
+            <b>boolean active</b>
+        </li>
+    </ul>
+    <p>
+        true if the user exists. The only case where active can be false is when a user is moved out of the
+        session context. This may happen if the users group assignment is changed or the user is deleted.
+        A single UserInfo event will be posted with active set to false then.
+    </p>
+    <ul>
+        <li>
+            <b>integer state</b>
+        </li>
+    </ul>
+    <p>
+        1 if the user is registered, 0 otherwise.
+    </p>
+    <ul>
+        <li>
+            <b>integer channel</b>
+        </li>
+    </ul>
+    <p>
+        number of current calls.
+    </p>
+    <ul>
+        <li>
+            <b>integer  alert</b>
+        </li>
+    </ul>
+    <p>
+        number of alerting calls
+    </p>
+    <ul>
+        <li>
+            <b>string type</b>
+        </li>
+    </ul>
+    <p>
+        the type of the users device.  Currently defined are “<b>ep</b>” (it is an endpoint), “<b>gw</b>”
+        (it is a gateway, for example a trunk line), “<b>waiting</b>” (a call queue) or “<b>broadcast</b>”
+        (a group).  Others may be defined over time.
+    </p>
+    <ul>
+        <li>
+            <b>string guid</b>
+        </li>
+    </ul>
+    <p>
+        the users GUID.  This is a globally unique identifier for the user.
+    </p>
+    <ul>
+        <li>
+            <b>string cn</b>
+        </li>
+    </ul>
+    <p>
+        the common name of the user. This is what the PBX’s LDAP server recognizes as the CN of this user.
+        The user’s name in the PBX configuration applet.
+    </p>
+    <ul>
+        <li>
+            <b>string e164</b>
+        </li>
+    </ul>
+    <p>
+        the extension number the user is registered with.
+    </p>
+    <ul>
+        <li>
+            <b>string h323</b>
+        </li>
+    </ul>
+    <p>
+        the alias the user is registered with.
+    </p>
+    <ul>
+        <li>
+            <b>string dn</b>
+        </li>
+    </ul>
+    <p>
+        the users display name.
+    </p>
+    <ul>
+        <li>
+            <b>string domain</b>
+        </li>
+    </ul>
+    <p>
+        the PBX domain if the Gatekeeper ID is used as domain
+    </p>
+    <ul>
+        <li>
+            <b>boolean h323email</b>
+        </li>
+    </ul>
+    <p>
+        If true, the h323 name shall be used as primary email address when sending emails to this user.
+    </p>
+    <ul>
+        <li>
+            <b>string email[]</b>
+        </li>
+    </ul>
+    <p>
+        email addresses of the user. If 'h323email' is not set, the first address in this list shall be
+        used as primary email address when sending emails to this user.
+    </p>
+    <ul>
+        <li>
+            <b>Group groups</b>
+        </li>
+    </ul>
+    <p>
+        An array of <b>Group</b> records (see below).
+    </p>
+    <ul>
+        <li>
+            <b>Presence presence</b>
+        </li>
+    </ul>
+    <p>
+        An array of <b>Presence</b> records (see below).
+    </p>
+    <ul>
+        <li>
+            <b>boolean cfg</b>
+        </li>
+    </ul>
+    <p>
+        If set to true indicates that the config of the user has changed
+    </p>
+    <ul>
+        <li>
+            <b>string object</b>
+        </li>
+    </ul>
+    <p>
+        The type of the user object
+    </p>
+    <ul>
+        <li>
+            <b>string loc</b>
+        </li>
+    </ul>
+    <p>
+        If the object described is not local to the PBX the <b>UserInfo</b> is sent from, the name of the
+        location the object is homed in is given in this element.
+        See <b>LocationUrl</b> to find out how to proceed further.
+    </p>
+    <ul>
+        <li>
+            <b>string node</b>
+        </li>
+    </ul>
+    <p>
+        The node of the object.
+    </p>
+    <ul>
+        <li>
+            <b>string nodenum</b>
+        </li>
+    </ul>
+    <p>
+        The object nodes node number (prefix).
+    </p>
+    <ul>
+        <li>
+            <b>Info</b>
+        </li>
+    </ul>
+    <p>
+        An <b>Info</b> record describing various aspects of the user. The type of the information
+        described in an individual <b>Info</b> record is determined by the value of its <i>type</i> member.
+        Currently defined values for <i>type</i> are:
+    </p>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>fake</b>
+                </li>
+            </ul>
+        </dd>
+        <dd>
+            The value configured as 'Send Number'
+        </dd>
+    </dl>
+    <ul>
+        <li>
+            <b>groups</b>
+        </li>
+    </ul>
+    <p>
+        The users group memberships are stored in a <b>Group</b> record which has the following elements:
+    </p>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>string group</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            the name of the group the user is a member of
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>bool active</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            true if the user is an active member of the group
+        </dd>
+    </dl>
+    <ul>
+        <li>
+            <b>presence</b>
+        </li>
+    </ul>
+    <p>
+        The users presence status is stored in a <b>Presence</b> record which has the following elements:
+    </p>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>string status</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            either <b>open</b> or <b>closed</b>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>string activity</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The users current activity (optional)
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>string note</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The user provided additional note (optional)
+        </dd>
+    </dl>
+
+    <a name="integer_UserInitialize.28integer_session.2C_string_user.2C_bool_xfer.2C_bool_disc.2C_string_hw.29"></a><h4> <span class="mw-headline">integer UserInitialize(integer session, string user, bool xfer, bool disc, string hw)</span></h4>
+    <p>
+        Returns a handle to the named <i>user</i> (0 on failure). String <code>user</code>
+        must be a Long Name(cn). Phone number(e164) is not supported. Use FindUser instead, to retrieve
+        cn to specified e164 number.
+    </p>
+    <p>
+        Once a user handle is obtained with <b>UserInitialize</b>, <b>CallInfo</b> events will be
+        posted and retrieved via <b>Poll</b> for all calls related to the user.
+        If <b>xfer</b> is set to <b>true</b>, <b>CallInfo</b> events will also be posted for calls which
+        are transferred away from <b>user</b>. Otherwise, such events will be posted only for the user
+        handle which the call has been transferred to. Thus, without setting follow to true,
+        an application will generally not be able to track calls after a transfer unless it has called
+        <b>UserInitialize</b> for any PBX object a call may be transferred to and matches the new call
+        on the transferred-to user via the <b>conf</b> information in the <b>Info</b> record
+        of the new call (which will be identical to the <b>conf</b> information for the transferred call).
+    </p>
+    <p>
+        When <b>xfer</b> is set to <b>true</b>, transferred calls will show up in the <b>CallInfo</b>
+        records with a <b>No</b> element of type <b>xfer</b> that indicates the number the call
+        has been transferred to.
+    </p>
+    <p>
+        When <b>disc</b> is set to <b>true</b>, calls to phones of the monitored user are cleared only
+        after the user hangs up the phone. This way it can be avoided that the SOAP application assumes
+        the phone is free but is still off-hook. This only works with innovaphone H.323 endpoints
+        since the Disconnect message used to do this is not defined in the SIP standard.
+    </p>
+    <p>
+        When a <b>hw</b> argument is provided only the device identified by this is monitored.
+        Please note that a valid handle will be returned even if there is no matching device for <b>user</b>.
+    </p>
+    <p>
+        Also, the user handle can be used to create and control calls on behalf of the user.
+    </p>
+    
+    <a name="void_UserEnd.28integer_user.29"></a><h4> <span class="mw-headline">void UserEnd(integer user)</span></h4>
+    <p>
+        Frees the handle <i>user</i> obtained with <b>UserInitialize</b>. No events will be posted for
+        this user anymore.
+    </p>
+    
+    <a name="int_SetPresence.28inno:Presence_presence.2C_bool_im.2C_string_contact.2C_string_guid.2C_string_h323.29"></a><h4> <span class="mw-headline">int SetPresence(inno:Presence presence, bool im, string contact, string guid, string h323)</span></h4>
+    <p>
+        Sets the presence of a PBX user.
+    </p>
+    <ul>
+        <li>
+            <b>presence</b>:
+        </li>
+    </ul>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>inno:PresenceStatus</b>: the status <b>closed</b>/<b>open</b> or empty
+                </li>
+                <li>
+                    <b>inno:PresenceActivity</b>: the activity like <b>busy</b>
+                </li>
+                <li>
+                    string <b>note</b>: the presence note
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <ul>
+        <li>
+            <b>im</b>: from im client?
+        </li>
+        <li>
+            <b>contact</b>: the presence contact like <b>tel:</b>, <b>calendar:</b>...
+        </li>
+        <li>
+            <b>guid</b>: the user guid
+        </li>
+        <li>
+            <b>h323</b>: the h323 name of the user
+        </li>
+    </ul>
+    <p>
+        You can use <b>guid</b> or <b>h323</b> to identify the user! If no guid is known, use <b>*</b>
+        as guid value.
+        <br/>
+        If the setting of the presence was ok, the method returns <b>1</b>. Otherwise <b>0</b>.
+    </p>
+
+    <a name="Device"></a><h3> <span class="mw-headline">Device</span></h3>
+    <p>
+        For each User object multiple devices can be configured within the PBX. A device reprersents
+        the physical endpoint used for calls (e.g. phones). Any registration to the PBX is associated
+        to a configured device by the name/number used for the registration. Even thou it is possible
+        that one configured device in the PBX accepts multiple registrations, it is recommened to configure
+        the PBX in a way that there is one registration to a device.
+        This way an application can control which physical endpoint is used for a call.
+    </p>
+
+    <a name="Device.5B.5D_Devices.28int_session.2C_string_user.29"></a><h4> <span class="mw-headline">Device[] Devices(int session, string user)</span></h4>
+    <p>
+        This function returns an array of devices configured for a user identified by its cn (long name).
+        The <b>cfg</b> flag in <b>UserInfo</b> is set when this information is changed.
+        The structure 'Device' contains the following members:
+    </p>
+    <table>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>hw</b>
+            </td>
+            <td>
+                The Hardware Id used to identify the device. This string is used to associate any calls to devices.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>text</b>
+            </td>
+            <td>
+                A text configured as a description of the device. It can be used to be presented to the user for the user to select a device.
+            </td>
+        </tr>
+    </table>
+
+    <a name="Call"></a><h3> <span class="mw-headline">Call</span></h3>
+    <p>
+        A call represents one leg of an existing call in the PBX.
+    </p>
+
+    <a name="CallInfo"></a><h4> <span class="mw-headline">CallInfo</span></h4>
+    <p>
+        The calls attributes are stored in a <b>CallInfo</b> structure, which has the following elements:
+    </p>
+    <ul>
+        <li>
+            <b>int user</b>
+        </li>
+    </ul>
+    <p>
+        the user handle the call belongs to
+    </p>
+    <ul>
+        <li>
+            <b>int call</b>
+        </li>
+    </ul>
+    <p>
+        the call handle
+    </p>
+    <ul>
+        <li>
+            <b>int reg</b>
+        </li>
+    </ul>
+    <p>
+        currently unused
+    </p>
+    <ul>
+        <li>
+            <b>bool active</b>
+        </li>
+    </ul>
+    <p>
+        <b>true</b> if the call exists, <b>false</b> if not.  The only case where <i>active</i> can be <b>false</b> is when a call is terminated. A single <b>CallInfo</b> event will be posted with <i>active</i> set to <b>false</b> then
+    </p>
+    <ul>
+        <li>
+            <b>integer state</b>
+        </li>
+    </ul>
+    <p>
+        A calls state. A bit field made up as follows:
+    </p>
+    <table rules="all" style="margin:1em 1em 1em 0; border:solid 1px #AAAAAA; border-collapse:collapse;empty-cells:show;" cellspacing="4" cellpadding="3" border="2">
+        <tr>
+            <td>
+                Value
+            </td>
+            <td>
+                Mask
+            </td>
+            <td>
+                Meaning
+            </td>
+        </tr>
+        <tr>
+            <td>
+                1
+            </td>
+            <td>
+                0xF
+            </td>
+            <td>
+                setup
+            </td>
+        </tr>
+        <tr>
+            <td> 2 </td>
+            <td> 0xF </td>
+            <td>
+                setup-ack
+            </td>
+        </tr>
+        <tr>
+            <td> 3 </td>
+            <td> 0xF </td>
+            <td>
+                call-proc
+            </td>
+        </tr>
+        <tr>
+            <td> 4 </td>
+            <td> 0xF </td>
+            <td>
+                Alert
+            </td>
+        </tr>
+        <tr>
+            <td> 5 </td>
+            <td> 0xF </td>
+            <td>
+                Connect
+            </td>
+        </tr>
+        <tr>
+            <td> 6 </td>
+            <td> 0xF </td>
+            <td>
+                disconnect sent
+            </td>
+        </tr>
+        <tr>
+            <td> 7 </td>
+            <td> 0xF </td>
+            <td>
+                disconnect received
+            </td>
+        </tr>
+        <tr>
+            <td> 8 </td>
+            <td> 0xF </td>
+            <td>
+                parked
+            </td>
+        </tr>
+        <tr>
+            <td> 0 </td>
+            <td>	0x80    </td>
+            <td>
+                inbound  call
+            </td>
+        </tr>
+        <tr>
+            <td> 128 </td>
+            <td>	0x80    </td>
+            <td>
+                outbound call
+            </td>
+        </tr>
+        <tr>
+            <td> 0 </td>
+            <td>	0x100   </td>
+            <td>
+                active call
+            </td>
+        </tr>
+        <tr>
+            <td> 256 </td>
+            <td>	0x100   </td>
+            <td>
+                call on hold
+            </td>
+        </tr>
+        <tr>
+            <td> 0 </td>
+            <td>	0x200   </td>
+            <td>
+                active call
+            </td>
+        </tr>
+        <tr>
+            <td> 512 </td>
+            <td>	0x200   </td>
+            <td>
+                active call put on hold by peer
+            </td>
+        </tr>
+    </table>
+    <p>
+        Note that the PBX API is PBX-centric, not terminal centric.  As such, it considers a call
+        <i>from</i> the PBX <i>to</i> the terminal as <i>outbound</i>.
+    </p>
+    <ul>
+        <li>
+            <b>string msg</b>
+        </li>
+    </ul>
+    <p>
+        A textual representation of the signalling message causing this event. E.g. “<b>x-setup</b>”.
+    </p><p>
+        <br>
+    </p>
+    <ul>
+        <li>
+            <b>No No</b>
+        </li>
+    </ul>
+    <p>
+        An array of <b>No</b> records (see below). This can include information about various peers
+        related to the call itself. The type of the peer described in an individual <b>No</b> record is
+        determined by the value of its <b>type</b> member.  Currently defined values for <b>type</b> are:
+    </p>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>peer</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The current remote end of the call (the local end is determined by the UserInfo identified
+            through the user handle above)
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>leg2</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The last diverting user (if any)
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>leg2orig</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The 1st diverting user (if any, from on v9hf1)
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>leg1</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            Indicates a call-forward/blind-xfer(?) to the calling end
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>ct</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The last user having transferred the call (if any)
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>parked-to</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The call was parked to the indicated endpoint. This is sent with the 'r-rel' message
+            indicating the clearing of this call.
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>picking</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The call was picked by the indicated endpoint. Usually empty because sent with the new call
+            which is created at the picking endpoint, but the fact that it is present indicates that
+            this is a picked up call. The endpoint where this call is picked from is indicated with
+            a <i>ct</i> No within the same call_info.
+        </dd>
+    </dl>
+    <ul>
+        <li>
+            <b>Info info</b>
+        </li>
+    </ul>
+    <p>
+        An <b>Info</b> record describing various aspects of the call. The type of the information
+        described in an individual <b>Info</b> record is determined by the value of its <i>type</i> member.
+        Currently defined values for <i>type</i> are:
+    </p>
+    <dl>
+        <dd>
+            <ul>
+                <li>
+                    <b>conf</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            A string holding the <i>conference id</i> (a GUID) of the call the reported call leg
+            (all legs of a certain call share the same <i>conference id</i>).
+            Also, CDRs for a call show this <i>conference id</i>
+            (<i>ref</i> for <a href="/index.php?title=Reference:Call_Detail_Record_CDR" title="Reference:Call Detail Record CDR">gateway CDRs</a>, <i>conf</i> in the <i>&lt;event&gt;</i> tag for <a href="/index.php?title=Reference10:Concept_Call_Detail_Record_CDR_PBX" title="Reference10:Concept Call Detail Record CDR PBX">PBX CDRs</a>).
+            <ul>
+                <li>
+                    <b>cause</b>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    <dl>
+        <dd>
+            The latest <a href="/index.php?title=Reference:ISDN_Cause_Codes" title="Reference:ISDN Cause Codes"> cause code </a> which has been notified on the call
+        </dd>
+    </dl>
+
+    <a name="CallInfo_for_Boolean_Objects"></a><h5> <span class="mw-headline"> CallInfo for Boolean Objects </span></h5>
+    <p>
+        A <i>Boolean</i> will send a CallInfo event when it's status changes. From the indicated number,
+        you can derive the status as follows:
+    </p>
+    <p>
+        00 - Auto-Off
+        01 - Auto-On
+        10 - Manual-Off
+        11 - Manual-On
+    </p>
+
+    <a name="No_Record"></a><h4> <span class="mw-headline">No Record</span></h4>
+    <p>
+        Peer information is stored in a <b>No</b> record with the following elements:
+    </p>
+    <ul>
+        <li>
+            <b>string type</b>
+        </li>
+    </ul>
+    <p>
+        the type of the peer described by the record
+    </p>
+    <ul>
+        <li>
+            <b>string cn</b>
+        </li>
+    </ul>
+    <p>
+        the peer’s PBX’s objects common name (if any)
+    </p>
+    <ul>
+        <li>
+            <b>string e164</b>
+        </li>
+    </ul>
+    <p>
+        the peer’s phone number
+    </p>
+    <ul>
+        <li>
+            <b>string h323</b>
+        </li>
+    </ul>
+    <p>
+        the peer’s h323 alias
+    </p>
+    <ul>
+        <li>
+            <b>string dn</b>
+        </li>
+    </ul>
+    <p>
+        the peer’s display name
+    </p>
+    <a name="Info_record"></a><h4> <span class="mw-headline">Info record</span></h4>
+    <p>
+        Various information is stored in <b>Info</b> records with the following elements:
+    </p>
+    <ul>
+        <li>
+            <b>string type</b>
+        </li>
+    </ul>
+    <p>
+        the type of the information described by the record
+    </p>
+    <ul>
+        <li>
+            <b>string vals</b>
+        </li>
+    </ul>
+    <p>
+        a string value associated with this information (if any, the <i>type</i> of the element
+        determines if an <b>Info</b> element has a string or an integer value)
+    </p>
+    <ul>
+        <li>
+            <b>integer vali</b>
+        </li>
+    </ul>
+    <p>
+        an integer value associated with this information (if any)
+    </p>
+    <p>
+        Note that the call related functions do not return a meaningful value. This is because the
+        operations success is reflected in the subsequent CallInfo events.
+    </p>
+
+    <a name="integer_UserCall.28integer_user.2C_string_cn.2C_string_e164.2C_string_h323.2C_int_reg.2C_InfoArray_info.2C_int_rc.2C_string_srce164.29"></a><h4> <span class="mw-headline">integer UserCall(integer user, string cn, string e164, string h323, int reg, InfoArray info, int rc, string srce164)</span></h4>
+    <p>
+        Creates an outgoing call from the <b>user</b> (which is a handle obtained by a call to
+        <b>UserInitialize</b>) to the destination described by <i>cn</i>, <i>e164</i> and <i>h323</i>.
+        The argument <b>srce164</b> may be used to override the calling party number
+        (note that this overrides the callers extension, not the full calling party number).
+        Arguments <i>reg</i> and <i>info</i> are currently ignored. The argument <i>rc</i> is usually 0,
+        unless special behavior is required by using other
+        <a href="/index.php?title=Reference8:SOAP_API#Remote_Control_Facilities" title="Reference8:SOAP API">Remote Control Facilities</a>.
+        Returns a handle to the call (0 on failure).
+    </p>
+    <p>
+        The called number (<i>e164</i>) is interpreted in the context of the user object the call is placed
+        for (<i>user</i>).
+    </p>
+    <p>
+        From V8HF3 on, if the srce164 argument of UserCall starts with 'r' or 'R', the call is sent
+        with CLIR (calling line identification restricted).
+    </p>
+    <p>
+        Depending on the nature of the device the user is registered with, the device may actually
+        place the call or the PBX may place a call and once it is accepted, it places another call
+        to the destination.
+    </p>
+
+    <a name="UserConnect.28integer_call.29"></a><h4> <span class="mw-headline">UserConnect(integer call)</span></h4>
+    <p>
+        Connects an existing <i>call</i>. This forces the device the user is registered with to accept the call.
+        It may then go into hands-free mode. Incapable (i.e. non-innovaphone) devices may simply ignore this call.
+    </p>
+
+    <a name="UserTransfer_.28int_acall.2C_integer_bcall.29"></a><h4> <span class="mw-headline">UserTransfer (int acall, integer bcall)</span></h4>
+    <p>
+        <i>acall</i> and <i>bcall</i> are both calls a single user currently has active.
+        This method will connect <i>acall</i> with <i>bcall</i>, leaving the user without both calls.
+    </p>
+
+    <a name="UserMediaTransfer_.28integer_acall.2C_integer_bcall.2C_boolean_user.2C_boolean_peer.29"></a><h4> <span class="mw-headline">UserMediaTransfer (integer acall, integer bcall, boolean user, boolean peer)</span></h4>
+    <p>
+        This function establishes a media connection between two parties currently active in a
+        call independent of the signalling connection. <i>acall</i> and <i>bcall</i> are both active
+        (connected) calls. If <i>user</i> is true, the user sides of the calls are connected together,
+        if <i>peer</i> is set to true the peer sides of the calls are connected together.
+        If neither <i>user</i> nor <i>peer</i> is set the calls are connected to their respective
+        signalling peers.
+    </p>
+
+    <a name="bool_UserRedirect.28integer_call.2C_string_cn.2C_string_e164.2C_string_h323.2C_InfoArray_info.29"></a><h4> <span class="mw-headline">bool UserRedirect(integer call, string cn, string e164, string h323, InfoArray info)</span></h4>
+    <p>
+        Places a call to the destination described by <i>cn</i>, <i>e164</i> and <i>h323</i>
+        and connects <i>call</i> to this destination.  Argument <i>info</i> is currently ignored.
+    </p>
+    <p>
+        Any call forwarding configured for the destination will be ignored.
+        See <a href="/index.php?title=Reference8:SOAP_API#bool_UserReroute.28integer_call.2C_string_cn.2C_string_e164.2C_string_h323.29" title="Reference8:SOAP API">UserReroute()</a> below.
+    </p>
+
+    <a name="bool_UserReroute.28integer_call.2C_string_cn.2C_string_e164.2C_string_h323.29"></a><h4> <span class="mw-headline">bool UserReroute(integer call, string cn, string e164, string h323)</span></h4>
+    <p>
+        Performs a rerouting of the call.  Call forwardings set for the destination will be obeyed.
+    </p>
+
+    <a name="integer_UserPickup.28int_user.2C_string_cn.2C_integer_call.2C_string_group.2C_int_reg.2C_InfoArray_info.29"></a><h4> <span class="mw-headline">integer UserPickup(int user, string cn, integer call, string group, int reg, InfoArray info)</span></h4>
+    <p>
+        Redirects a call such that it appears as a new call at <i>user</i>. The call to be redirected
+        can be specified by its <i>call</i> handle.  Alternatively, calls can be picked up by a users
+        <i>cn</i> or by a <i>group</i> name. If all parameters are null, an implicit pickup is done.
+        The new call handle is returned. Arguments <i>reg</i> and <i>info</i> are currently ignored.
+    </p>
+
+    <a name="UserClear.28integer_call.2C_integer_cause.2C_InfoArray_info.29"></a><h4> <span class="mw-headline">UserClear(integer call, integer cause, InfoArray info)</span></h4>
+    <p>
+        Disconnects the <i>call</i> providing <i>cause</i> as disconnect reason. For example the cause code
+        <i>26 non-selected user clearing</i> could be used to disconnect the call immediately on local phone,
+        so no disconnect tone is played.
+    </p><p>
+        Cause is coded as a 7bit integer according to the table found in <a href="/index.php?title=Reference:ISDN_Cause_Codes" title="Reference:ISDN Cause Codes">Reference:ISDN Cause Codes</a>.
+        Argument <i>info</i> is currently ignored.
+    </p>
+
+    <a name="UserCtComplete.28integer_call.2C_string_e164.2C_string_h323.29"></a><h4> <span class="mw-headline">UserCtComplete(integer call, string e164, string h323)</span></h4>
+    <p>
+        Sends a notification to the device <i>call</i> is active on that the remote peer has changed to
+        <i>e164</i> and <i>h323</i>. This resembles the notification a device may receive if its
+        remote peer transfers the call to the new destination. The device may update its display
+        and/or call data accordingly.  This call is often used to force the devices (i.e. telephones)
+        display to show application specific data.
+    </p>
+
+    <a name="UserHold.28integer_call.2C_bool_remote.29"></a><h4> <span class="mw-headline">UserHold(integer call, bool remote)</span></h4>
+    <p>
+        Sets the call on hold. The device may or may not display the hold status. In any case,
+        the media channel is disconnected until a UserRetrieve is called.
+    </p>
+    <p>
+        In <i>V8 hotfix23</i> an additional parameter <b>remote</b> was added. If set to <b>true</b>, <b>remote</b> will force to play MOH only to remote user (who is being held), set to <b>false</b> maintains the default behaviour (MOH played on remote user and a dialing tone to local user (depending on the pbx firmware, versions prior to v11r2 will play music on hold)). To use this parameter the recent WSDL 8.00 file must be retrieved.
+    </p>
+
+    <a name="UserRetrieve.28integer_call.29"></a><h4> <span class="mw-headline">UserRetrieve(integer call)</span></h4>
+    <p>
+        Retrieves the <i>call</i> on hold. The device may or may not display the new status. In any case,
+        the media channel is reconnected.
+    </p>
+
+    <a name="integer_UserPark.28integer_call.2C_string_cn.2C_integer_position.29"></a><h4> <span class="mw-headline">integer UserPark(integer call, string cn, integer position)</span></h4>
+    <p>
+        Parks the call at the PBX object <b>cn</b> and local user on postion <b>position</b>.
+        A position of -1 means any position is allowed. The return value is the handle of the new call.
+    </p>
+    <p>
+        To unpark calls, use the returned call handle with the <b>UserPickup()</b> function.
+    </p><p>
+        The <b>cn</b> argument can be used to identify another object, where the call shall be parked to.
+    </p>
+
+    <a name="UserDTMF.28integer_call.2C_bool_recv.2C_string_dtmf.29"></a><h4> <span class="mw-headline">UserDTMF(integer call, bool recv, string dtmf)</span></h4>
+    <p>
+        Sends DTMF digits on behalf of the user. If <b>recv</b> is set to <i>true</i> the DTMF is sent
+        to the local user.
+    </p>
+
+    <a name="UserUUI.28integer_call.2C_bool_recv.2C_string_uui.29"></a><h4> <span class="mw-headline">UserUUI(integer call, bool recv, string uui)</span></h4>
+    <p>
+        Sends User-User_information on behalf of the user. If <b>recv</b> is set to <i>true</i> the uui is
+        sent to the local user.
+    </p>
+
+    <a name="UserInfo.28integer_call.2C_bool_recv.2C_string_cdpn.2C_string_key.2C_string_dsp.29"></a><h4> <span class="mw-headline">UserInfo(integer call, bool recv, string cdpn, string key, string dsp)</span></h4>
+    <p>
+        Sends INFO message on behalf of the user. If <b>recv</b> is set to <i>true</i> the INFO message
+        is sent to the local user. This function can be used to send overlap dialing information.
+    </p>
+
+    <a name="UserRc.28integer_call.2C_integer_rc.29"></a><h4> <span class="mw-headline">UserRc(integer call, integer rc)</span></h4>
+    <p>
+        Sends remote control facility to an innovaphone IP phone. It will be ignored by 3rd-party endpoints.
+    </p>
+    <p>
+        A remote control facility can be sent to an innovaphone IP phone to activate additional
+        call handling on the device.
+    </p>
+    <p>
+        The current set of remote control facility function codes actually depends on the firmware
+        used on the telephone, not the WSDL version used for SOAP. The current set is documented in
+        <a href="/index.php?title=Reference:Remote_Control_Facility" title="Reference:Remote Control Facility">Reference:Remote Control Facility</a>.
+    </p>
+    <p>
+        This function can be used for example to establish a three-party conference on an innovaphone
+        IP phone. For this use the function UserRc on an active call using the <b>rc</b> value 4,
+        while a second call is on hold.  See also the <i>rc</i> argument to <a href="#integer_UserCall.28integer_user.2C_string_cn.2C_string_e164.2C_string_h323.2C_int_reg.2C_InfoArray_info.2C_int_rc.2C_string_srce164.29" title="">UserCall()</a>.
+    </p>
+
+    <a name="Messaging"></a><h3> <span class="mw-headline">Messaging</span></h3>
+    <a name="integer_UserMessage.28integer_user.2C_string_e164.2C_string_h323.2C_string_msg.2C_string_src_e164.2C_string_src_h323_.29"></a><h4> <span class="mw-headline">integer UserMessage(integer user, string e164, string h323, string msg, string src_e164, string src_h323 )</span></h4>
+    <p>
+        Sends an message from the <b>user</b> (which is a handle obtained by a call to <b>UserInitialize</b>)
+        to the destination described by <i>e164</i> and <i>h323</i>.
+        The parameters <i>src_e164</i> and <i>src_h323</i> may be used to override the calling party's
+        information, in order to present a different callback information to the recipient of the message.
+        Returns a handle to the call (0 on failure), which can be used to track the delivery of the message.
+        A event of type 'msg-sent' indicates the delivery of the message.
+    </p>
+
+    <a name="Status_Retrieval"></a><h3> <span class="mw-headline">Status Retrieval</span></h3>
+    <p>
+        Instead of monitoring calls using the <i>Poll</i> mechanics, there are some functions to retrieve the current at a certain point in time.
+    </p>
+
+    <a name="CallInfo.5B.5D_Calls.28integer_session.2C_string_user.29"></a><h4> <span class="mw-headline">CallInfo[] Calls(integer session, string user)</span></h4>
+    <p>
+        Returns an array of <b>CallInfo</b> records for the calls currently active at the registration
+        defined by <i>user</i>.  Please note that this function may be called without having called
+        <b>UserInitialize ()</b> before. Thus, the call handle information in the <b>CallInfo</b>
+        records returned is meaningless.
+    </p>
+
+    <a name="UserInfo.5B.5D_FindUser.28string_v501.2C_string_v700.2C_string_v800.2C_string_vx1000.2C_string_cn.2C_string_h323.2C_string_e164.2C_integer_count.2C_integer_next.2C_boolean_nohide.29"></a><h4> <span class="mw-headline">UserInfo[] FindUser(string v501, string v700, string v800, string vx1000, string cn, string h323, string e164, integer count, integer next, boolean nohide)</span></h4>
+    <p>
+        Returns an array of at most <i>count</i> <b>UserInfo</b> records for the users matching <i>cn</i>,
+        <i>h323</i> or <i>e164</i>. Only one of <i>cn</i>, <i>h323</i> and <i>e164</i> may be specified,
+        except that <i>e164</i> and <i>cn</i> may be specified. In this case the number in <i>e164</i>
+        is interpreted in the Node of the user specified with <i>cn</i>.
+        The search string will be used as a starting point into the alphabetically sorted list of objects,
+        that is, a search for “<b>A</b>” will yield entries starting with “<b>A</b>” but also – depending on
+        <i>count</i> – the following entries. Neither search string may be empty. <i>v501</i>,
+        <i>v700</i>, <i>v800</i> and <i>vx1000</i> must be set to a non-empty value.
+        In case <i>cn</i> is set to the empty value, <b>FindUser</b> returns results starting from the
+        first object in the PBX.
+    </p>
+    <p>
+        To call <b>FindUser</b>, no session is required, however, you need a valid HTTP authentication.
+    </p>
+    <p>
+        Be aware that large values for <i>count</i> may fail and even crash the PBX. If you need
+        to retrieve the whole user list, you should be using 50 as  <i>count</i>,
+        provide the last <i>cn</i> retrieved as new start cn and loop until <b>FindUser</b> returns
+        no more results, passing <b>true</b> as  value for <i>next</i> for all but the first calls.
+    </p>
+    <p>
+        If the parameter <i>nohide</i> is true, all objects regardless if marked as <i>Hide from LDAP</i> or not are returned by the <b>FindUser</b> function.
+    </p>
+
+    <a name="bool_UserFindDestination.28integer_user.2C_string_e164.2C_string_h323.2C_out_UserInfo_user.29"></a><h4> <span class="mw-headline">bool UserFindDestination(integer user, string e164, string h323, out UserInfo user)</span></h4>
+    <p>
+        This function checks if a destination can be reached from a given user by either a given number or a given name. <i>user</i> is the user handle from which PBX user the searching is started through all PBX nodes up and down. <i>e164</i> is the number, <i>h323</i> is a name.
+    </p><p>
+        The function returns <b>true</b>, if the number or name is incomplete, otherwise <b>false</b>.
+        If a destination is found, a <b>UserInfo</b> <i>user</i> is delivered.
+    </p>
+    <p>
+        No session is required to call <b>UserFindDestination</b>, however, you need a valid HTTP authentication.
+    </p>
+
+    <a name="string_License.28integer_session.2C_string_name.29"></a><h4> <span class="mw-headline">string License(integer session, string name)</span></h4>
+    <p>
+        This function is for internal use only.
+    </p>
+
+    <a name="string_LocationUrl.28string_v501.2C_string_v700.2C_string_v800.2C_string_vx1000.2C_string_location.2C_bool_tls.29"></a><h4> <span class="mw-headline">string LocationUrl(string v501, string v700, string v800, string vx1000, string location, bool tls)</span></h4>
+    <p>
+        Returns a string with the HTTP URL for the PBX named location to which a SOAP session can be created.
+        Typically, <i>location</i> is retrieved from the <i>vals</i> element of an <b>Info</b>
+        record with <i>type</i> <b>loc</b> in an <b>UserInfo</b> record.
+    </p>
+    <p>
+        <i>location</i> needs to be specified as the <b>h323</b> attributes value of the PBX node
+        <b>UserInfo</b> data you are interested in.
+    </p>
+    <p>
+        If <i>tls</i> is set to <b>true</b>, a HTTPS URL is returned.
+    </p>
+
+    <a name="string_UserLocalNum.28int_user.2C_string_num.29"></a><h4> <span class="mw-headline">string UserLocalNum(int user, string num)</span></h4>
+    <p>
+        Converts a given number <b>num</b> into a number diallable from the location of a specific
+        <b>user</b>. Useful in inter-node scenarios where a destination node number and -extension are known,
+        but the required escape prefix digits are unknown.
+    </p>
+    <dl>
+        <dt>user</dt>
+        <dd>
+            The id of the specified user
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The number to be localized into the spefified user's location
+        </dd>
+        <dt>result</dt>
+        <dd>
+            The localized number, including escape prefixes
+        </dd>
+    </dl>
+
+    <a name="Administration"></a><h3> <span class="mw-headline">Administration</span></h3>
+    <p>
+        The SOAP interface can be used for administrational purposes also. This is done via the Admin call.
+        All kinds of PBX objects can be created, read or modified.
+    </p>
+
+    <a name="string_Admin.28string_xml.29"></a><h4> <span class="mw-headline">string Admin(string xml)</span></h4>
+    <p>
+        Sends the administrational command <i>xml</i> to the PBX. The command is executed and any result
+        is returned.
+    </p>
+    <p>
+        This command allows you to query and modify the PBX object configuration (e.g. to query and
+        set a users call forwarding). The scope and format of the commands valid for <i>xml</i>
+        is beyond the scope of this document, however, there is a
+        <a href="/index.php?title=Howto:Using_the_SOAP_Admin_Function" title="Howto:Using the SOAP Admin Function"> separate article on that </a>.
+    </p>
+    <p>
+        To call <b>Admin</b>, no session is required. However, you must be authenticated as an
+        admin user on the underlying HTTP layer.
+    </p>
+    <p>
+        <a href="/index.php?title=Howto:Using_the_SOAP_Admin_Function" title="Howto:Using the SOAP Admin Function">Howto:Using the SOAP Admin Function</a>
+    </p>
+
+    <a name="Typical_design_of_a_PBX_SOAP_Application"></a><h2> <span class="mw-headline">Typical design of a PBX SOAP Application</span></h2>
+    <p>
+        Please refer to the <a href="/index.php?title=Reference:SOAP_API_%28pbx501.wsdl%29#Typical_design_of_a_PBX_SOAP_Application" title="Reference:SOAP API (pbx501.wsdl)">pbx501.wsdl</a>
+        article for a discussion of the typical design of a SOAP application.
+    </p>
+
+    <a name="References"></a><h2> <span class="mw-headline">References</span></h2>
+    <ul>
+        <li>
+            <a href="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx10_00.wsdl" rel="nofollow">Version10-wsdl</a>.
+        </li>
+    </ul>
+    <p>
+        Applications based on this wsdl will work with V10 PBX firmware (and up) only.
+    </p>
+    <p>
+        Applications written to the previous pbx501.wsdl, pbx700.wsdl and pbx900.wsdl will continue
+        to work with V10 firmware.
+    </p>
+    <p>
+        For your reference the old version files are still available:
+    </p>
+    <ul>
+        <li>
+            <a href="http://www.innovaphone.com/wsdl/pbx501.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx501.wsdl" rel="nofollow">Version5-wsdl</a>
+        </li>
+        <li>
+            <a href="http://www.innovaphone.com/wsdl/pbx700.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx700.wsdl" rel="nofollow">Version7-wsdl</a>
+        </li>
+        <li>
+            <a href="http://www.innovaphone.com/wsdl/pbx900.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx900.wsdl" rel="nofollow">Version9-wsdl</a>
+        </li>
+    </ul>
+
+    <a name="Known_Problems"></a><h2> <span class="mw-headline">Known Problems</span></h2>
+    <p>
+        Please read <a href="/index.php?title=Howto:Authentication_in_the_SOAP_interface" title="Howto:Authentication in the SOAP interface">Howto:Authentication in the SOAP interface</a> in case you have problems to authenticate SOAP access.
+    </p>
+
+    <a name="System_Requirements"></a><h2> <span class="mw-headline">System Requirements</span></h2>
+    <p>
+        The PBX SOAP API requires a working PBX.
+    </p>
+    <p>
+        To work with the PBX API in this version, you must run at least version 7.00 software on your PBX.  Also, you must run at least version 5 software on the phones.
+    </p>
+
+    <a name="Installation"></a><h2> <span class="mw-headline">Installation</span></h2>
+    <p>
+        There is no specific installation required, as the PBX API is integral part of the PBX
+        (although licenses are required to operate the PBX).
+    </p>
+
+    <a name="Configuration"></a><h2> <span class="mw-headline">Configuration</span></h2>
+    <p>
+        To prepare an PBX for PBX API testing
+    </p>
+    <ul>
+        <li>
+            setup a separate PBX
+        </li>
+        <li>
+            install current firmware (at least 8.00)
+        </li>
+        <li>
+            configure the PBX as usually
+        </li>
+        <li>
+            add an user object called <b>API</b> , define a <i>password</i> for this object
+        </li>
+        <li>
+            create a new group (e.g. called <b>all users</b>), by adding a group tag to <b>API</b>,
+            make it <i>active</i>
+        </li>
+        <li>
+            add a similar group tag to all other test users
+        </li>
+        <li>
+            call <b>Initialize()</b> and use <b>API</b> as user and <b>API</b> and its <i>password</i>
+            as http credentials
+        </li>
+    </ul>
+
+    <a name="Known_Issues"></a><h2> <span class="mw-headline">Known Issues</span></h2>
+    <p>
+        We have reports that the PBX wsdl is incompatible to some of the contemporary SOAP platforms
+        available in the market.  Most notably, Silverlight and Java seem to be affected.
+        These problems are fixed in the v11 implementation of the PBX SOAP interface <i>pbx11_00.wsdl</i>
+        (available at <a href="http://www.innovaphone.com/wsdl/pbx11_00.wsdl" class="external text" title="http://www.innovaphone.com/wsdl/pbx11_00.wsdl" rel="nofollow">www.innovaphone.com/wsdl/pbx11_00.wsdl </a>).
+    </p>
+    <p>
+        Note: This wdsl file is not available directly from the PBX
+        (e.g. at <code>http://xx.xx.xx.xx/pbx11_00.wsdl</code>)
+    </p>
+    <p>
+        However, we have had indications that for Java, solutions are possible based on Apache Axis 1.4,
+        Netbeans 6.8 or JAX-RPC.
+    </p>
+    <p>
+        The PBX does not expect the SOAP client to disconnect the session right after a UserCall.
+        If this is the case (e.g. in a script which merely creates a call on behalf of a user
+        and then terminates), it might happen that the outgoing call from the device will not be
+        created correctly (a matter of timing).  In this case, just wait for one second.
+    </p>
+
+    <a name="Related_Articles"></a><h2> <span class="mw-headline">Related Articles</span></h2>
+    <p>
+        <a href="http://wiki.innovaphone.com/index.php?search=soap" class="external text" title="http://wiki.innovaphone.com/index.php?search=soap" rel="nofollow">Search for articles about SOAP</a>
+    </p><p>
+        <br>
+    </p>
+</body>
+
+</html>

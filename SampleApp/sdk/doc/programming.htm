@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>APIs, Interfaces and libraries</title>
+    <link rel="stylesheet" href="../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Programming guide</h1>
+    <p>
+        Overview about the the structure of app services (C++) and apps (Javascript) and the libraries and APIs that are provided by the SDK for building them.
+    </p>
+    
+    <h2>Content</h2>
+    <dl>
+        <dt><a href="#app-services">App Services</a></dt>
+        <dd>
+            Links to documentation needed to program an App service
+        </dd>
+        <dt><a href="#apps">Apps</a></dt>
+        <dd>
+            Links to documentation needed to program an App
+        </dd>
+        <dt><a href="#apis">APIs for communication between components</a></dt>
+        <dd>
+            APIs provided for Apps and used by the different modules themself
+        </dd>
+    </dl>
+	
+    <a name="app-services"></a><h2>App Services (C++)</h2>
+	<h3> Overview</h3>		
+	<img src="pics/Libraries_and_Interfaces.png" alt="App Platform Libraries and Interfaces" title="Overview about APIs used with this SDK" style="width:723px; height:350px;">
+	
+    <h3>Interfaces and Libraries for App Services</h3>
+	<p> 
+		For the implementation of app Services, to enable communication between App Services or the App Services 
+		and system components of the App Platform (without any need for Linux knowledge)
+		and also to support recurring and complex tasks this SDK provides you with a bunch of interfaces and libraries listed below:	
+	</p>
+	<table>
+		<tr><td><b><a href="reference.htm#CPP_AppServiceInterfaces">App Service Interfaces (1)</a></b></td>
+            <td>
+                The App Service Interface is fundamental to implement your own App Services.
+            </td>
+        </tr>
+		<tr><td><b><a href="reference.htm#CPP_AppPlatformLibraries">App Platform Libraries (2)</a></b></td>
+            <td>
+				App platform libraries provide access to complex functionality that is recurringly needed using App Platform interfaces.
+            </td>
+        </tr>
+		<tr><td><b><a href="reference.htm#CPP_StandaloneLibraries">Standalone Libraries (3)</a></b></td>
+            <td>
+                This is a very portable libray for some fundamental features,
+				like string manipulation, json encoding/decoding, binary trees
+				and much more. It is a library also used within the innovaphone firmware.
+            </td>
+        </tr>
+		<tr><td><b><a href="reference.htm#CPP_AppPlatformInterfaces">App Platform Interfaces (4)</a></b></td>
+            <td>
+                These libraries provide easy access to core components of the App Platform, such as Webwerver, Database, Sockets.
+            </td>
+        </tr>
+	</table>
+
+    <h3>Assynchrous programming environment</h3>
+    <p>
+        The innovaphone SDK is designed to completly work in an asynchronous, non-blocking way.
+        Each IO operation is asynchronous. Same for timers and exec callbacks, used to to call a
+        function asynchronous. All of that is controlled by the IIoMux instance of an AppInstance.
+        Because of this, the IIoMux instance must be passed to nearly all interfaces on creation.
+        The interface will take care of registering and unregistering itself to the IIoMux instance.
+    </p>
+    <p>
+        So each apps needs to be design with the same manner, too. That means, that the app must
+        implement good flowcontrol to not loose control of what is going on. Because of this, each
+        nearly Interface has also a User class
+        (generally with the same name as the interface, only starts with 'U' instead of 'I' - e. G.
+        ISocket and USocket). The app must provide classes that will be subclasses of an user
+        class and pass an instance of that user to the Interface when
+        creating. So for example, if an application creates an instance of IHTTPClient,
+        it must pass an instance of a subclass of UHTTPClient. That subclass needs to implement
+        all callback functions that are of interest for the app. More informations of what functions
+        must be overwritten and what functions having default implementation, can be found at the
+        description of the interfaces.
+    </p>
+    <p>
+        Generally, each asynchronous function will lead in an result callback function
+        (e. G. Send() -> SendResult()). If an app calls Send() of an interface that provides
+        a Send() function, the app should wait until the SendResult() callback had
+        been called before sending the nexxt part. Doing this helps to have non blockng operations.
+        The same is for Recv(), wich will call a RecvResult() callback function if data had been
+        received. While waiting for data to receive, the application can still handled other
+        stuff (e. g. Recive a Websocket message). Each application instance has an IIoMux instance,
+        wich finally will handle each type of connection, inform each interface of data that
+        is available, handles timers and Execute-Callbacks, which can be used to call a function
+        asynchronous.
+    </p>
+
+    <h3>PBX manager plugin</h3>
+    <p>
+        Each app service should provide a plugin for the PBX manager that is
+        used for the configuration by the admin. It can be used to change the settings of an app instance
+        and to maintain the corresponding app objects in the PBX.
+        See <a href="../web1/com.innovaphone.manager/pbx_manager_plugin.htm">PBX Manager plugin</a> for details.
+    </p>
+
+    <a name="apps"></a><h2>Apps (Javascript)</h2>
+    <h3>Overview</h3>
+    <h3>Libraries for apps</h3>
+    <table>
+        <tr>
+            <td><b><a href="reference.htm#JS_library">innovpahone.lib1</a></b></td>
+            <td>
+                Javascript library for apps
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="reference.htm#JS_library">innovpahone.ui1</a></b></td>
+            <td>
+                Javascript library for user interfaces
+            </td>
+        </tr>
+    </table>
+
+    <a name="apis"></a><h2>APIs for communication between components</h2>
+    <h3>Overview</h3>
+    <p>
+        <img src="pics/API.png" alt="API-Architecture" title="Overview about APIs used with this SDK" style="width:643px; height:380px;">
+    </p>
+    
+    <h3>List of APIs</h3>
+    <table>
+        <tr>
+            <td><b><a href="reference.htm#APIs_Client">Client APIs and Launcher Services (1),(2) </a></b></td>
+            <td>
+                Client APIs are used for communication between (web-)apps running in the myApps Client.
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="reference.htm#APIs_PBX">PBX APIs (3),(4),(5)</a></b></td>
+            <td>
+                PBX APIs are available on all websocket connections to the PBX (PBX App -> PBX, App Object->App Service)
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="reference.htm#APIs_Service">Service APIs (6)</a></b></td>
+            <td>
+                On the App Platform, Service APIs are used for communication between app services
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

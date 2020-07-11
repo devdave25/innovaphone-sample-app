@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>iomux</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <a name="IIoMux"><h1>iomux</h1></a>
+    <p>
+        This class is typically allocated by the platform specific main function and then passed
+        to the application classes and all interface modules for initialization and then
+        the Run function is called for the wait on filedescriptors.
+    <p/>
+
+    <p>
+        Members:
+    <p/>
+
+    <dl>
+    <dt>static IIoMux * Create()</dt>
+        <dd>
+            Allocates the IoMux class
+        </dd>
+    <dt>void Run()</dt>
+        <dd>
+            Called after the initialization to wait for events (epoll)
+        </dd>
+    <dt>void Terminate()</dt>
+        <dd>
+            Called to terminate the Run() loop of IoMux to terminate the main function.
+        </dd>
+    <dt>void FDAdd(int fd, UIoContext * context, bool pollOut)</dt>
+        <dd>
+            Add a filedescriptor to wait for. If the filedescriptor becomes ready for read/write the UIoContext::IoContextNotify function is called. If pollOut is true, not only ready for read, but also ready for write triggers the Notify.
+        </dd>
+    <dt>void FDClose(UIoContext * context)</dt>
+        <dd>
+            Removes a filedescriptor to wait on.
+        </dd>
+    <dt>void FDUnblock(int fd)</dt>
+        <dd>
+            Unblocks a file descriptor.
+        </dd>
+    <dt>void bool CanAcceptFD()</dt>
+        <dd>
+            Returns true if the maximum number of file descriptors is not yet reached.
+        </dd>
+    <dt>void Lock(), void UnLock()</dt>
+        <dd>
+            Used for the support of interfaces, which do not support asynchronous operation. These typically start one and more threads for the I/O. All callbacks to the application need to be synchronized with the application thread by these functions.
+        </dd>
+    <dt>void SetExec(UIoContext * ioContext, void * execContext)</dt>
+        <dd>
+            Destined for construction of asynchronous callback functions that must not interfere with invocations of corresponding interface functions. '''Requirement:''' A class derived from ''UIoContext'' and being passed into SetExec() must implement ''void UIoContext::IoExec(void * execContext)''
+        </dd>
+    <dt>void SetExecLocked(UIoContext * ioContext, void * execContext)</dt>
+        <dd>
+            Synchronizes with the application thread and asserts SetExec(). This might be called from a different thread to schedule a callback.
+        </dd>
+    <dt>void CancelSetExec(UIoExec * const ioContext)</dt>
+        <dd>
+            Cancels all outstanding exec calls for the given ioContext.
+        </dd>
+    <dt>void RegisterSignalConsumer(ISignalConsumer * consumer)</dt>
+        <dd>
+            Registers a class derived from ISignalConsumer to receive <i>OnSignal(int signr)</i> callbacks.<br />
+            Currently only SIGHUP is signaled.
+        </dd>
+    <dt>void RegisterShutdownHandler(IShutdownHandler * shutdownHandler)</dt>
+        <dd>
+            Registers a class derived from IShutdownHandler to receive <i>Shutdown()</i> callbacks. A Shutdown() callback is triggerd on SIGTERM, SIGINT and SIGKILL.<br />
+            In case that IShutdownHandlers are registered, these handlers <b>have</b> to call iomux->Terminate() when they have finished their shutdown handling!
+        </dd>
+    <dt>void RegisterChildExitedHandler(IChildExitedHandler * childExitedHandler)</dt>
+        <dd>
+            Registers a class derived from IChildExitedHandler to receive <i>ChildExited(signed int pid, int signr, int exitCode, bool sigFault)</i> callbacks.
+        </dd>
+    <dt>void UnRegisterChildExitedHandler(IChildExitedHandler * childExitedHandler)</dt>
+        <dd>
+            Unregisters a class derived from IChildExitedHandler which then doesn't receive these callbacks anymore.
+        </dd>
+    </dl>
+
+    <h2>ITimer</h2>
+    <p>
+        Timer implementation, resolution in milliseconds.
+    </p>
+    <dl>
+        <dt>Pattern example:</dt>
+        <dd>
+            <ul>
+                <li>
+                    Class ''LdapServerConn'' contains a timer(timerIdle) and is derived from UTimer.<code type="cpp">
+<pre>
+class LdapServerConn : public UTimer {
+
+    ITimer       timerIdle;
+    void TimerOnTimeout(ITimer * timer);
+    ..
+};
+</pre>
+                </li>
+                <li>
+                    Within the constructor of LdapServerConn ioMux will be passed into the constructor of timerIdle<code type="cpp">
+<pre>
+LdapServerConn::LdapServerConn(IIoMux * ioMux, ISockContext * srvContext, LdapSrv * ldapSrv) :
+    timerIdle(ioMux, this)
+{
+    ..
+}
+</pre>
+                </li>
+                <li>
+Start of an idle-timer with 30 seconds. Purpose: after 30s of „silence“ a timeout shall trigger.<code type="cpp">
+<pre>
+void LdapServerConn::SockContextReceive(void * data, unsigned len)
+{
+    this->timerIdle.Start(30000);
+    ..
+}
+</pre>
+                </li>
+                <li>
+                    Timer-Routine: The affected timer is ruled-out means of an address check(necessary only in case of multiple timers).<code type="cpp">
+<pre>
+void LdapServerConn::TimerOnTimeout(ITimer * timer)
+{
+    if (timer == &this->timerIdle) {
+        this->Release();
+    }
+}
+</pre>
+                </li>
+            </ul>
+        </dd>
+    </dl>
+    
+    
+    
+    <h2>ITimerAbsolute</h2>
+    <p>
+        Timer implementation, which takes an absolute timestamp to trigger. Note that this version uses system timers from the Linux OS, so use them carefully.
+        ITImerAbsolute is used in the same way as ITimer (except that the user for callback is UTimerAbsolute).
+    </p>
+</body>
+</html>

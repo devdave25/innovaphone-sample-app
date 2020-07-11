@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - config implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Config</h1>
+    <p>
+        The config library supports Apps to store configuration options in a config database table. To access the config options
+		from within a JavaScript App, the C++ config library communicates with the <a href="../../web1/config/config.htm">JavaScript config library</a> using JSON messages. See the
+		JS config library documentation for more informations.
+	</p>
+    <p>
+		The usage of the config library is straight forward and only needs a couple of steps:
+    </p>        
+    <ul>
+        <li>Create instance of ConfigContext.</li>
+        <li>Register the config library to the JSON API framework by passing the created instance to RegisterJsonApi(configContextInstance).</li>
+        <li>Create the database table used by the config lib by calling CreateInitTask(databaseObject) and exetuting the returned task (don't forget to free it,
+            after the task is finished).</li>
+        <li>Add ConfigItem members to your class and initialize them passing the ConfigContext instance (see the description of the ConfigItems classes
+            below).</li>
+    </ul>
+    <p>
+        Now the appliction service and the JavaScript app only need to access the items or changed and save them (especially from the JavaScript side). ConfigContext and
+        the JavaScript config library are handling all of the communication, so there is no need for an app to worry about that.
+	</p>
+    
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/config.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#ConfigContext">ConfigContext</a><br>
+                                       <a href="#ConfigItem">ConfigItem</a><br>
+                                       <a href="#ConfigChoice">ConfigChoice</a><br>
+                                       <a href="#ConfigBool">ConfigBool</a><br>
+                                       <a href="#ConfigInt">ConfigInt</a><br>
+                                       <a href="#ConfigDword">ConfigDword</a><br>
+                                       <a href="#ConfigLong64">ConfigLong64</a><br>
+                                       <a href="#ConfigUlong64">ConfigUlong64</a><br>
+                                       <a href="#ConfigString">ConfigString</a><br>
+                                       <br>
+                                   </td></tr>
+        <tr><td><b>JSON messages</b></td><td>
+                                             <a href="#BaseMessage">Base message</a><br>
+                                          <a href="#GetConfigItems">GetConfigItems</a><br>
+                                          <a href="#GetConfigItemsResult">GetConfigItemsResult</a><br>
+                                          <a href="#ReadConfig">ReadConfig</a><br>
+                                          <a href="#ReadConfigResult">ReadConfigResult</a><br>
+                                          <a href="#ConfigUpdate">ConfigUpdate</a><br>
+                                          <a href="#WriteConfig">WriteConfig</a><br>
+                                          <a href="#WriteConfigResult">WriteConfigResult</a><br>
+                                          <br>
+                                      </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                          <a href="#ExampleConfigContext">ConfigContext</a><br>
+                                          <a href="#ExampleConfigUse">Using config</a><br>
+                                          <a href="#ExampleFirstSteps">First steps</a><br>
+                                          <br>
+                                      </td></tr>
+	</table>
+	
+	
+	
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+	<a name="ConfigContext"><h2>ConfigContext</h2></a>
+	<pre><code class="C++">class ConfigContext : public UTask, public UJsonApiContext, public UConfigContextApi {
+protected:
+    virtual void ConfigChanged() {}
+    virtual void ConfigChangedUnmanaged() {}
+    virtual bool CanReadConfig(IJsonApiConnection * const connection) { return true; }
+    virtual bool CanWriteConfig(IJsonApiConnection * const connection) { return true; }
+    class ITask * UpdateUnmanagedItems();
+
+public:
+    ConfigContext(class IDatabase * database, class IInstanceLog * log);
+    virtual ~ConfigContext();
+
+    class ITask * CreateInitTask(class IDatabase * database = nullptr);
+    void ResetChangedFlag();
+    class ITask * WriteItemValue(ConfigItem * item, const char * value, bool notify);
+};</code></pre>
+
+	<h3>Overview</h3>
+	The ConfigContext is the base class of the config library. It handles the communication with the database as well as with the
+	JSON API framework. An application only needs to create an instance of ConfigContext and initialize it. To initialize, the
+	instance must be passed to to RegisterJsonApi() of an existing JsonApiContext instance and the database must be initialized by
+	executing the task returned	by CreateInitTask(). Even if not necessary it is recommended to create a subclass of ConfigContext
+	to store the config items into that subclass, too. This makes handling and initializing the config items easier as well as get
+	informed after changes made for the config items.<br/><br/>
+	The ConfigContext stores the configuration inside the database accassable through the given database connection. When initializing running
+	the task to do so, a table called config will be created with three rows:
+	<ul>
+		<li><b>name</b> The name of the config item with a maximum length of 255 chars.</li>
+		<li><b>value</b> The vlaue of the config item. Each item is stored as string with an (in theory) unlimited length. But be aware that each item will stay resident in RAM,
+		                 so take care to not hold values to big.</li>
+		<li><b>unmanaged</b> A boolean value to describe if the item is unmanaged or not.</li>
+	</ul>
+	Note that only items will be written to the database, that have a different value than given as the default value. Even if an item had ben changed and set back to
+	the default value, it is no longer written to the database.<br/>
+	Each config item will be registered to a ConfigContext instance and managed by that instance. That also means that each config item must have a unique name. See the description
+	of ConfigItem classes below for more details.
+
+    <h3>Protected functions</h3>
+    <div class="fnhead">ConfigChanged</div>
+    <dd>
+        Will be called after the value of a config item had been changed. Create a class derived from ConfigContext to catch that callback.
+    </dd>
+
+    <div class="fnhead">ConfigChangedUnmanaged</div>
+    <dd>
+        Will be called after the value of an unmanaged config item had been changed. An unmanaged config item can only be accessed by the C++ side of the library,
+		but not by the JSON API. So on the JSON API side, that item is read-only. Create a class derived from ConfigContext to catch that callback.
+    </dd>
+
+    <div class="fnhead">CanReadConfig</div>
+    <dd>
+        Will be called to check, if a given IJsonApiConnection instance has the right to read the config. Create a class derived from ConfigContext and overwrite
+		the function to add rights management for reading the config.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IJsonApiConnection * const <b>connection</b></td><td>The <a href="../interface/json_api.htm">IJsonApiConnection</a> instance to be checked for the right to read the config.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        True, if the given connection has the right to read the config. So if true is returned, ConfigContext will send config informations to the connection that asks for them.
+		False, to deny the access to the config. The default implementation of ConfigContext::CanReadConfig() always returns true.
+    </dd>
+    
+    <div class="fnhead">CanWriteConfig</div>
+    <dd>
+        Will be called to check, if a given IJsonApiConnection instance has the right to write the config. Create a class derived from ConfigContext and overwrite
+		the function to add rights management for writing the config.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IJsonApiConnection * const <b>connection</b></td><td>The <a href="../interface/json_api.htm">IJsonApiConnection</a> instance to be checked for the right to write the config.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        True, if the given connection has the right to write the config. So if true is returned, ConfigContext will accept changed config values send via JSON API messages and write
+		them to the database. False, to deny the access to the config. The default implementation of ConfigContext::CanWriteConfig() always returns true.
+    </dd>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigContext (Constructor)</div>
+    <dd>
+        The constructor of the class.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IDatabase * <b>database</b></td><td>The <a href="../interface/database.htm">IDatabase</a> instance to be used by the config context.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">CreateInitTask</div>
+    <dd>
+        Creates an instance of the task to initialize the database table used by the config context.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IDatabase * <b>database</b></td><td><i>(Default: nullptr)</i> The <a href="../interface/database.htm">IDatabase</a> instance to be used.
+			                                                                                          If nullptr, the instance passed to the constructor will be used.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        The task that must be executed to initialize the config table. Simply call Start() of that task, passing a user of your choice to that function.
+		
+		<h4>Remarks</h4>
+		Note that the created ITask instance returned by CreateInitTask() must be freed after the task has finished or failed. If not, the application will
+		create memory leaks.
+    </dd>
+
+    <div class="fnhead">ResetChangedFlag</div>
+    <dd>
+		This will reset the changed flag of all items. After calling that, Changed() of each ConfigItem registered to ConfigContext will return false. It will be a good
+		Idea to call that function in ConfigChanged() and / or ConfigChangedUnmanaged() after handling all changes.
+    </dd>
+
+    <div class="fnhead">WriteItemValue</div>
+    <dd>
+		Call this function to write a config item to the database. Generally this will be done when items had been changed through the JSON API. But in case of unmanaged
+		items, this function is the only way to save them.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigItem * <b>item</b></td><td>The config item to write to the database.</td></tr>
+            <tr><td class="param">const char * <b>value</b></td><td>The value to write.</td></tr>
+            <tr><td class="param">bool <b>notify</b></td><td>If true, a changed notification will be send to all open JsonApoContext instances.</td></tr>
+        </table>
+		
+    </dd>
+
+	<a name="ConfigItem"><h2>ConfigItem</h2></a>
+	<pre><code class="C++">class ConfigItem : public istd::listElement<ConfigItem> {
+private:
+    char * name;
+
+protected:
+    friend class TaskWriteConfig;
+    friend class TaskWriteConfigUnmanaged;
+    friend class TaskInitConfig;
+    friend class ConfigContext;
+
+    class IInstanceLog * const log;
+    bool changed;
+    bool unmanaged;
+
+    virtual void ReadValueFromDataset(class IDataSet * dataset) = 0;
+    virtual void ReadValueFromJSON(class json_io * json, dword base, class IJsonApiConnection * connection) = 0;
+    virtual void WriteValueToJSON(class json_io * json, dword base, char * & convBuf, class IJsonApiConnection * connection) = 0;
+    virtual int WriteValueToString(char * dest) = 0;
+    virtual void SetWriteValue(const char * value) = 0;
+    virtual void WriteItemTypeToJSON(class json_io * json, dword base, char * & convBuf) = 0;
+
+public:
+    ConfigItem(ConfigContext * context, const char * name, bool unmanaged);
+    virtual ~ConfigItem();
+
+    const char * GetName() const { return this->name; }
+    bool Changed() const { return this->changed; }
+    virtual bool HasDefaultValue() = 0;
+    virtual void Reset() = 0;
+};
+</code></pre>
+
+	<h3>Overview</h3>
+	This is the base class for each config item. Generally there is no need to create an own config item, because the config library provides config items
+	for the most use cases. But if there is need, an own config item must be derived from ConfigItem. Also, because of the internals, ConfigContext must
+	be a friend class for the new config item as well (the other classes don't need to, that's only used internally for the ConfigItem base class).<br/>
+	If an app whants to create an own config item class, it needs to provide one of the default data types to ConfigContext anyway. If not, the result of
+	handling that item on the JSON API side is undefined. Types supported by the ConfigContext are:
+	<ul>
+	<li>32bit integers (singed and unsigned)</li>
+	<li>64bit integers (singed and unsigned - but take care with 64bit integers because of the not-that-good support of them on JavaScript).</li>
+	<li>bool.</li>
+	<li>string (with unlimited length).</li>
+	<li>password (which is a string with a flag given on initialization to define it as password. Passwords can only be received from the JSON API
+	             and only in an encrypted way. ConfigContext will not send passwords. Instead an empty string for that items will be send).</li>
+	<li>choice (which is a combination of an integer as index and a array with available choices).</li>
+	</ul>
+	
+	<h3>Remarks</h3>
+	Don't use ConfigItem direktly (however, because of the pure virutal functions the compiler don't let you do so). Use one of the pre defined ConfigItem
+	subclasses (as described below) or implement your own to map the data type of your choice the one of the base data types using a subclass of ConfigItem.<br/>
+	When creating a subclass, each functions (except GetName() and Changed()) must be implemented by the subclass!
+	
+    <h3>Protected variables</h3>
+    <div class="fnhead">bool changed</div>
+    <dd>
+        Must be set from within the ReadValue* functions to show whether the value of the item had been changed or not.
+    </dd>
+
+    <div class="fnhead">bool unmanaged</div>
+    <dd>
+        Defines whether the item is unmanaged or not. An unmanaged item cannot be accessed through the JSON API. It is recommended to not touch this
+		value in an subclass and only set it using the constructor of ConfigItem.
+    </dd>
+
+    <h3>Protected functions</h3>
+    <div class="fnhead">ReadValueFromDataset</div>
+    <dd>
+        Will be called during loading the data from the database. An derived class should get the value from the "value" field of the dataset (by calling the
+		datasets functions to get a value by field name, see <a href="../interface/database.htm#IDataSet">IDataSet</a> for details) and stores that to an
+		internal variable in whatever datatype needed. Don't make a copy of the dataset pointer, because it will be released after all data had ben read from
+		the database. There is no need to control the items name inside the dataset, because ConfigContext will determine the config item the current row in dataset
+		is for by the config item name of that row.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IDataSet * <b>dataset</b></td><td>The dataset instance holding the row responsible for the item.</td></tr>
+        </table>
+
+		<h4>Remarks</h4>
+		Never ever delete the given dataset, store the pointer for later use or call Next() or FetchNextRow() of the dataset instance, or everything will be
+		screwed up!
+    </dd>
+
+    <div class="fnhead">ReadValueFromJSON</div>
+    <dd>
+		Will be called during parsing a JSON received from the JSON API. The function need to get the value (depending on the type, see the JSON message description below)
+		and store it into an internal variable. If the value differes from the previous value, the function must set the changed flag to true.<br/>
+		A subclass of ConfigItem read the value of the datatype needed from the given json_io instance. It must check, if there is data for that item not not get undefined
+        behaviour. The name for the field is the same as the one for the config value. Only choice type config items are a little bit different. See the JSON describtion below.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class json_io * <b>json</b></td><td>The <h href="../ilib/json.htm#json_io">json_io</h> instance to read the config item value from.</td></tr>
+            <tr><td class="param">dword <b>base</b></td><td>The base id inside the json to start reading the config item data.</td></tr>
+            <tr><td class="param">class IJsonApiConnection * const <b>connection</b></td><td>The <a href="../interface/json_api.htm">IJsonApiConnection</a> instance that sent the data to write.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">WriteValueToJSON</div>
+    <dd>
+		When an JasonApiContext requests the configuration of an application through the JSON API, ConfigContext will call WriteValueToJSON for each config item.
+		The function need to write their value to the given json_io instance by calling the propriate function for the value to write. The value should be written
+		using the name of the config item as name for the JSON item to write which get be done using the GetName() function of ConfigItem
+		(e. g. json->add_usnigned(base, this->GetName(), this->value, convBuf)). Config item that are type of choice item need also to store the choices to them.
+		See the JSON message description below.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class json_io * <b>json</b></td><td>The <h href="../ilib/json.htm#json_io">json_io</h> instance to write the config item value to.</td></tr>
+            <tr><td class="param">dword <b>base</b></td><td>The base id inside the json to start writing the config item data.</td></tr>
+            <tr><td class="param">char * & <b>convBuf</b></td><td>A pointer to a buffer used by json_io to convert numbers to strings. You only need it if
+			                                                      number values need to be written to the json_io instance.</td></tr>
+            <tr><td class="param">class IJsonApiConnection * const <b>connection</b></td><td>The <a href="../interface/json_api.htm">IJsonApiConnection</a> instance that requested the config.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">WriteValueToString</div>
+    <dd>
+		When writing the value to the database, ConfigContext needs it as string (because the values from the config items are stored as strings only to the database).
+		So for each config item this function will be called so that the function can convert the value to write it into the given buffer (or copy it, if the value of
+		the item is already in string format).
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>dest</b></td><td>The destination buffer to write the value to as string. Dest can also be nullptr. In that case, the function
+			                                                 only should return the length of the string that will be written to the buffer if given in dest.</td></tr>
+        </table>
+		
+		<h4>Return value</h4>
+		The function must return the length of the string put to dest, also if dest nullptr.
+	</dd>
+
+    <div class="fnhead">WriteItemTypeToJSON</div>
+    <dd>
+		The JavaScript config library requests all config items registeres to ConfigContext and needs to now what type there are. For this, ConfigContext calls WriteItemTypeToJSON.
+		A ConfigItem subclass needs the following fields to the given json_io instance:
+		<ul>
+			<li><b>name</b> The name of the config item. You can use ConfigItem::GetName() for this.</li>
+			<li><b>type</b> The type of the config item wich must be one of the items listed below.</li>
+			<li><b>password</b> This field must only be added (and then be added with the value true), if the item holds a string password value.</li>
+			<li><b>minVal</b> (For integer types only) The minumum value the item can have.</li>
+			<li><b>maxVal</b> (For integer types only) The maximum value the item can have.</li>
+		</ul>
+		Type need to be one of the followin value (the names of defines for that type is given in brackets):
+		<ul>
+			<li><b>BOOL</b> The item is a BOOl type (CFG_TYPE_BOOL)</li>
+			<li><b>INT</b> The item is a signed 32bit integer type (CFG_TYPE_INT)</li>
+			<li><b>DWORD</b> The item is an unsigned 32bit integer type (CFG_TYPE_DWORD)</li>
+			<li><b>LONG64</b> The item is a signed 64bit integer type (CFG_TYPE_LONG64)</li>
+			<li><b>ULONG64</b> The item is an unsigned 64bit integer type (CFG_TYPE_ULONG64)</li>
+			<li><b>STRING</b> The item is a string type (CFG_TYPE_STRING)</li>
+			<li><b>CHOICE</b> The item is a choice type (CFG_TYPE_CHOICE)</li>
+		</ul>
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class json_io * <b>json</b></td><td>The <h href="../ilib/json.htm#json_io">json_io</h> instance to write the config item type information.</td></tr>
+            <tr><td class="param">dword <b>base</b></td><td>The base id inside the json to start writing the config item type information.</td></tr>
+            <tr><td class="param">char * & <b>convBuf</b></td><td>A pointer to a buffer used by json_io to convert numbers to strings. You only need it if
+			                                                      number values need to be written to the json_io instance.</td></tr>
+        </table>
+	</dd>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigItem (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td>If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">GetName</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the name of the config item as passed to the constructor.
+	</dd>
+
+    <div class="fnhead">Changed</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns ture, if the item had been changed the last time the config items had been saved using the JSON API. The only good place to call that function
+		will be within ConfigContext::ConfigChanged() and ConfigContext::ConfigChangedUnmanaged() to figure out, wich item actually had been changed and maybe
+		nead to lead to additional updates inside the application.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+		
+		<h4>Remarks</h4>
+		ConfigItem itself doesn't have handlig of default value, so it need to be implemented from a subclass.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value. Must be implemented by a subclass.
+	</dd>
+	
+
+	<a name="ConfigChoice"><h2>ConfigChoice</h2></a>
+	<pre><code class="C++">class ConfigChoice : public ConfigItem {
+public:
+    ConfigChoice(ConfigContext * context, const char * name, size_t defVal, const char ** options, bool unmanaged = false);
+    virtual ~ConfigChoice();
+
+    int ValueIdx() const { return this->valueIdx; }
+    const char * Value() const { return (this->valueIdx < this->optionsCount ? this->choiceValues[this->valueIdx] : nullptr); }
+    void SetValue(const char * option);
+    void SetValueIdx(size_t valudIdx);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item is for providing a couple of available options and selecting one of them (that can be used e. g. for setting the language for an UI). The choice
+	options will be passes as an array of string (terminated by a nullptr entry), while the choice itself represents the index inside that array. However, ConfigChoice
+	will write the choice itself to the database instead of the index. So if there need to localize the options, the application needs to provide some kind of mapping.
+	Using the options in a way to show them directly inside a UI is not the best idea.
+	
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigChoice (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">size_t <b>defVal</b></td><td>The index of the default value inside the given options array.</td></tr>
+            <tr><td class="param">const char ** <b>options</b></td><td>The options proivided by an array of char pointers terminated by a nullptr entry. ConfigOptions
+			                                                           won't copy that array, so it should be guaranteed that this array exists over the lifetime of the
+																	   COnfigOptions instance.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">ValueIdx</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the index of the currently selected option.
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the value of the current selected options. This will be the same as options[ConfigItem::ValuedIdx()].
+		<h4>Remarks</h4>
+		If the current value index is out of range of the options array, nullptr will be returned.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the current value of ConfigItem by passing a string that also is inside the options array. Calling this function will internally set the
+		value index to the correct value. If the given option cannot be found, the internal value index will be set to 0.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>option</b></td><td>The option to set. Must be inside the options array passed to the constructor of ConfigChoice.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		You also should take care the case of the given string, because SetValue() will make a case sensitive compare to each string inside the options array.
+	</dd>
+
+    <div class="fnhead">SetValueIdx</div>
+    <dd>
+		Will set the internal index to the given value. If the given value is out of range, the internal index will set to 0.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">size_t <b>valueIdx</b></td><td>The new index to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValueIdx() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+	
+
+	<a name="ConfigBool"><h2>ConfigBool</h2></a>
+	<pre><code class="C++">class ConfigBool : public ConfigItem {
+public:
+    ConfigBool(ConfigContext * context, const char * name, bool defVal, bool unmanaged = false);
+    virtual ~ConfigBool();
+
+    bool Value() const { return this->value; }
+    void SetValue(bool value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};
+</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store a simple boolean value.
+	
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigBool (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">bool <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">bool <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+
+	<a name="ConfigInt"><h2>ConfigInt</h2></a>
+	<pre><code class="C++">class ConfigInt: public ConfigItem {
+public:
+    ConfigInt(ConfigContext * context, const char * name, int defVal, bool unmanaged = false, int minVal = INT32_MIN, int maxVal = INT32_MAX);
+    virtual ~ConfigInt();
+
+    int Value() const { return this->value; }
+    void SetValue(int value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store a 32bit singed integer.
+		
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigInt (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">int <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+            <tr><td class="param">int <b>minVal</b></td><td><i>(Default: INT32_MIN)</i> The minimum value that can be set to that item.</td></tr>
+            <tr><td class="param">int <b>maxVal</b></td><td><i>(Default: INT32_MAX)</i> The maximum value that can be set to that item.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		If the value passed to SetValue() is less than minVal (given to the constructor), the internal value will be set to minVal. If it is greater than
+		maxVal, the internal value will be set to maxVal.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+	<a name="ConfigDword"><h2>ConfigDword</h2></a>
+	<pre><code class="C++">class ConfigDword : public ConfigItem {
+public:
+    ConfigDword(ConfigContext * context, const char * name, dword defVal, bool unmanaged = false, dword minVal = 0, dword maxVal = UINT32_MAX);
+    virtual ~ConfigDword();
+
+    dword Value() const { return this->value; }
+    void SetValue(dword value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store a 32bit unsinged integer.
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigDword (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">dword <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+            <tr><td class="param">dword <b>minVal</b></td><td><i>(Default: 0)</i> The minimum value that can be set to that item.</td></tr>
+            <tr><td class="param">dword <b>maxVal</b></td><td><i>(Default: UINT32_MAX)</i> The maximum value that can be set to that item.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		If the value passed to SetValue() is less than minVal (given to the constructor), the internal value will be set to minVal. If it is greater than
+		maxVal, the internal value will be set to maxVal.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+	<a name="ConfigLong64"><h2>ConfigLong64</h2></a>
+	<pre><code class="C++">class ConfigLong64 : public ConfigItem {
+public:
+    ConfigLong64(ConfigContext * context, const char * name, long64 defVal, bool unmanaged = false, long64 minVal = INT64_MIN, long64 maxVal = INT64_MAX);
+    virtual ~ConfigLong64();
+
+    long64 Value() const { return this->value; }
+    void SetValue(long64 value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store a 64bit singed integer.
+		
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigLong64 (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">long64 <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+            <tr><td class="param">long64 <b>minVal</b></td><td><i>(Default: INT64_MIN)</i> The minimum value that can be set to that item.</td></tr>
+            <tr><td class="param">long64 <b>maxVal</b></td><td><i>(Default: INT64_MAX)</i> The maximum value that can be set to that item.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		If the value passed to SetValue() is less than minVal (given to the constructor), the internal value will be set to minVal. If it is greater than
+		maxVal, the internal value will be set to maxVal.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+	<a name="ConfigUlong64"><h2>ConfigUlong64</h2></a>
+	<pre><code class="C++">class ConfigUlong64 : public ConfigItem {
+public:
+    ConfigUlong64(ConfigContext * context, const char * name, ulong64 defVal, bool unmanaged = false, ulong64 minVal = 0, ulong64 maxVal = UINT64_MAX);
+    virtual ~ConfigUlong64();
+
+    ulong64 Value() const { return this->value; }
+    void SetValue(ulong64 value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store a 64bit singed integer.
+		
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigUlong64 (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">ulong64 <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+            <tr><td class="param">ulong64 <b>minVal</b></td><td><i>(Default: 0)</i> The minimum value that can be set to that item.</td></tr>
+            <tr><td class="param">ulong64 <b>maxVal</b></td><td><i>(Default: UINT64_MAX)</i> The maximum value that can be set to that item.</td></tr>
+        </table>
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ulong64 <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		If the value passed to SetValue() is less than minVal (given to the constructor), the internal value will be set to minVal. If it is greater than
+		maxVal, the internal value will be set to maxVal.
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+	<a name="ConfigString"><h2>ConfigString</h2></a>
+	<pre><code class="C++">class ConfigString : public ConfigItem {
+public:
+    ConfigString(ConfigContext * context, const char * name, const char * defVal, bool unmanaged = false, bool isPassword = false);
+    virtual ~ConfigString();
+
+    const char * Value() const { return this->value; }
+    void SetValue(const char * value);
+    bool HasDefaultValue() override;
+    void Reset() override;
+    static void Encrypt(const char * seed, const char * password, char * out, size_t len);
+    static void Decrypt(const char * seed, const char * password, char * out, size_t len);
+};</code></pre>
+
+	<h3>Overview</h3>
+	This config item will store string value. That also can be a password (of isPassword of the constructor is set to true). In that case, an empty string
+    instead of the password itself will be send to a JsonApiContext. When setting a new value for that item using the JSON API, the password must be encrypted.
+    See the JSON messages description below for more details. Gladly, the encryption and decryption part is handled inside the JavaScript config library as
+    well as inside the C++ library.
+	
+	<h3>Remarks</h3>
+	Note that even passwords must be send by a JsonApiContext in an encrypted format, the password itself will be saved unencrypted to the database. This
+	is not a big problem, because the database of an application can only be accassed after passing the login-procedure on the JavaScript side. On the linux
+	(C++) side, the access to the database is also protected by username and password. However, an app is free to encrypt the password itself before sending
+	it to ConfigContext (or setting it using SetValue() for unmanaged items), which will end up in an encrpyted password inside the databse. In that case,
+    the app also must decrypt the password when needed.
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">ConfigString (Constructor)</div>
+    <dd>
+		The constructor of the class.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ConfigContext * <b>context</b></td><td>The <h href="#ConfigContext">ConfigContext</h> instance the item itself will reigster to it.</td></tr>
+            <tr><td class="param">char * <b>name</b></td><td>The name of the config item. Must be unique withing the given ConfigContext.</td></tr>
+            <tr><td class="param">char * <b>defVal</b></td><td>The default value for the item.</td></tr>
+            <tr><td class="param">bool <b>unmanaged</b></td><td><i>(Default false)</i> If set to true, the item is unmanaged and with this not accassable through the JSON API.</td></tr>
+            <tr><td class="param">bool <b>isPassword</b></td><td><i>(Default false)</i> If set to true, the item is handled as password string and will not be send to a JsonApiContext.</td></tr>
+        </table>
+
+        <h4>Remarks</h4>
+        Note that ConfigString won't make a copy of the default value given in devVal. It will only store the pointer. So an application must guarantee, that the string
+        passed to the constructor will exist and also not be changed over the lifetime of a ConfigString object.
+	</dd>
+
+    <div class="fnhead">Value</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns the current value of the config item.
+		
+		<h4>Remarks</h4>
+		If the item is defined as password, Value() will return that password in plain text.
+	</dd>
+
+    <div class="fnhead">SetValue</div>
+    <dd>
+		Set the value of the config item to the given one.
+		
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ulong64 <b>value</b></td><td>The new value to set.</td></tr>
+        </table>
+		
+		<h4>Remarks</h4>
+        SetValue() can only be called for items with unmanaged flag set to true. Everything else will lead to an assertion.<br/>
+		Note that this won't affect the internal changed flag.<br/>
+		If the item is defined as password, the password must be set unencrypted here (or Value() will return it encrypted, too).
+	</dd>
+
+    <div class="fnhead">HasDefaultValue</div>
+    <dd>
+		<h4>Return value</h4>
+		Returns true, if the current value of the item equals the default value given on creation, else false.
+	</dd>
+
+    <div class="fnhead">Reset</div>
+    <dd>
+		Resets the config item and set the value to the default value.
+	</dd>
+
+    <div class="fnhead">Encrypt</div>
+    <dd>
+        Encrypts a password with a seed and writes the result to an output buffer. The encrypted password can be decrypted with the same seed again.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>seed </b></td><td>A seed to use.</td></tr>
+            <tr><td class="param">const char * <b>password </b></td><td>The clear text password.</td></tr>
+            <tr><td class="param">char * <b>out </b></td><td>Output buffer. The buffer should have a size of strlen(password) * 2 + 1.</td></tr>
+            <tr><td class="param">size_t <b>len </b></td><td>The length of the output buffer.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Decrypt</div>
+    <dd>
+        Decrypts a password with a seed and writes the result to an output buffer.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>seed </b></td><td>A seed to use.</td></tr>
+            <tr><td class="param">const char * <b>password </b></td><td>The encrypted password.</td></tr>
+            <tr><td class="param">char * <b>out </b></td><td>Output buffer. The buffer should have a size of strlen(password) / 2 + 1.</td></tr>
+            <tr><td class="param">size_t <b>len </b></td><td>The length of the output buffer.</td></tr>
+        </table>
+    </dd>
+
+	<h1>JSON Messages</h1>
+	<h2>Overview</h2>
+	Below is the description of the JSON messages the ConfigContext shares with the JavaScript config library. Note that some of the fields are optional end depend on the value
+	of other fields. You are free to implement your only config javascript library, but note that this messages only will be accepted after sucessfully logging into an appservice
+	using the AppWebsocket javascript library. See <a href="../../web1/config/config.htm">JavaScript config library</a> for details.
+    
+    <p>
+        The Config protocol supports the AppWebsocket "src" mechanism.
+    </p>
+	
+	<a name="BaseMessage"><h2>Base message</h2></a>
+	<pre><code class="json">{
+    "api": "Config",
+    "src": string,
+    "mt": "ConfigMessage"
+}</code></pre><br/>
+	All messages send from and to ConfigContext always have the same header. The property api defines the message as part of the configuration API of the SDK, mt defines the message
+	itself and will be one of the following values:
+	<p>
+	<u>Send to ConfigContext</u>
+	<ul>
+		<li><a href="#GetConfigItems">GetConfigItems</a></li>
+		<li><a href="#ReadConfig">ReadConfig</a></li>
+		<li><a href="#WriteConfig">WriteConfig</a></li>
+	</ul>
+	</p>
+	<p>
+	<u>Send from ConfigContext</u>
+	<ul>
+		<li><a href="#GetConfigItemsResult">GetConfigItemsResult</a></li>
+		<li><a href="#ReadConfigResult">ReadConfigResult</a></li>
+		<li><a href="#WriteConfigResult">WriteConfigResult</a></li>
+		<li><a href="#ConfigUpdate">ConfigUpdate</a></li>
+	</ul>
+	</p>
+	
+	<a name="GetConfigItems"><h2>GetConfigItems</h2></a>
+	<pre><code class="json">{
+    "api": "Config",
+    "mt": "GetConfigItems"
+}</code></pre>
+	<h3>Overview</h3>
+	Before reading the current config, the list of available config items should be requested first. This will be done by the GetConfigItems message, which will lead to a
+	GetConfigItemsResult with the list of config items and details to them.
+	
+	<a name="GetConfigItemsResult"><h2>GetConfigItemsResult</h2></a>
+	<pre><code class="json">{
+    "api": "Config",
+    "mt": "GetConfigItems",
+    "result": "AccessDenied",
+    "ConfigItems": [ConfigItemObject]
+}</code></pre>
+	<h3>Overview</h3>
+	This will be the answer for a GetConfigItems message. Beside the message base, there will be another property which is either result or ConfigItems.
+
+	<h3>Fields</h3>
+    <div class="fnhead">result</div>
+    <dd>
+		If the JsonApiContext that sent the GetConfigItems message doens't have the right to read the config, the result property will be set (always with the value "AccessDenied").
+		In that case, result is the only additional one. If access is allowed, no result property will be sent within that message.
+    </dd>
+
+
+    <div class="fnhead">ConfigItems</div>
+    <dd>
+		If the JsonApiContext that has sent the GetConfigItems message has the right to read the config, an array named ConfigItems will be send. This array can be empty (if there
+		are no config items), or filled with objects descriped in <a href="#ConfigItemObject">ConfigItemObject</a> providing the informations for an config item.
+    </dd>
+
+    <h3 id="ConfigItemObject">ConfigItemObject</h3></a>
+    <pre><code class="json">{
+    "name": "ConfigItemName",
+    "type": "TypeOfItem",
+    "minVal" : Number,
+    "maxVal" : Number,
+    "password" : true,
+    "choices" : [ListOfChoices]
+}</code></pre>
+    <div class="fnhead">name</div>
+    <dd>
+		The name of the config item as defined on the C++ side.
+    </dd>
+
+    <div class="fnhead">type</div>
+    <dd>
+		The type of the config item. Will be one of the following:
+		<ul>
+			<li><b>BOOL</b> A boolean field.</li>
+			<li><b>INT</b> A 32bit singed integer field.</li>
+			<li><b>DWORD</b> A 32bit unsigned integer field.</li>
+			<li><b>LONG64</b> A 64bit singed integer field.</li>
+			<li><b>ULONG64</b> A 64bit unsigned integer field.</li>
+			<li><b>STRING</b> A string field.</li>
+			<li><b>CHOICE</b> A choice field.</li>
+		</ul>
+    </dd>
+
+    <div class="fnhead">minVal (optional)</div>
+    <dd>
+		<i>(Only for config item types INT, DWORD, LONG64 and ULONG64)</i> If set, the property defines minimum value accepted by that config item.
+	</dd>
+
+    <div class="fnhead">maxVal (optional)</div>
+    <dd>
+		<i>(Only for config item types INT, DWORD, LONG64 and ULONG64)</i> If set, the property defines maximum value accepted by that config item.
+	</dd>
+
+    <div class="fnhead">password (optional)</div>
+    <dd>
+		<i>(Only for config item type STRING)</i> If exists (and in that case always set to true), the string config item is defined as password string. That means,
+		that ReadConfig and ConfigUpdate never will send the real value for that item (an empty string will be send instead). And when writing a value to that item,
+        it must be encrypted. That encryption is handled by the JavaScript config library.
+	</dd>
+
+    <div class="fnhead">choices</div>
+    <dd>
+		<i>(Only for config item type CHOICE)</i> An array with the available choices to choose. Each choice is represented by a string value.
+	</dd>
+
+    <h3>Example message</h3>
+	<pre><code class="json">{
+    "api": "Config",
+    "mt": "GetConfigItemsResult",
+    "ConfigItems": [{
+        "name" : "maxPlayers",
+        "type" : "DWORD",
+        "minVal" : 1,
+        "maxVal" : 10
+    },
+    {
+        "name" : "teams",
+        "type" : "CHOICE",
+        "choices" : ["RedTeam", "BlueTeam", "InnoTeam"]
+    },
+    {
+        "name" : "playerName",
+        "type" : "STRING"
+    }]
+}</code></pre>
+
+<a name="ReadConfig"><h2>ReadConfig</h2></a>
+<pre><code class="json">{
+    "api": "Config",
+    "mt": "ReadConfig"
+}</code></pre>
+    <h3>Overview</h3>
+    This will request the current configuration which will lead to a ReadConfigResult message.
+
+    <a name="ConfigUpdate"/><a name="ReadConfigResult"><h2>ReadConfigResult / ConfigUpdate</h2></a>
+    <pre><code class="json">{
+    "api": "Config",
+    "mt": "ReadConfigResult" / "ConfigUpdate"
+    "ConfigItems" : {
+        "ItemName" : number,
+        "ItemName" : true / false,
+        "ItemName" : "stringValue"
+    }
+}</code></pre>
+        <h3>Overview</h3>
+        This message will be used to send the current configuration after requested (ReadConfigResult) or after the config had been changed on the C++ side (ConfigUpdate). The messages for         
+        ReadConfigResult and ConfigUpdate are the same except the value of the mt property, of course.
+
+        <div class="fnhead">ConfigItems</div>
+        <dd>
+            This array holds all config items and their values. Each item will be send by a property with the name of the item and the value. The value type depends of the type of the config item itself:
+            <ul>
+                <li><b>INT, DWORD, LONG64, ULONG64</b>: The value as number with the bitwith according the config item type.</li>
+                <li><b>CHOICE</b>: The zero based index inside the array of choices received with the GetConfigItemsResult message.</li>
+                <li><b>BOOL</b>: Simply true or false.</li>
+                <li><b>STRING</b>: The string value of the item.</li>
+            </ul>
+        </dd>    
+
+        <h3>Example message</h3>
+        <pre><code class="json">{
+    "api": "Config",
+    "mt": "ReadConfigResult",
+    "ConfigItems": {
+        "maxPlayers" : 5,
+        "teams" : 2,
+        "playerName" : "Goldfish"
+    }
+}</code></pre>
+    
+<a name="WriteConfig"><h2>WriteConfig</h2></a>
+<pre><code class="json">{
+    "api": "Config",
+    "mt": "WriteConfig",
+    "ConfigItems": {
+        "ItemName": number,
+        "ItemName": true / false,
+        "ItemName": "StringValue",
+        "ItemNamePassword": {
+            "value": "EncodedValue",
+            "key": "KeyToDecode"
+        }
+    }
+}</code></pre>
+    <h3>Overview</h3>
+    With this message, ConfigContext will update the internal config items with the values sent by the message. Each property value that differ from the appropriate config items dfefault value or current value,
+    will be updated in memory and written to the database.
+
+        <div class="fnhead">ConfigItems</div>
+        <dd>
+            This array holds all config items and their values. Each item will be send by a property with the name of the item and the value. The value type depends of the type of the config item itself:
+            <ul>
+                <li><b>INT, DWORD, LONG64, ULONG64</b>: The value as number with the bitwith according the config item type.</li>
+                <li><b>CHOICE</b>: The zero based index inside the array of choices received with the GetConfigItemsResult message.</li>
+                <li><b>BOOL</b>: Simply true or false.</li>
+                <li><b>STRING</b>: The string value of the item.</li>
+            </ul><br/>
+            There is one special field for string config items that are defined as password strings. For this items, "Password" must be added to the items name and set as the property that holds an array.
+            Inside this array, the encrypted string value will be set to the value property, while the key property holds the key needed to decode the string inside value. The encryption must be done by
+            creating a value for the key and call the decrypt function of appWebsocket with that created key and the string to encode. Both informations (the encrypted string and the key) are used by
+            ConfigContext do decrypt the password again.
+        </dd>    
+
+    <a name="WriteConfigResult"><h2>WriteConfigResult</h2></a>
+    <pre><code class="json">{
+    "api":"Config",
+    "mt":"WriteConfigResult",
+    "result":"ok"
+}</code></pre>
+    <h3>Overview</h3>
+    This message will be send as answer to WriteConfig.
+
+    <div class="fnhead">result</div>
+    <dd>
+        The result of the WriteConfig message which can be one of the following value:
+        <ul>
+            <li><b>ok</b> The config had been sucessfully witten to the database.</li>
+            <li><b>failed</b> Writing the config failed. See the log of the application service for details (logging of config must be enabled).</li>
+            <li><b>AccessDenied</b> The connection does't have the right to write the config.</li>
+        </ul>
+    </dd>
+
+    <h1>Code examples</h1>
+    <a name="ExampleConfigContext"><h2>ConfigContext</h2></a>
+    <pre><code class="C++">// A simple class derived from ConfigContext
+
+static const char * team_names[] = { "ReadTeam", "BlueTeam", "InnoTeam", nullptr };
+
+class MyConfig : public ConfigContext() {
+private:
+    class MyApp * myApp;
+    ConfigInt maxPlayers;
+    ConfigString playerName;
+    ConfigChoice teams;
+
+protected:
+    virtual void ConfigChanged()
+    {
+        this->myApp->OnConfigChanged();
+    }
+
+public:
+    // Let's assume, that MyApp is derived from JsonApiContext.
+    MyConfig(class MyApp * userApp, class IDatabase * database, class IInstanceLog * log)
+        : ConfigContext(database, log),
+          maxPlayers(this, "maxPlayers", 5, false, 1, 10),
+          playerName(this, "playerName", "Goldfish"),
+          teams(this, "teams", 2, team_names)
+    {
+        this->myApp = userApp;
+        this->myApp->RegisterJsonApi(this);
+    }
+
+    ConfigInt & MaxPlayers() { return this->maxPlayers; }
+    ConfigString & PlayerName() { return this->playerName; }
+    ConfigChoice & Teams() { return this->teams; }
+};</code></pre>
+
+    <a name="ExampleConfigUse"><h2>Using config</h2></a>
+    <pre><code class="C++">// Let's assume, that MyApp is derived from JsonApiContext and UTask, already
+// created and also has pointers to an already created and initialized IDatabase
+// instance as well as valid IInstanceLog instance.
+
+void MyApp::Init()
+{
+    this->config = new MyConfig(this, this->database, this->log);
+    ITask * initConfigTask = this->config->CreateInitTask();
+    initConfigTask->Start(this);
+}
+
+void MyApp::TaskComplete(ITask * task)
+{
+    delete task;
+    debug->printf("Config database initialized");
+}
+
+void MyApp::OnConfigChanged()
+{
+    debug->printf("Config changed - new values:");
+    debug->printf("    Max-Players   : %u", this->config->MaxPlayers().Value());
+    debug->printf("    Player-Name   : %s", this->config->PlayerName().Value());
+    debug->printf("    Selected Team : %s", this->config->Teams().Value());
+}
+</code></pre>
+
+    <a name="ExampleFirstSteps"><h2>First Steps</h2></a>
+
+    <p>
+        To use config some preparations in your code needs to be done. The following steps appply
+        when you use ConfigContext as base class to your instance class and do not use a separate
+        class for the config. This is a good option in most cases.
+    </p>
+
+    <dl>
+        <dt>Includes</dt>
+        <dd>
+            Use config.h as include
+            <pre><code class="C++">#include "common/lib/config.h"</code></pre>
+        </dd>
+        <dt>Definitions in the instance class</dt>
+        <dd>
+            Use JsonApiContext and ConfigContext as base class
+            <pre><code class="C++">..., public JsonApiContext, public ConfigContext</code></pre>
+            Define a private function, as initialization complete handler
+            <pre><code class="C++">void ConfigInitComplete(class ITask * task);</code></pre>
+            Define a UTaskTemplate class so that this handler will be called
+            <pre><code class="C++">class UTaskTemplate&lt;YourApp, class ITask&gt; taskConfigInit;</code></pre>
+            Define public members for the config parameters, e.g
+            <pre><code class="C++">class ConfigString configParameter;</code></pre>
+        </dd>
+        <dt>Instance Code</dt>
+        <dd>
+            Initializations in the constructor of the instance class
+            <pre><code class="C++">ConfigContext(0, this),
+taskConfigInit(this, &yourApp::ConfigInitComplete),
+configParameter(this, "parameter", "")
+</code></pre>
+            Call RegisterJsonApi in the instance constructor, so that the Config lib
+            is known as Api provider
+            <pre><code class="C++">RegisterJsonApi(this);</code></pre>
+            Start config initialization after database is connected. E.g. in the
+            DatabaseConnectComplete function
+            <pre><code class="C++">    class ITask * task = CreateInitTask(database);
+    task->Start(&taskConfigInit);
+</code></pre>
+            Continue initialization when config init is complete
+            <pre><code class="C++">void YourApp::ConfigInitComplete(class ITask * task)
+{
+    ... more init ...
+}</code></pre>
+            Make sure the you instance class is passed as jsonApiContext in the AppWebsocket
+            constructor
+            <pre><code class="C++">AppWebsocket(webserverPlugin, yourApp, <b>yourApp</b>)</code></pre>
+        </dd>
+    </dl>
+</body>
+</html>

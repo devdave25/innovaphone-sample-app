@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Recording</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Recording</h1>
+
+    <p>
+        On phones as on media-relay interfaces in gateway, a recording URL can be configured. When this URL is
+        configured, for each call, the media of the call is sent via HTTP PUT (WebDav) to a webserver. The media
+        data is sent as pcap file, containing unencrypted RTP streams along with a dummy SIP signaling, so that
+        wireshark can directly decode the media stream. The coding of the media stream is as it was used for
+        the conversiation.
+    </p>
+
+    <h2>File name used for the PUT</h2>
+
+    <p>
+        The URL used for the PUT is what is configured as recording URL. To this URL a filename is added
+        which is used to encode some basic information about the call, so that it can be matched to
+        information received thru RCC or the CDR records
+    </p>
+    <p>
+        Filename format:
+        <pre><code>&lt;guid&gt;-&lt;mac&gt;-&lt;serial&gt;(-&lt;reg-name&gt;)</code></pre>
+    </p>
+    <dl>
+        <dt>guid</dt>
+        <dd>
+            The confernce id of the call. This conference id is identical at all legs of the call, so recordings
+            done on different devices of the same call, can all be associated to the call. The conference id is
+            also sent in the CDRs of a call.
+        </dd>
+        <dt>mac</dt>
+        <dd>
+            MAC address of the device, which performed the recording
+        </dd>
+        <dt>serial</dt>
+        <dd>
+            Serial number of the recording, to build a unique file name in case a call is recorded multiple
+            times from the same device.
+        </dd>
+        <dt>reg-name</dt>
+        <dd>
+            If a registration name is available it is added to the filename
+        </dd>
+    </dl>
+
+    <h2>File format</h2>
+
+    <p>
+        The file format is PCAP. A dummy SIP signaling is added, so that wireshark can find the RTP streams. For
+        the RTP streams fixed port numbers are used, 16386 for the local side and 16388 for the remote side.
+    </p>
+    <p>
+        The media is provided with the same coder as it was sent on the actual conversation, but without any
+        encryption. If the data shall be sent encrypted to the recorder, a HTTPS URL should be used.
+    </p>
+</body>
+</html>

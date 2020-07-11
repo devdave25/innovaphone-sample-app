@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - tasks implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Tasks</h1>
+    <p>
+        An interface that encapsulates asynchronous tasks, that can be started,
+        then take some time and finally succeed or fail.
+        Applications can use this interface as a base class for their tasks.
+	</p>
+    
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/task.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#ITask">ITask</a><br>
+                                       <a href="#UTask">UTask</a><br>
+                                       <a href="#UTaskTemplate">UTaskTemplate</a><br>
+                                      </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                          <a href="#IUTask">Task</a><br>
+                                          <a href="#IUTaskTemplate">UTaskTemplate</a><br>
+                                      </td></tr>
+	</table>
+	
+	
+	
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+	<a name="ITask"><h2>ITask</h2></a>
+    <pre><code class="C++">class ITask {
+protected:
+    class UTask * user;
+
+public:
+    <a href="#ITaskF" style="text-decoration:none">ITask();</a>
+    virtual ~ITask() {}
+    <a href="#ITaskStart" style="text-decoration:none">virtual void Start() {};</a>
+    <a href="#ITaskStartU" style="text-decoration:none">virtual void Start(class UTask * user) = 0;</a>
+    <a href="#ITaskStop" style="text-decoration:none">virtual void Stop() { stopped = true; };</a>
+    <a href="#ITaskComplete" style="text-decoration:none">virtual void Complete() { if (user) user->TaskComplete(this); };</a>
+    <a href="#ITaskFailed" style="text-decoration:none">virtual void Failed() { if (user) user->TaskFailed(this); };</a>
+    <a href="#ITaskProgress" style="text-decoration:none">virtual void Progress(dword progress) { if (user) user->TaskProgress(this, progress); };</a>
+    <a href="#ITaskFinished" style="text-decoration:none">virtual void Finished() {};</a>
+    <a href="#ITaskError" style="text-decoration:none">bool error;</a>
+    <a href="#ITaskStopped" style="text-decoration:none">bool stopped;</a>
+};</code></pre>
+
+    <p>
+    The ITask class is a base class for tasks which shall do asynchronous operations and callback later a result on a UTask user.
+    </p>
+
+    <h3>Public functions</h3>
+    <a name="ITaskF"><div class="fnhead">ITask()</div></a>
+    <dd>
+        The constructor of the class.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ITaskStart"><div class="fnhead">virtual void Start()</div></a>
+    <dd>
+        Start function of a task, not to be used.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ITaskStartU"><div class="fnhead">virtual void Start(class UTask * user)</div></a>
+    <dd>
+        Start function of a task. Override this function in your parent class.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class UTask * <b>user</b></td><td>The <a href="#UTask">UTask</a> instance which will receive the callbacks.</td></tr>
+        </table>
+    </dd>
+    <a name="ITaskStop"><div class="fnhead">virtual void Stop()</div></a>
+    <dd>
+        Stop function of a task. The default implemenation just sets <a href="ITaskStopped">stopped</a> to true.<br>
+        You can override Stop and implement a logic to interrupt a task.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ITaskComplete"><div class="fnhead">virtual void Complete()</div></a>
+    <dd>
+        This function can be used as a shortcut instead of calling <a href="#UTaskTaskComplete">user->TaskComplete(this)</a>.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ITaskFailed"><div class="fnhead">virtual void Failed()</div></a>
+    <dd>
+        This function can be used as a shortcut instead of calling <a href="#UTaskTaskFailed">user->TaskFailed(this)</a>.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    <a name="ITaskProgress"><div class="fnhead">virtual void Progress(dword progress)</div></a>
+    <dd>
+        This function can be used as a shortcut instead of calling <a href="#UTaskTaskProgress">user->TaskProgress(this, progress)</a>.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>progress</b></td><td>A dword to differentiate between different progress states.</td></tr>
+        </table>
+    </dd>
+    <a name="ITaskFinished"><div class="fnhead">virtual void Finished()</div></a>
+    <dd>
+        This function can be overwritten to implement a Finished function which e.g. handles success and failed together.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+        </table>
+    </dd>
+    
+    <h3>Public members</h3>
+    <table style="margin-left:-12px">
+        <tr><td class="param"><a name="ITaskError">bool <b>error</b></a></td><td>A boolean which can be set to true to indicate an error.</td></tr>
+        <tr><td class="param"><a name="ITaskStopped">bool <b>stopped</b></a></td><td>A boolean which can be set to true to indicate that the task has been stopped.</td></tr>
+    </table>
+    
+    <a name="UTask"><h2>UTask</h2></a>
+    <pre><code class="C++">class UTask {
+public:
+    virtual ~UTask() {};
+    <a href="#UTaskTaskComplete" style="text-decoration:none">virtual void TaskComplete(class ITask * const task) = 0;</a>
+    <a href="#UTaskTaskFailed" style="text-decoration:none">virtual void TaskFailed(class ITask * const task) = 0;</a>
+    <a href="#UTaskTaskProgress" style="text-decoration:none">virtual void TaskProgress(class ITask * const task, dword progress = 0) {};</a>
+};</code></pre>
+
+    <p>
+    The UTask class is a base class for classes which handle the callbacks from ITask tasks.
+    </p>
+
+    <h3>Public virtual functions</h3>
+    <a name="UTaskTaskComplete"><div class="fnhead">virtual void TaskComplete(class ITask * const task)</div></a>
+    <dd>
+        Callback that is called if the task is completed successfully.
+        If the implementation needs to return data as a result of the task,
+        this is outside the scope of the ITask interface.
+        Instead implementations should provid getter functions for result data.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class ITask * const <b>task</b></td><td>The <a href="#ITask">ITask</a> instance of the task itself.</td></tr>
+        </table>
+    </dd>
+    <a name="UTaskTaskFailed"><div class="fnhead">virtual void TaskFailed(class ITask * const task)</div></a>
+    <dd>
+        Callback that is called if the task failed.        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class ITask * const <b>task</b></td><td>The <a href="#ITask">ITask</a> instance of the task itself.</td></tr>
+        </table>
+    </dd>
+    <a name="UTaskTaskProgress"><div class="fnhead">virtual void TaskProgress(class ITask * const task, dword progress)</div></a>
+    <dd>
+        Callback that is called if there was some progress to the task.            
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class ITask * const <b>task</b></td><td>The <a href="#ITask">ITask</a> instance of the task itself.</td></tr>
+            <tr><td class="param">dword <b>progress</b></td><td>The nummeric value 'progress' can be used to indicate additional information the type of the progress.</td></tr>
+        </table>
+    </dd>
+    
+    <a name="UTaskTemplate"><h2>UTaskTemplate</h2></a>
+    <pre><code class="C++">template <class B, class T> class UTaskTemplate : public UTask {
+public:
+    <a href="#UTaskTemplateF" style="text-decoration:none">UTaskTemplate(B * base,
+                  void (B::* taskComplete)(T * task),
+                  void (B::* taskFailed)(T * task) = 0,
+                  void (B::* taskProgress)(T * task, dword progress) = 0);
+};</code></pre>
+
+    <p>
+    Just using UTask is fine for classes which handle one task, but if you have a class which handles many different tasks, you would need to dynamic cast inside TaskComplete/TaskFailed/TaskProgress.<br>
+    UTaskTemplate helps to avoid this by handing a member which can be added to the class which used to be derived from UTask. Instead of handing <b>this</b> to the ITask::Start function, you hand a reference to the member, which itself has specific callback functions.
+    </p>
+
+    <h3>Public  functions</h3>
+    <a name="UTaskTemplateF"><div class="fnhead">UTaskTemplate(B * base,
+                  void (B::* taskComplete)(T * task),
+                  void (B::* taskFailed)(T * task) = 0,
+                  void (B::* taskProgress)(T * task, dword progress) = 0)</div></a>
+    <dd>
+        The constructor of the class.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">B <b>* base</b></td><td>The class which has the member of UTaskTemplate.</td></tr>
+            <tr><td class="param">void (B::* taskComplete)<b>(T * task)</b></td><td>The specific TaskComplete function of the calling class.</td></tr>
+            <tr><td class="param">void (B::* taskFailed)<b>(T * task)</b></td><td>The specific TaskFailed function of the calling class.</td></tr>
+            <tr><td class="param">void (B::* taskProgress)<b>(T * task)</b></td><td>The specific TaskProgress function of the calling class.</td></tr>
+        </table>
+    </dd>
+    
+    <h3>Remarks</h3>
+    The <a href="ITaskError">error property</a> of the ITask instance is automatically set to true if TaskFailed is called.
+    
+    <!-- Block with the examples -->
+    <h1>Examples</h1>
+	<a name="IUTask"><h2>Task</h2></a>
+    <pre><code class="C++">
+// a class which has UTask as base class and calls an ITask instance
+class TaskHandler : public UTask {
+    class TaskExecutor * task;
+public:
+    TaskHandler();
+    void TaskComplete(class ITask * task) override;
+    void TaskFailed(class ITask * task) override;
+    void TaskProgress(class ITask * task, dword progress = 0) override;
+}
+
+// a class which has ITask as base class which can be used by class TaskHandler
+class TaskExecutor : public ITask {
+public:
+    void Start(class UTask * user) override;    // do some async processing and call TaskFailed/TaskComplete later (async!)
+    void Stop() override;
+}
+
+// implementation
+TaskHandler::TaskHandler() {
+    this->task = new class TaskExecutor();
+    this->task->Start(this);
+}
+
+void TaskHandler::TaskComplete(class ITask * task) {
+    debug->printf("done");
+    this->task = nullptr;
+    delete task;
+}
+void TaskHandler::TaskFailed(class ITask * task) {
+    debug->printf("failed");
+    this->task = nullptr;
+    delete task;
+}
+
+void TaskHandler::TaskProgress(class ITask * task, dword progress = 0) {
+    debug->printf("progress");
+}
+    </code></pre>
+    
+    <a name="IUTaskTemplate"><h2>UTaskTemplate</h2></a>
+    <pre><code class="C++">
+// instead of having a base class UTask, we have a member from UTaskTemplate
+class TaskHandler {
+    UTaskTemplate<TaskHandler, class TaskExecutor> taskExecutor;
+    
+    class ITask * task;
+    
+    void TaskExecutorFinished(class TaskExecutor * task);
+    void TaskExecutorFailed(class TaskExecutor * task);
+    void TaskExecutorProgress(class TaskExecutor * task, dword progress = 0);
+}
+
+// implementation
+TaskHandler::TaskHandler() :
+// hand all the callback functions of our class to the taskExecutor member
+taskExecutor(this, &TaskHandler::TaskExecutorFinished, &TaskHandler::TaskExecutorFailed, &TaskHandler::TaskExecutorProgress)
+{
+    this->task = new class TaskExecutor();
+    this->task->Start(&taskExecutor);       // hand a reference to taskExecutor instead of this
+}
+
+void TaskHandler::TaskExecutorFinished(class TaskExecutor * task) {
+    debug->printf("done");
+    this->task = nullptr;
+    delete task;
+}
+void TaskHandler::TaskExecutorFailed(class TaskExecutor * task) {
+    debug->printf("failed");
+    this->task = nullptr;
+    delete task;
+}
+
+void TaskHandler::TaskExecutorProgress(class TaskExecutor * task, dword progress = 0) {
+    debug->printf("progress");
+}
+    </code></pre>
+</body>
+</html>

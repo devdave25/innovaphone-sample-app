@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - [Name of library part here]</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>pbx_admin.h</h1>
+
+    <p>
+        IPbxAdminApi is an interface, which provides administrative access to the PBX. It uses the Websocket/Json
+        interface "PbxAdmin". To be able to use this interface inside an App Service, a Websocket connection
+        from the PBX has to exist. For this connection access to the "PbxAdminApi" has to be granted
+	</p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/pbx_admin.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#IPbxAdminApi">IPbxAdminApi</a><br>
+                                       <a href="#UPbxMonitorAdminObject">UPbxMonitorAdminObject</a><br>
+                                       <a href="#UPbxMonitorConfig">UPbxMonitorConfig</a><br>
+                                       <br>
+                                   </td></tr>
+    </table>
+
+	<h1>Classes</h1>
+
+    <a name="IPbxAdminApi"><h2>IPbxAdminApi</h2></a>
+
+    <pre><code class="C++">class IPbxAdminApi : public UJsonApiContext {
+public:
+    static class IPbxAdminApi * Create(const char * domain, const char * pbx);
+    virtual ~IPbxAdminApi() {};
+
+    virtual void SetPbx(const char * domain, const char * pbx) = 0;
+    virtual void MonitorAdminObject(class UPbxMonitorAdminObject * monitor) = 0;
+    virtual void MonitorConfig(class UPbxMonitorConfig * monitor) = 0;
+};</code></pre>
+
+    <p>
+        This is the interface class which provides the public functions for the features of the interface
+        after initialization is done.
+    </p>
+	
+    <h3>Public functions</h3>
+
+    <div class="fnhead">Create</div>
+
+    <p>
+        This functions needs to be called as part of the initialization to create the interface class.
+    </p>
+
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr><td class="param">char * <b>domain</b></td><td>The name of the domain, to be used for the Api</td></tr>
+                <tr><td class="param">char * <b>pbx</b></td><td>The name of the pbx, to be used for the Api</td></tr>
+            </table>
+        </dd>
+		<dt>Return value</dt>
+        <dd>
+            Returns the pointer to the IPbxAdmin class
+		</dd>
+    </dl>
+
+    <p>
+        For this to work, the AppInstance class needs to use JsonApiContext as base class.
+    </p>
+
+<pre><code class="C++">class &lt;Your App Name&gt;</> : public AppInstance, ... , public JsonApiContext</code></pre>
+
+    <p>
+        After the Create function the interface has to be registered in the JsonApiContext
+    </p>
+<pre><code class="C++">pbxAdminApi = IPbxAdminApi::Create(domain, pbx);
+RegisterJsonApi(pbxAdminApi);</code></pre>
+    <div class="fnhead">MonitorAdminObject</div>
+
+    <p>
+        Starts monitoring of the PBX Admin object. The UPbxMonitorAdminObject virtual functions are
+        called on changes
+    </p>
+
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UPbxMonitorAdminObject * <b>monitor</b></td><td>The virtual class for the callback functions</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <p>
+        Use UPbxMonitorAdminObject as a base class of one of your classes and call this function to start
+        monitoring. Example:
+    </p>
+
+<pre><code class="C++">class &lt;Your App Name&gt;</> : public AppInstance, ... , public UPbxMonitorAdminObject {
+    ...
+    pbxAdminApi->MonitorAdminObject(this);
+}</code></pre>
+
+    <div class="fnhead">MonitorConfig</div>
+
+    <p>
+        Starts monitoring of the PBX for some basic config changes
+    </p>
+
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UPbxMonitorConfig * <b>monitor</b></td><td>The virtual class for the callback functions</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <p>
+        Use UPbxMonitorConfig as a base class of one of your classes and call this function to start
+        monitoring. Example:
+    </p>
+
+<pre><code class="C++">class &lt;Your App Name&gt;</> : public AppInstance, ... , public UPbxMonitorConfig {
+    ...
+    pbxAdminApi->MonitorConfig(this);
+}</code></pre>
+
+    <a name="UPbxMonitorAdminObject"><h2>UPbxMonitorAdminObject</h2></a>
+
+    <pre><code class="C++">class UPbxMonitorAdminObject {
+public:
+    virtual void PbxAdminObjectUpdate(const char * pwd, const char * key) = 0;
+};</code></pre>
+
+    <p>
+        Virtual base class to be used for the callback on Admin object changes
+    </p>
+
+    <a name="UPbxMonitorConfig"><h2>UPbxMonitorConfig</h2></a>
+
+    <pre><code class="C++">class UPbxMonitorConfig {
+public:
+    virtual void PbxConfigUpdate(const char * domain, const char * pbx, const char * dns) = 0;
+};</code></pre>
+
+    <p>
+        Virtual base class to be used for the callback on PBX config changes
+    </p>
+</body>
+</html>

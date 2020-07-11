@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.avatar (App API)</title>
+    <link rel="stylesheet" href="../lib1/innovaphone.lib1.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>com.innovaphone.avatar (App API)</h1>
+    <p>
+        This API is used for managing profile images. If not profile image has been set, a SVG with the name initials will be displayed. For this, the com.innovaphone.avatar library is used.
+    </p>
+    <p>
+        <dl>
+            <dt>To access the API</dt>
+            <dd>
+                <code>var avatar = new innovaphone.Avatar(start, user, domain);</code>
+                <dl>
+                    <dt>start</dt>
+                    <dd>The start object</dd>
+                    <dt>domain</dt>
+                    <dd>The user doing the request, to check the privacy settings</dd>
+                    <dt>domain</dt>
+                    <dd>The default domain, to be used if no domain is given in user</dd>
+                </dl>
+            </dd>
+            <dt>To get an URL</dt>
+            <dd><code>avatar.url(user, size, dn);</code>
+                <dl>
+                    <dt>user</dt>
+                    <dd>
+                        The username from the user which profile picture is requested.
+                        If this name does not contain a domain, the domain provided in
+                        the constructor is used.
+                    </dd>
+                    <dt>size</dt>
+                    <dd>The size of the picture in pixels (for example, 64).</dd>
+                    <dt>dn</dt>
+                    <dd>The display name of the user (optional). If set, it will be used to obtain the initals for the default picture. Otherwise the common name will be used. If the user has not been found, "..." will be displayed.</dd>
+                </dl>
+            </dd>
+        </dl>
+    </p>
+
+    <h2>API model</h2>
+    <h3>Service info</h3>
+    <p>
+        <dl>
+            <dt>filename</dt>
+            <dd>The filename part of the profile picture URI.</dd>
+            <dt>token</dt>
+            <dd>An arbitrary string used for authentication.</dd>
+            <dt>domain</dt>
+            <dd>The domain of the avatar provider.</dd>
+        </dl>
+<pre>
+    "info":{
+        "filename":"picture",
+        "token":"fa37JncCHryDsbzayy4cBWDxS22JjzhMaiRrV41mtzxlYvKWrO72tK0LK0e1zLOZ",
+        "domain":"example.com"
+    }
+</pre>
+    </p>
+    <h3>Provider model</h3>
+    <p>
+        The API doesn't define a provider model.
+    </p>
+
+    <h2>API messages</h2>
+    <p>
+        All messages are JSON objects that have a mandatory attribute "mt" that specifies the message type.
+    </p>
+    <h3>Requests</h3>
+    <p>
+        The API doesn't define any request messages.
+    </p>
+    <h3>Responses</h3>
+    <p>
+        The API doesn't define any response messages.
+    </p>
+    
+</body>
+</html>

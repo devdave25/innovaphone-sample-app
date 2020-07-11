@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Tutorial: HTTP requests</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript">
+        function toggleSpoiler(id) {
+            var e = document.getElementById(id);
+            if (e.style.display == "none") e.style.display = "";
+            else e.style.display = "none";
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Tutorial: HTTP requests</h1>
+
+    <p>
+        In this tutorial you will learn how to handle incoming HTTP requests in your app service.
+    </p>
+    <p>
+        For that we build a simple REST API. A very simple one as you will see. It stores a single text, that can be accessed using the URL http://&lt;app-platform-addr&gt;/&lt;app-name&gt;/value. We implement GET, PUT and DELETE operations for reading, storing and deleting the text.
+    </p>
+    
+    <h2>Conventions</h2>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name NewApp1 and the company name innovaphone.
+        Your filenames might be different according to your settings.
+        The IP address of the app platform in the example is "172.16.13.100". Please change to the correct IP address of your setup.
+    </p>
+    
+    <h2>Testing and expected behaviour</h2>
+    <p>
+        For testing the app we need to generate the HTTP requests. The command line tool CURL is a good choice for that. However you can use any tool that does the job.
+        Let's take a look how this can be done and what's the expected behaviour on the network on the individual operations.
+    </p>
+    <h3>Storing the text using PUT</h3>
+    <p><pre>curl -i -X PUT http://172.16.13.100/newapp1/value -d "some text" -H "Content-Type: text/plain"</pre></p>
+    <p>
+        <pre>PUT /newapp1/value HTTP/1.1
+Content-Type: text/plain
+Content-Length: 9
+
+some text
+
+HTTP/1.1 200 OK
+Content-Length: 0
+</pre>
+    </p>
+
+    <h3>Reading the text using GET</h3>
+    <p><pre>curl -i -X GET http://172.16.13.100/newapp1/value</pre></p>
+    <p>
+        <pre>GET /newapp1/value HTTP/1.1
+HTTP/1.1 200 OK
+Content-Length: 9
+Content-Type: text/plain; charset=utf-8
+some text
+</pre>
+    </p>
+    
+    <h3>Deleting the text using DELETE</h3>
+    <p><pre>curl -i -X DELETE http://172.16.13.100/newapp1/value</pre></p>
+    <p>
+        <pre>DELETE /newapp1/value HTTP/1.1
+
+HTTP/1.1 200 OK
+Content-Length: 0
+</pre>
+    </p>
+
+    <h2>Step by step</h2>
+    <p>
+        Let's start with the unchanged app and understand what it does with incoming HTTP requests.
+        For that we compile and run it from Visual Studio. Then we do a GET request.
+    </p>
+    <p>
+    <p><pre>curl -i -X GET http://172.16.13.100/newapp1/value</pre></p>
+    <p>
+        <pre>GET /newapp1/value HTTP/1.1
+
+HTTP/1.1 307 Temporary Redirect
+Location: ./13A000/value
+...
+</pre>
+    </p>
+    <p>
+        The code that receives the GET and does the redirect can be found in NewApp1.cpp in the function <code>NewApp1::WebserverPluginHttpListenResult</code>.
+        Let's add a debug printf to see what's going on and try again.
+    </p>
+    <p>
+        <pre><code class="language-cpp">void NewApp1::WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize)
+{
+    if (requestType == WS_REQUEST_GET) {
+        debug->printf("GET %s", resourceName); // added this line
+        if (plugin->BuildRedirect(resourceName, _BUILD_STRING_, strlen(_BUILD_STRING_))) {
+            return;
+        }
+    }
+    plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+}
+</code></pre>
+    </p>
+    <p>After building and restarting the app we send another GET request. The console window of visual studio shows our trace.</p>
+    <p><pre>06-14 15:28:13.351 GET /value</pre></p>
+    <p>
+        Explanations
+        <ul>
+            <li>
+                WebserverPluginHttpListenResult is part of the interface <a href="../../common/interface/webserver_plugin.htm#UWebserverPlugin">UWebserverPlugin</a> that is implemented by our NewApp1 class.
+            </li>
+            <li>
+                This is where all the HTTP requests are received that are not handled otherwise.
+            </li>
+            <li>
+                Each request must be accepted using IWebserverPlugin::Accept or rejected using IWebserverPlugin::Cancel. Unhandled requests cause an assertion.
+            </li>
+            <li>
+                In order to reiceive requests an <a href="../../common/interface/webserver_plugin.htm#UWebserverPlugin">UWebserverPlugin</a> needs to register for a specific webserver path using <a href="../../common/interface/webserver_plugin.htm#IWebserverPlugin">IWebserverPlugin::HttpListen</a>. 
+                In our app this can be seen in NewApp1::ConfigInitComplete.
+            </li>
+        </ul> 
+    </p>
+
+    <h3>Task 1: Create your own handler for HTTP requests</h3>
+    <p>
+        Let's start coding our REST API. We could do that by adding all the functionality to NewApp1::WebserverPluginHttpListenResult. 
+        But in this tutorial we want to create our own UWebserverPlugin class, that just handles the requests to our path <code>/value</code>.
+    </p>
+    <p>
+        <ul>
+            <li>
+                Create a new class <code>RestApi</code> implementing the interface <code>UWebserverPlugin</code>.
+                You only need to implement the interface function <code>WebserverPluginHttpListenResult</code> for our purposes.
+            </li>
+            <li>
+                Create an instance of your class called <code>rest</code> and register it for the path <code>value</code> using HttpListen.
+            </li>
+            <li>
+                Add debug traces for GET, PUT and DELETE requests.
+            </li>
+            <li>
+                Cancel all incoming requests. Remember that there will be an assertion if is not accepted or canceled.
+            </li>
+            <li>
+                Test your implementation by sending different requests and watching the debug traces.
+            </li>
+        </ul>
+    </p>
+    
+    <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('solution1');">Code spoiler</button>
+    <div id="solution1" style="display:none">
+        <p>
+            Definition of class RestApi
+            <pre><code class="language-cpp">class RestApi : public UWebserverPlugin {
+public:
+    RestApi();
+    ~RestApi();
+    void WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize) override;
+};</code></pre>
+        </p>
+        
+        <p>
+            Implementation of class RestApi
+            <pre><code class="language-cpp">RestApi::RestApi()
+{
+}
+
+RestApi::~RestApi()
+{
+}
+
+void RestApi::WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize)
+{
+    if (requestType == WS_REQUEST_GET) {
+        debug->printf("RestApi GET");
+    }
+    else if (requestType == WS_REQUEST_PUT) {
+        debug->printf("RestApi PUT");
+    }
+    else if (requestType == WS_REQUEST_DELETE) {
+        debug->printf("RestApi DELETE");
+    }
+    
+    plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+}</code></pre>
+        </p>
+        
+        <p>
+            Registration at the webserver plugin
+            <pre><code class="language-cpp">void NewApp1::ConfigInitComplete()
+{
+    delete currentTask;
+    currentTask = nullptr;
+    webserverPlugin->HttpListen(nullptr, nullptr, nullptr, nullptr, _BUILD_STRING_);
+    webserverPlugin->HttpListen("value", new class RestApi()); // added this line
+    webserverPlugin->WebsocketListen();
+    Log("App instance initialized");
+}</code></pre>
+        </p>
+
+    </div>
+
+    <h3>Adding the PUT operation</h3>
+    <p>
+        Now we can start implementing the actual REST operations. For the text to be stored we first add a member <code>char * value</code> to our RestApi class.
+        <pre><code class="language-cpp">class RestApi : public UWebserverPlugin {
+public:
+    RestApi();
+    ~RestApi();
+    void WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize) override;
+
+    char * value; // added this line
+};</code></pre>
+    </p>
+    <p>
+        <pre><code class="language-cpp">RestApi::RestApi()
+{
+    value = 0; // added this line
+}
+
+RestApi::~RestApi()
+{
+    if (value) free(value); // added this line
+}
+</code></pre>
+    </p>
+    <p>
+        Then we can implement our PUT operation that stores the text. For that we need to create another class of type <a href="../../common/interface/webserver_plugin.htm#UWebserverPut">UWebserverPut</a>.
+    </p>
+    <p>
+        <pre><code class="language-cpp">#define DATA_SIZE_MAX 63
+
+class RestApiPut : public UWebserverPut {
+public:
+    RestApiPut(class RestApi * rest);
+    ~RestApiPut();
+    void WebserverPutRequestAcceptComplete(IWebserverPut * const webserverPut) override;
+    void WebserverPutRecvResult(IWebserverPut * const webserverPut, void * buffer, size_t len) override;
+    void WebserverPutRecvCanceled(IWebserverPut * const webserverPut, void * buffer) override;
+    void WebserverPutSendResult(IWebserverPut * const webserverPut) override;
+    void WebserverPutCloseComplete(IWebserverPut * const webserverPut) override;
+
+    class RestApi * rest;
+    char data[DATA_SIZE_MAX + 1];
+};</code></pre>
+    </p>
+    <p>
+        <pre><code class="language-cpp">RestApiPut::RestApiPut(class RestApi * rest)
+{
+    this->rest = rest;
+}
+
+RestApiPut::~RestApiPut()
+{
+}
+
+void RestApiPut::WebserverPutRequestAcceptComplete(IWebserverPut * const webserverPut)
+{
+    // start receiving data
+    webserverPut->Recv(data, DATA_SIZE_MAX);
+}
+
+void  RestApiPut::WebserverPutRecvResult(IWebserverPut * const webserverPut, void * buffer, size_t len)
+{
+    // store received value in REST API
+    data[len] = 0;
+    if (rest->value) free(rest->value);
+    rest->value = len ? _strdup(data) : nullptr;
+
+    // send 202 OK response with no content data
+    webserverPut->SetResultCode(WEBDAV_RESULT_OK, 0);
+    webserverPut->Send(0, 0);
+}
+
+void  RestApiPut::WebserverPutRecvCanceled(IWebserverPut * const webserverPut, void * buffer)
+{
+}
+
+void RestApiPut::WebserverPutSendResult(IWebserverPut * const webserverPut)
+{
+    // response is sent, close
+    webserverPut->Close();
+}
+
+void RestApiPut::WebserverPutCloseComplete(IWebserverPut * const webserverPut)
+{
+    // clean-up
+    delete webserverPut;
+    delete this;
+}</code></pre>
+    </p>
+    <p>
+        Additionally we need to use our RestApiPut class to handle incoming PUT requests. Therefore we change our <code>RestApi::WebserverPluginHttpListenResult</code> like follows.
+        <pre><code class="language-cpp">void RestApi::WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize)
+{
+    if (requestType == WS_REQUEST_GET) {
+        debug->printf("RestApi GET");
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+    else if (requestType == WS_REQUEST_PUT) {
+        debug->printf("RestApi PUT");
+        plugin->Accept(new RestApiPut(this));
+    }
+    else if (requestType == WS_REQUEST_DELETE) {
+        debug->printf("RestApi DELETE");
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+    else {
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+}</code></pre>
+    </p>
+
+
+    <!-- Task 2: Adding the GET operation -->
+
+    <h3>Task 2: Adding the GET operation</h3>
+    <p>
+        Now we need a way to read the stored values using GET requests.
+    </p>
+    <p>
+        <ul>
+            <li>
+                Create a new class <code>RestApiGet</code> implementing the interface <code>UWebserverGet</code>.
+            </li>
+            <li>
+                Use it to handle incoming GET requests in <code>RestApi::WebserverPluginHttpListenResult</code>.
+            </li>
+            <li>
+                Return the stored text as text/plain.
+            </li>
+        </ul>
+    </p>
+
+    <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('solution2');">Code spoiler</button>
+    <div id="solution2" style="display:none">
+        <p>
+            Definition of class RestApiGet
+            <pre><code class="language-cpp">class RestApiGet : public UWebserverGet {
+public:
+    RestApiGet(class RestApi * rest);
+    ~RestApiGet();
+    void WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet) override;
+    void WebserverGetSendResult(IWebserverGet * const webserverGet) override;
+    void WebserverGetCloseComplete(IWebserverGet * const webserverGet) override;
+    
+    class RestApi * rest;
+};</code></pre>
+        </p>
+
+        <p>
+            Implementation of class RestApiGet
+            <pre><code class="language-cpp">RestApiGet::RestApiGet(class RestApi * rest)
+{
+    this->rest = rest;
+}
+
+RestApiGet::~RestApiGet()
+{
+}
+
+void RestApiGet::WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet)
+{
+    // send stored value as text/plain
+    size_t len = rest->value ? strlen(rest->value) : 0;
+    webserverGet->SetTransferInfo(WSP_RESPONSE_TEXT, len);
+    webserverGet->Send(rest->value, len);
+}
+
+void RestApiGet::WebserverGetSendResult(IWebserverGet * const webserverGet)
+{
+    // close request
+    webserverGet->Close();
+}
+
+void RestApiGet::WebserverGetCloseComplete(IWebserverGet * const webserverGet)
+{
+    delete webserverGet;
+    delete this;
+}</code></pre>
+        </p>
+
+        <p>
+            Handling of incoming GET request
+            <pre><code class="language-cpp">void RestApi::WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize)
+{
+    if (requestType == WS_REQUEST_GET) {
+        debug->printf("RestApi GET");
+        plugin->Accept(new RestApiGet(this));  // changed this line
+    }
+    else if (requestType == WS_REQUEST_PUT) {
+        debug->printf("RestApi PUT");
+        plugin->Accept(new RestApiPut(this));
+    }
+    else if (requestType == WS_REQUEST_DELETE) {
+        debug->printf("RestApi DELETE");
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+    else {
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+}</code></pre>
+        </p>
+
+    </div>
+
+    <!-- Task 3: Adding the DELETE operation -->
+
+    <h3>Task 3: Adding the DELETE operation</h3>
+    <p>
+        Now only the DELETE operation is missing.
+    </p>
+    <p>
+        <ul>
+            <li>
+                Create a new class <code>RestApiDelete</code> implementing the interface <code>UWebserverDelete</code>.
+            </li>
+            <li>
+                Use it to handle incoming DELETE requests in <code>RestApi::WebserverPluginHttpListenResult</code>.
+            </li>
+            <li>
+                The operation shall delete the stored value so that a subsequent GET operation will return an empty result.
+            </li>
+        </ul>
+    </p>
+
+    <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('solution3');">Code spoiler</button>
+    <div id="solution3" style="display:none">
+        <p>
+            Definition of class RestApiDelete
+            <pre><code class="language-cpp">class RestApiDelete : public UWebserverDelete {
+public:
+    RestApiDelete(class RestApi * rest);
+    ~RestApiDelete();
+    void WebserverDeleteRequestAcceptComplete(IWebserverDelete * const webserverDelete) override;
+    void WebserverDeleteSendResult(IWebserverDelete * const webserverDelete) override;
+    void WebserverDeleteCloseComplete(IWebserverDelete * const webserverDelete) override;
+    
+    class RestApi * rest;
+};</code></pre>
+        </p>
+
+        <p>
+            Implementation of class RestApiDelete
+            <pre><code class="language-cpp">RestApiDelete::RestApiDelete(class RestApi * rest)
+{
+    this->rest = rest;
+}
+
+RestApiDelete::~RestApiDelete()
+{
+}
+
+void RestApiDelete::WebserverDeleteRequestAcceptComplete(IWebserverDelete * const webserverDelete)
+{
+    if (rest->value) free(rest->value);
+    rest->value = 0;
+    webserverDelete->SetResultCode(WEBDAV_RESULT_OK, 0);
+    webserverDelete->Send(0, 0);
+}
+
+void RestApiDelete::WebserverDeleteSendResult(IWebserverDelete * const webserverDelete)
+{
+    webserverDelete->Close();
+}
+
+void RestApiDelete::WebserverDeleteCloseComplete(IWebserverDelete * const webserverDelete)
+{
+    delete webserverDelete;
+    delete this;
+}</code></pre>
+        </p>
+
+        <p>
+            Handling of incoming DELETE request
+            <pre><code class="language-cpp">void RestApi::WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize)
+{
+    if (requestType == WS_REQUEST_GET) {
+        debug->printf("RestApi GET");
+        plugin->Accept(new RestApiGet(this));
+    }
+    else if (requestType == WS_REQUEST_PUT) {
+        debug->printf("RestApi PUT");
+        plugin->Accept(new RestApiPut(this));
+    }
+    else if (requestType == WS_REQUEST_DELETE) {
+        debug->printf("RestApi DELETE");
+        plugin->Accept(new RestApiDelete(this)); // changed this line
+    }
+    else {
+        plugin->Cancel(WSP_CANCEL_NOT_FOUND);
+    }
+}</code></pre>
+        </p>
+
+    </div>
+
+    <h2>Conclusion</h2>
+    <ul>
+        <li>We created a simple REST API using the webserver plugin classes of the SDK.</li>
+        <li>IWebserverPlugin::HttpListen can be used to register a UWebserverPlugin for a specific webserver path.</li>
+        <li>UWebserverPlugin::WebserverPluginHttpListenResult is the place where incoming HTTP requests are received. Each request needs to be accepted or canceled in the context of that callback.</li>
+        <li>Implementations of the classes UWebserverGet, UWebserverPut, UWebserverDelete can be used to handle HTTP requests.</li>
+    </ul>
+
+    <h2>Useful documentation</h2>
+    <ul>
+        <li><a href="../../common/interface/webserver_plugin.htm">Webserver Plugin</a></li>
+    </ul>
+</body>
+</html>

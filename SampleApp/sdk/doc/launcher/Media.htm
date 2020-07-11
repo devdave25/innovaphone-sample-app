@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - myApps Protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Media Protocol</h1>
+
+    <p>
+        Media protocol is the websocket protocol used by the PhoneApp to talk to the native media protocol.
+    </p>
+
+
+    <u>Messages</u>
+    <p>
+        The following messages are defined:
+        <ul>
+            <li><a href="#AllocChannel">AllocChannel</a></li>
+        </ul>
+    </p>
+
+    <h2>Messages</h2>
+
+    <a name="AllocChannel"></a><div class="fnhead">AllocChannel</div>
+    <p>
+        Sent by the PhoneApp. Used to alloc a media channel.
+    </p>
+<pre><code class="json">{
+    "mt": "AllocChannel",
+    "iceServers": [<a href="#Server">Server</a>],
+    "stunSlow": string
+}</code></pre>
+    <dl>
+        <dt>iceServers</dt>
+        <dd>
+            An array of the available iceServers, turn and stun.
+        </dd>
+        <dt>stunSlow</dt>
+        <dd>
+            stunSlow feature.
+        </dd>
+    </dl>
+
+</body>
+</html>

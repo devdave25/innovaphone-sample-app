@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Certificates implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Certificates</h1>
+    <p>
+        Interface to create and validate certificates.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/certificates.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IGuuid">ICertificates</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#certificate_error_t">certificate_error_t</a><br>
+                <a href="#certificate_type_t">certificate_type_t</a><br>
+                <a href="#fingerprint_t">fingerprint_t</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleCertificates">Example</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+    <h3>Logging</h3>
+    To enable logging for ICertificates, the flag LOG_CERTIFICATES must be set in the managers diagnostic settings.
+    <h1>Classes</h1>
+    <a name="ICertificates"><h2>ICertificates</h2></a>
+    <pre><code class="language-cpp">class ICertificates {
+public:
+    <a href="#ValidateCertificate" style="text-decoration:none;">static certificate_error_t ValidateCertificate(class IInstanceLog * log, const byte * cert, size_t certLen);</a>;
+    <a href="#CertificateFingerprint" style="text-decoration:none;">virtual byte * CertificateFingerprint(class IInstanceLog * log, const byte * cert, size_t certLen, fingerprint_t type = FINGERPRINT_SHA256) = 0;</a>;
+    <a href="#CreateCertificate" style="text-decoration:none;">virtual byte * CreateCertificate(class IInstanceLog * log, size_t * certLen, certificate_type_t type = CERTIFICATE_PEM) = 0;</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="ValidateCertificate">ValidateCertificate</a> (static function)</div>
+    <dl>
+        <dd>
+            This function validates a certificate in PEM format.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">IInstanceLog * <b>log </b></td><td>An <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> pointer to the logging interface.</td></tr>
+                <tr><td class="param">const byte * <b>cert </b></td><td>A byte buffer which holds the certificate.</td></tr>
+                <tr><td class="param">size_t <b>certLen </b></td><td>The length of the byte buffer.</td></tr>
+            </table>
+
+            <h4>Return value</h4>
+            An enum <a href="#certificate_error_t">certificate_error_t</a> which indicates a possible error.
+        </dd>
+    </dl>
+    <div class="fnhead" id="CertificateFingerprint">CertificateFingerprint</a> (static function)</div>
+    <dl>
+        <dd>
+            This function generates a certificate fingerprint for PEM certificates.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">IInstanceLog * <b>log </b></td><td>An <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> pointer to the logging interface.</td></tr>
+                <tr><td class="param">const byte * <b>cert </b></td><td>A byte buffer which holds the certificate.</td></tr>
+                <tr><td class="param">size_t <b>certLen </b></td><td>The length of the byte buffer.</td></tr>
+                <tr><td class="param"><a href="#fingerprint_t">fingerprint_t</a> <b>type </b></td><td>The fingerprint hash type.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            A byte buffer holding the fingerprint hash. The buffer must be freed by the caller.
+        </dd>
+    </dl>
+    <div class="fnhead" id="CreateCertificate">CreateCertificate</a> (static function)</div>
+    <dl>
+        <dd>
+            This function creates a certificate.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">IInstanceLog * <b>log </b></td><td>An <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> pointer to the logging interface.</td></tr>
+                <tr><td class="param">size_t * <b>certLen </b></td><td>The length of the returned buffer.</td></tr>
+                <tr><td class="param"><a href="#certificate_type_t">certificate_type_t</a> <b>type </b></td><td>The output certificate type.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            A byte buffer holding the certificates private and public key. The buffer must be freed by the caller.
+        </dd>
+    </dl>
+
+    <h1>Data types</h1>
+    <h2 id="certificate_error_t">certificate_error_t</h2>
+    <pre><code class="laguage-cpp">typedef enum {
+    CERTIFICATE_OK = 0,
+    CERTIFICATE_PARSING_FAILED,
+    CERTIFICATE_PUBLIC_KEY_INVALID,
+    CERTIFICATE_PRIVATE_KEY_INVALID,
+    CERTIFICATE_CHAIN_INVALID
+} certificate_error_t;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">enum certificate_error_t</code> is used to determine the error code of the parsing or if the parsing succeeded.
+
+    <h2 id="certificate_type_t">certificate_type_t</h2>
+    <pre><code class="laguage-cpp">typedef enum {
+    CERTIFICATE_PEM = 0
+} certificate_type_t;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">enum certificate_type_t</code> holds all supported certificate types.
+
+    <h2 id="fingerprint_t">fingerprint_t</h2>
+    <pre><code class="laguage-cpp">typedef enum {
+    FINGERPRINT_MD5,
+    FINGERPRINT_SHA1,
+    FINGERPRINT_SHA224,
+    FINGERPRINT_SHA256,
+    FINGERPRINT_SHA384,
+    FINGERPRINT_SHA512
+} fingerprint_t;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">enum fingerprint_t</code> holds all supported fingerprint hash types.
+
+    <h1> Code Example </h1>
+<a name="ExampleCertificates"></a>
+<pre class="sample"><code class="language-cpp">size_t pemBufferLen = 0;
+byte * pemBuffer = ICertificates::CreateCertificate(logIf, &pemBufferLen, CERTIFICATE_PEM);
+if(pemBuffer) {
+    if(ICertificates::ValidateCertificate(logIf, pemBuffer, pemBufferLen) == CERTIFICATE_OK) {
+        byte * fingerPrint = CertificateFingerprint(logIf, pemBuffer, pemBufferLen, FINGERPRINT_SHA512);
+        debug->printf("fingerprint of new certificate: %s", fingerPrint);
+        free(fingerPrint);
+    }
+    free(pemBuffer);
+}
+    </code>
+  </pre>
+</body>
+</html>

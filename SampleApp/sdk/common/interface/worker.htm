@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Worker Implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Worker</h1>
+    <p>
+        IWorker interface provides the framework for user implemented tasks to be run in a thread. The interface consists of a function to schedule tasks and three callbacks for: success, failure and progress 
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/worker.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IWorker">IWorker</a><br>
+                <a href="#UWorker">UWorker</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#WORKER_TASK">WORKER_TASK</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <h2 id="IWorker">IWorker</h2>
+    <pre><code class="language-cpp">class IWorker {
+public:
+    <a href="#Create" style="text-decoration:none;">static IWorker* Create(class IIoMux * const iomux,unsigned int numThreads)</a>;
+    <a href="#~IWorker" style="text-decoration:none;">virtual ~IWorker()</a>;
+    <a href="#WorkerScheduleJob" style="text-decoration:none;">virtual void WorkerScheduleJob(const char * job, WORKER_TASK workerTask, class UWorker * const user)</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="Create">Create</a> (static function)</div>
+    <dl>
+        <dd>
+            Creates an instance of IWorker. iomux is the main thread's iomux control. It is used to run the callbacks in the main thread context.numThreads sets the maximum number of concurrently running threads. Note: each user defined task that runs under the IWorker control operates in a single thread. The numThreads parameter (if it is > 1) comes into play when another task is scheduled before the previously scheduled is still running. Then a second, third,.., thread is started until the numThreads limit is reached. In this case the actual request is queued and processed as soon as one of the threads terminates. 
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>Main threads IoMux instance pointer</td></tr>
+                <tr><td class="param">unsigned int <b>numThreads</b></td><td> The number of parallel threads to allocate for jobs</td></tr>
+            </table>
+
+            <h4>Return value</h4>
+            Returns the allocated class IWorker*.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="~IWorker">~IWorker</a> (destructor fuction)</div>
+    <dl>
+        <dd>
+            The class IWorker destructor.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="WorkerScheduleJob">WorkerScheduleJob</a> (virtual void function)</div>
+    <dl>
+        <dd>
+            Starts the textual task description in the user defined WORKER_TASK workerTask. The results and progress indications are returned to the main thread via the functions defined in the UWorker class.
+log is used to log AppInstance related logs depedent of the log flag LOG_WORKER. When the IWorker framework processes a job request, it calls the workerTask function with the parameter "job" given in the WorkerScheduleJobcall.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>job</b></td><td>Textual description of job</td></tr>
+                <tr><td class="param">WORKER_TASK <b>workerTask</b></td><td> User defined function that is called by the IWorker interface and implements the job that is to be carried out in a thread</td></tr>
+		<tr><td class="param"class UWorker * const <b>user</b></td><td> The class that uses the Iworker interface</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h2 id="UWorker">UWorker</h2>
+    <pre><code class="language-cpp">class UWorker {
+public:
+    <a href="#WorkerJobComplete" style="text-decoration:none;">void WorkerJobComplete(class IWorker * const task, const char * jobResult)</a>;
+    <a href="#WorkerJobFailed" style="text-decoration:none;">void WorkerJobFailed(class IWorker * const task, int error)</a>;
+    <a href="#WorkerJobProgress" style="text-decoration:none;">void WorkerJobProgress(class IWorker * const task, const char * notification)</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="WorkerJobComplete">WorkerJobComplete</a> (callback fuction)</div>
+    <dl>
+        <dd>
+           This function is called after successful completion of the scheduled job. Parameters: "class IWorker * const task": the IWorker instance the job was processed by. "const char * jobResult": the result string returned in int(*WORKER_TASK)(.., char** result,..);. 
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IWorker * const  <b>task</b></td><td>The class IWorker instance that issues this callback</td></tr>
+                <tr><td class="param">const char * <b>jobResult</b></td><td> Text string generated by the worker task</td></tr>
+            </table>
+
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="WorkerJobFailed">WorkerJobFailed</a> (callback fuction)</div>
+    <dl>
+        <dd>
+            This function is called after unsuccessful completion of the scheduled job. Parameters: "class IWorker * const task": the IWorker instance the job was processed by. "int error": the error (!=0) return code returned by WORKER_TASK;.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IWorker * const  <b>task</b></td><td>The class IWorker instance that issues this callback</td></tr>
+                <tr><td class="param">int <b>error</b></td><td> Error code generated by the worker task</td></tr>
+            </table>	    
+
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="WorkerJobProgress">WorkerJobProgress</a> (callback fuction)</div>
+    <dl>
+        <dd>
+            This function is called if the WORKER_TASK calls the NOTIFICATION_FUNC during operation. Parameters: "class IWorker * const task": the IWorker instance the job was processed by. "const char * notification": the notification text;
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IWorker * const  <b>task</b></td><td>The class IWorker instance that issues this callback</td></tr>
+                <tr><td class="param">const char * <b>notification</b></td><td> Textual notification generated by the worker function to be passed back to the main thread</td></tr>
+            </table>
+        </dd>
+    </dl>    
+
+    <h1>Data types</h1>
+    <h2 id="WORKER_TASK">WORKER_TASK</h2>
+    <pre><code class="laguage-cpp">typedef int(*WORKER_TASK)(const char * job, class UWorker * const user, char** result, class IWorker * const task, NOTIFICATION_FUNC notificationFunc);</code></pre>
+
+    <h3>Overview</h3>
+    <code class="laguage-cpp">WORKER_TASK</code> This is the prototype of the function the user creates and passes to the IWorker framework to execute. Parameter description: "const char * job": the textual parameter string as given in WorkerScheduleJob(const char * job,...). "class UWorker * const user": the job requesting classe's own "this". DO NOT USE IT IN YOUR WORKER FUNCTION! It is there to be passed subsequently to the notification function to pass back progress calls to your user class "char** result": output parameter for the worker function. There a char* container with the result of a SUCCESSFUL operation is stored. NOTE: The container is freed by the worker framework when all processing is completed. DO NOT FREE IT YOURSELF! "class IWorker * const task": passthrough parameter for IWorker operation. DO NOT USE IT IN YOUR WORKER FUNCTION OTHER THAN PASSING IT TO "NOTIFICATION_FUNC notificationFunc"! "NOTIFICATION_FUNC notificationFunc": this is a function provided by the IWorker framework that your worker function can call to asyncronously pass back information to your user class during operation. e.g. progress information return code: "0" indicates success and leads to a WorkerJobComplete(..) callback, otherwise the WorkerJobFailed(.., int error) is called and the return code is passed in "error".
+
+        <h4>Return value</h4>
+            Returning 0 indicates success and leads to a WorkerJobComplete(..) callback, otherwise the WorkerJobFailed(.., int error) is called and the return code is passed in "error" .
+
+
+    <h2 id="NOTIFICATION_FUNC">NOTIFICATION_FUNC</h2>
+    <pre><code class="laguage-cpp">typedef void(*NOTIFICATION_FUNC)(class UWorker * const user, class IWorker * const task, char* notification);</code></pre>
+
+    <h3>Overview</h3>
+    <code class="laguage-cpp">NOTIFICATION_FUNC</code> Parameter description: "class UWorker * const user": passthrough to the IWorker, given as parameter to your worker function. "char** result": output parameter for the worker function. There a char* container with the result of a SUCCESSFUL operation is stored. NOTE: The container is freed by the worker framework when all processing is completed. "class IWorker * const task": passthrough parameter for IWorker operation. "char* notification": textual information to be passed back to your requesting user class. .
+
+
+    <h1> Code Example </h1>
+        <pre class="sample"><code class="language-cpp">
+    /*
+    This example shows the code to schedule 3 jobs to convert pcap files containing voice data to wave audio
+    */
+
+
+    // app class definition
+class myApp :  public UWorker {
+
+...
+
+    virtual void WorkerJobComplete(class IWorker * const task, const char * jobResult);
+    virtual void WorkerJobProgress(class IWorker * const task, const char * notification);
+    virtual void WorkerJobFailed(class IWorker * const task, int error);
+...
+}
+
+
+#define MAX_NUM_THREADS 2
+myApp::myApp(IIoMux * iomux)
+    : iomux(iomux)
+{
+    // in this example the thread worker system is created in the main constructor, but it can be created whenever deemed necessary
+    IWorker* worker = IWorker::Create(iomux,MAX_NUM_THREADS);
+
+    // since MAX_NUM_THREADS is 2 the next 2 jobs are started immediately
+    // the first parameter ("Convert2Wave: PhoneCall-645.pcap") is used for display purposes
+    worker->WorkerScheduleJob("Convert2Wave: PhoneCall-645.pcap", WorkerFunc, this);
+    worker->WorkerScheduleJob("Convert2Wave: PhoneCall-389.pcap", WorkerFunc, this);
+
+    // if the 2 previously started threads are still running this job is queued and processed as soon as one of the former completes
+    worker->WorkerScheduleJob("Convert2Wave: PhoneCall-123.pcap", WorkerFunc, this);
+}
+
+// when the first thread starts your worker function will be called:
+
+#define SOME_ERROR -1
+int WorkerFunc("Convert2Wave: PhoneCall-645.pcap", class UWorker* user, char** result, class IWorker * const task, NOTIFICATION_FUNC notificationFunc){
+
+	... read job description:  Convert2Wave: PhoneCall-645.pcap ...
+
+	... open PhoneCall-645.pcap ... 
+
+	// if you wish to send a notification do so: (the "notificationFunc" inside the worker interface will subsequently call the WorkerJobProgress callback  
+       	notificationFunc(user, task, "Estimated time: 13 sec");
+
+	... convert ...
+
+       	// something goes wrong:
+      	return SOME_ERROR;
+
+	// all went well
+	char* resultString=(char*)malloc(<somesize>);
+	sprintf(resultString,"Converted File: PhoneCall-645.wav");
+	*result=resultString;
+	return 0; 
+}
+
+// when your Worker function completes successfully:
+
+void app::WorkerJobComplete(class IWorker * const task, "Converted File: PhoneCall-645.wav"){
+}
+
+// when your Worker function failes:
+
+void app::WorkerJobFailed(class IWorker * const task, SOME_ERROR){
+}
+
+// progress callback: (will be called by the notificationFunc)
+
+void app::WorkerJobProgress(class IWorker * const task, "Estimated time: 13 sec"){
+
+}
+
+
+</pre></code>
+
+</body>
+</html>
+

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - pdf</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css" type="text/css" />
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>pdf</h1>
+    <p>
+        Interface to create a PDF document.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/pdf.h<br /><br /></td></tr>
+        <tr>
+            <td><a href="#classes"><b>Classes</b></a></td>
+            <td>
+                <a href="#class-IPdfProvider">IPdfProvider</a><br>
+                <a href="#class-IPdf">IPdf</a><br>
+                <a href="#class-IPdfPage">IPdfPage</a><br>
+                <a href="#class-IPdfImageStream">IPdfImageStream</a><br>
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td><a href="#IPdfProvider-members"><b>class IPdfProvider members</b></a></td>
+            <td>
+                <a href="#IPdfProvider-CreatePdf">CreatePdf</a><br>
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td><a href="#IPdf-members"><b>class IPdf members</b></a></td>
+            <td>
+                <a href="#IPdf-SetCompressionMode">SetCompressionMode</a><br>
+                <a href="#IPdf-AddPage">AddPage</a><br>
+                <a href="#IPdf-Complete">Complete</a><br>
+                <a href="#IPdf-Get">Get</a><br>
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td><a href="#IPdfPage-members"><b>class IPdfPage members</b></a></td>
+            <td>
+                <a href="#IPdfPage-SetSize">SetSize</a><br>
+                <a href="#IPdfPage-SetDirection">SetDirection</a><br>
+                <a href="#IPdfPage-GetWidth">GetWidth</a><br>
+                <a href="#IPdfPage-GetHeight">GetHeight</a><br>
+                <a href="#IPdfPage-AddImageStream">AddImageStream</a><br>
+                <a href="#IPdfPage-Complete">Complete</a><br>
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td><a href="#IPdfImageStream-members"><b>class IPdfImageStream members</b></a></td>
+            <td>
+                <a href="#IPdfImageStream-Write">Write</a><br>
+                <a href="#IPdfImageStream-SetStreamWidth">SetStreamWidth</a><br>
+                <a href="#IPdfImageStream-SetStreamHeight">SetStreamHeight</a><br>
+                <a href="#IPdfImageStream-Draw">Draw</a><br>
+                <br />
+            </td>
+        </tr>
+    </table>
+
+    <h1 id="classes">Classes</h1>
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 id="class-IPdfProvider">IPdfProvider</h2>
+    <!-- ---------------------------------------------------------------------- -->
+    <pre><code class="C++">class IPdfProvider {
+public:
+    virtual ~IPdfProvider() { };
+    virtual class IPdf * CreatePdf() = 0;
+};</code></pre>
+
+    <h3 id="IPdfProvider-members">Public functions</h3>
+    <dl>
+        <div class="fnhead" id="IPdfProvider-CreatePdf">CreatePdf</div></dt>
+        <dd>
+            Creates an IPdf object. This object is to be deleted after use.
+        </dd>
+    </dl>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 id="class-IPdf">IPdf</h2>
+    <!-- ---------------------------------------------------------------------- -->
+    <pre><code class="C++">class IPdf {
+public:
+    virtual ~IPdf() { };
+    enum Compressions {
+        CompressionNone     = 0x0,
+        CompressionText     = 0x1,
+        CompressionImage    = 0x2,
+        CompressionMetaData = 0x4,
+        CompressionAll      = 0xf,
+    };
+    enum Directions {
+        DirectionPortrait,
+        DirectionLandscape,
+    };
+    enum Sizes {
+        SizeA4,
+    };
+    enum StreamTypes {
+        StreamTypeCcittG31D,
+    };
+    virtual void SetCompressionMode(unsigned compressionMode) = 0;
+    virtual class IPdfPage * AddPage(enum IPdf::Sizes size = IPdf::SizeA4, 
+                                     enum IPdf::Directions direction = IPdf::DirectionPortrait) = 0;
+    virtual void Complete() = 0;
+    virtual void Get(const byte * & data, unsigned & length, bool * last = 0) = 0;
+};
+</code></pre>
+    
+    <p>
+    </p>
+    <h3 id="IPdf-members">Public functions</h3>
+    <dl>
+        <div class="fnhead" id="IPdf-SetCompressionMode">SetCompressionMode</div></dt>
+        <dd>The function sets the compression mode of the PDF document.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">unsigned <b>compressionMode</b></td>
+                    <td>Bit mask which type of content should be compressed.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdf-AddPage">AddPage</div></dt>
+        <dd>Add a new page to the document.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">enum IPdf::Sizes <b>size</b></td>
+                    <td><i>(Default IPdf::SizeA4)</i> The size of the page.</td>
+                </tr>
+                <tr>
+                    <td class="param">enum IPdf::Directions <b>direction</b></td>
+                    <td><i>(Default IPdf::DirectionPortrait)</i> The direction of the page.</td>
+                </tr>
+            </table>
+            <h4>Return value</h4>
+            Returns the pointer to the internally used class IPdfPage.
+        </dd>
+        <div class="fnhead" id="IPdf-Complete">Complete</div></dt>
+        <dd>The function is to be called if the document is completly defined and should be rendered.</dd>
+        <div class="fnhead" id="IPdf-Get">Get</div></dt>
+        <dd>
+            Get the document data. The data pointer is set to a pointer allocated by IPdf. The end of the document is reached if length is zero or last is true.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const byte * & <b>data</b></td>
+                    <td>Reference to the data pointer which is set by the function to the internal data.</td>
+                </tr>
+                <tr>
+                    <td class="param"> unsigned & <b>length</b></td>
+                    <td>Reference to a unsigned variable which is set by the function to the data length.</td>
+                </tr>
+                <tr>
+                    <td class="param">bool * <b>last</b></td>
+                    <td><i>(Default 0)</i> Reference to a bool variable, whose value is set by the function. The value is set to true if the end of the data is reached.
+                        This parameter can also be a null pointer, in which case it is not used.</td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 id="class-IPdfPage">IPdfPage</h2></a>
+    <!-- ---------------------------------------------------------------------- -->
+    <pre><code class="C++">class IPdfPage {
+public:
+    virtual ~IPdfPage() { };
+    virtual void SetSize(enum IPdf::Sizes size) = 0;
+    virtual void SetDirection(enum IPdf::Directions direction) = 0;
+    virtual float GetWidth() = 0;
+    virtual float GetHeight() = 0;
+    virtual class IPdfImageStream * AddImageStream(enum IPdf::StreamTypes type) = 0;
+    virtual void Complete() = 0;
+};
+</code></pre>
+
+    <p>
+    </p>
+    <h3 id="IPdfPage-members">Public functions</h3>
+    <dl>
+        <div class="fnhead" id="IPdfPage-SetSize">SetSize</div></dt>
+        <dd>Set the page size.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">enum IPdf::Sizes <b>size</b></td>
+                    <td>The supported size is A4.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdfPage-SetDirection">SetDirection</div></dt>
+        <dd>Set the page direction.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">enum IPdf::Directions <b>direction</b></td>
+                    <td>Portrait or landscape.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdfPage-GetWidth">GetWidth</div></dt>
+        <dd>Get the page width.
+            <h4>Return value</h4>
+            Returns the width of the page.
+        </dd>
+        <div class="fnhead" id="IPdfPage-GetHeight">GetHeight</div></dt>
+        <dd>Get the page height.
+            <h4>Return value</h4>
+            Returns the height of the page.
+        </dd>
+        <div class="fnhead" id="IPdfPage-AddImageStream">AddImageStream</div></dt>
+        <dd>Add an image stream to the page.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">enum IPdf::StreamTypes <b>type</b></td>
+                    <td>The supported type is one-dimentional G3 data.</td>
+                </tr>
+            </table>
+            <h4>Return value</h4>
+            Returns the pointer to the internally used class IPdfImageStream.
+        </dd>
+        <div class="fnhead" id="IPdfPage-Complete">Complete</div></dt>
+        <dd>The function is to be called if the page is complete. After this, IPdfPage is invalid.</dd>
+    </dl>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <a name="class-IPdfImageStream"><h2>IPdfImageStream</h2></a>
+    <!-- ---------------------------------------------------------------------- -->
+    <pre><code class="C++">class IPdfImageStream {
+public:
+    virtual ~IPdfImageStream() { };
+    virtual void Write(const byte * data, unsigned length) = 0;
+    virtual void SetStreamWidth(unsigned int width) = 0;
+    virtual void SetStreamHeight(unsigned int height) = 0;
+    virtual void Draw(float x, float y, float width, float height) = 0;
+};</code></pre>
+
+    <p>
+    </p>
+    <h3 id="IPdfImageStream-members">Public functions</h3>
+    <dl>
+        <div class="fnhead" id="IPdfImageStream-Write">Write</div></dt>
+        <dd>The function is to be called to write data into the image stream.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const byte * <b>data</b></td>
+                    <td>Pointer to the data block to write.</td>
+                </tr>
+                <tr>
+                    <td class="param">unsigned <b>length</b></td>
+                    <td>Length of the data block to write.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdfImageStream-SetStreamWidth">SetStreamWidth</div></dt>
+        <dd>This function must be called to set the internal width parameter to the width of the written image.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">unsigned int <b>width</b></td>
+                    <td>The width in pixel.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdfImageStream-SetStreamHeight">SetStreamHeight</div></dt>
+        <dd>This function must be called to set the internal height parameter to the height of the written image.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">unsigned int <b>height</b></td>
+                    <td>The height in pixel.</td>
+                </tr>
+            </table>
+        </dd>
+        <div class="fnhead" id="IPdfImageStream-Draw">Draw</div></dt>
+        <dd>
+            The function is to be called if the stream is complete. After this, IPdfImageStream is invalid.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">float <b>x</b></td>
+                    <td>Horizontal start position of the image in the page.</td>
+                </tr>
+                <tr>
+                    <td class="param">float <b>y</b></td>
+                    <td>Vertical start position of the image in the page.</td>
+                </tr>
+                <tr>
+                    <td class="param">float <b>width</b></td>
+                    <td>Width of the image in the page.</td>
+                </tr>
+                <tr>
+                    <td class="param">float <b>height</b></td>
+                    <td>Height of the image in the page.</td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+</body>
+</html>
+

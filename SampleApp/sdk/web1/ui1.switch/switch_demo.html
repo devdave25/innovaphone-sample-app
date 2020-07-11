@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, user-scalable=0" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Switch Demo</title>
+    <script type="text/javascript" src="../lib1/innovaphone.lib1.js"></script>
+    <script type="text/javascript" src="../ui1.lib/innovaphone.ui1.lib.js"></script>
+    <script type="text/javascript" src="innovaphone.ui1.switch.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-size: 14px;
+            font-family: "Arial", "sans-serif";
+        }
+
+        h1{
+            color: white;
+            font-size: 18px; 
+        }
+    </style>
+</head>
+<body onload="start()">
+
+    <script>
+
+        var colorSchemes = {
+				"dark": {
+					"--client-bg1": "#232323", 			  // AppClient BG
+					"--client-bg2": "#161616", 			  // AppClient Header-BG
+					"--forms": "#1E1E1E", 				  // for searchbar
+					"--bg1": "#282828", 				  // background level 1, f.e. Main-BG
+					"--bg2": "#333333", 				  // background level 2, f.e. Header-BG
+					"--bg3": "#474747", 				  // background level 3, f.e. Panel-BG
+					"--c1": "#efefef", 					  // main text color
+					"--c2": "#939393", 					  // darker text color, f.e. for less important text
+					"--highlight-bg": "#595959",		  // used as highlight-color, f.e. for Hover (but not for hover over buttons)
+					"--button-bg": "#3D3D3D", 			  // used only for buttons
+					"--green": "#7cb270", 				  // used f.e. for call-icon or confirm-buttons
+				}
+        };
+
+        function start() {
+            new SwitchDemo();
+            var defaultcolor = new innovaphone.ui1.CssVariables(colorSchemes, "dark");
+        }
+
+        function SwitchDemo() {
+            var that = this;
+            that.createNode("body", "background-color: black");
+
+            var dark = that.add(new innovaphone.ui1.Div("background-color:#333333;  height: auto; width: 95%; padding: 10px;margin: 10px; "));
+            var light = that.add(new innovaphone.ui1.Div("background-color:#d6d6d6; height: auto; width: 95%; padding: 10px;margin: 10px; "));
+            dark.add(new innovaphone.ui1.Node("h1", null, "innovaphone.ui1.Switch(style, height, width, value, cl, foreground, backgroundOff, backgroundOn)"));
+            dark.add(new innovaphone.ui1.Div("color: var(--c1); margin-bottom: 10px;", "With default colors: "));
+            dark.add(new innovaphone.ui1.Switch());
+            dark.add(new innovaphone.ui1.Div("color: var(--c1); margin-top: 30px", "With correct theme colors: "));
+			dark.add(new innovaphone.ui1.Div("color: var(--c1); margin-top: 10px; font-size: 14px;", "foreground: var(--c1) / #efefef -- backgroundOff: var(--c2) / #939393 --- backgroundOn: var(--green) / #7cb270"));
+            dark.add(new innovaphone.ui1.Switch("margin: 10px 0", null, null, null, null, "var(--c1)", "var(--c2)", "var(--green)"));
+
+			light.add(new innovaphone.ui1.Div("color: black; margin: 30px 0 10px 0;", "With default colors: "));
+            light.add(new innovaphone.ui1.Switch());
+			light.add(new innovaphone.ui1.Div("color: #000000; margin-top: 30px", "With correct theme colors: "));
+			light.add(new innovaphone.ui1.Div("color: #000000; margin-top: 10px; font-size: 14px;", "foreground: var(--bg3) / #ffffff -- backgroundOff: var(--forms) / #ededed --- backgroundOn: var(--green) / #7cb270"));
+            light.add(new innovaphone.ui1.Switch("margin: 5px 0;", null, null, null, null, "#ffffff", "#ededed", "#7cb270"));
+			
+        }
+        SwitchDemo.prototype = innovaphone.ui1.nodePrototype;
+    </script>
+</body>
+</html>

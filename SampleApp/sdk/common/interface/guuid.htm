@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Guuid Implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Guuid</h1>
+    <p>
+        Interface to generate global universally unique identifier.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/guuid.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IGuuid">IGuuid</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#OS_GUID">OS_GUID</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleGenerateUUID">IGuuid::GenerateUUID</a><br>
+                <a href="#ExampleGenerateBinaryUUID">IGuuid::GenerateBinaryUUID</a><br>                
+                <br>
+            </td>
+        </tr>
+    </table>
+    <h1>Classes</h1>
+    <a name="IGuuid"><h2>IGuuid</h2></a>
+    <pre><code class="language-cpp">class IGuuid {
+public:
+    <a href="#GenerateUUID" style="text-decoration:none;">static void GenerateUUID(char * uid)</a>;
+    <a href="#GenerateBinaryUUID" style="text-decoration:none;">static void GenerateBinaryUUID(OS_GUID * uid)</a>;
+};</code></pre>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead" id="GenerateUUID">GenerateUUID</a> (static function)</div>
+    <dl>
+        <dd>
+            This function creates a new universally unique identifier (UUID) and unparse it to a <code>char</code> pointer.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>uid </b></td><td>A <code>char</code> pointer to store the new UUID. It needs to be of size <code>GUID_SIZE</code> (37 bytes)</td></tr>
+            </table>
+            <h4 id="ExampleGenerateUUID">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">char * id = (char *)malloc(GUID_SIZE);
+IGuuid::GenerateUUID(id);
+                </code></pre>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="GenerateBinaryUUID">GenerateBinaryUUID</a> (static function)</div>
+    <dl>
+        <dd>
+            This function creates a binary universally unique identifier (UUID).
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">OS_GUID * <b>uid </b></td><td>An object of type <code>struct OS_GUID</code> </td></tr>
+            </table>
+            <h4 id="ExampleGenerateBinaryUUID">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">OS_GUID id;
+IGuuid::GenerateBinaryUUID(&id);
+                </code></pre>
+        </dd>
+    </dl>
+    <h1>Data types</h1>
+    <h2 id="OS_GUID">OS_GUID</h2>
+    <pre><code class="laguage-cpp">typedef struct {
+    byte b[16]; 
+} OS_GUID;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">struct OS_GUID</code> is used to store the binary generated UUID.
+</body>
+</html>

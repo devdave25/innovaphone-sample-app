@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Generic callback interface</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Generic callback interface</h1>
+    <p>
+        The callback interface is a helper interface that can be used for generic callbacks inside applications. It can be used to decouple components. 
+        One component can do callbacks without having to include the header file of the other component.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/callback.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#ICallback">ICallback</a><br>
+                <a href="#UCallback">UCallback</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="ICallback"><h2>ICallback</h2></a>
+    <pre><code class="C++">class ICallback {
+public:
+    virtual ~ICallback() {};
+};</code></pre>
+
+    <h3>Overview</h3>
+    Components that want to do callbacks should use ICallback as a base class.
+
+    <a name="UCallback"><h2>UCallback</h2></a>
+    <pre><code class="C++">class UCallback {
+public:
+    virtual void Callback(class ICallback * source) {};
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for components that want to receive generic callbacks.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">Callback</div>
+    <dd>
+        The actual callback function.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class ICallback * <b>source</b></td>
+                <td>
+                    The component doing the callback. The UCallback component can use this pointer to distinguish between different sources.
+                </td>
+            </tr>
+        </table>
+    </dd>
+</body>
+</html>

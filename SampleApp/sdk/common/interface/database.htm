@@ -1,0 +1,1156 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>database</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Database</h1>
+    <p>
+        The Database interface is an abstraction of different database libraries to allow acces do different databases (PostgreSQL and MySQL are supported).
+        The interface only allows easy access to the underlying database system, which will be enough in most cases. However, nearly everything you can do with the
+        SQL features supported by the database engine, you can do with IDatabase. IDatabase won't translate the non-standard SQL syntax from one database engine
+        to an other. So while they can (and maybe have to be) used, changing the underlying database engine will probably fail. <br/><br/>
+        <b>NOTE:</b> The SQL engine used and provided by the AppPlatform is PostgreSQL. There is no mySQL server running on the AppPlatform. But because there are a
+        lot of servers in the world wide web (or elsewhere) running MySQL, it is supported by the AppPlatform SDK, too. For AppPlatform app developtment, normaly only
+        PostgreSQL knowledge is needed.
+    </p>
+
+   <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/database.h<br><br/></td></tr>
+        <tr><td><b>Public functions</b></td><td>
+                                    <a href="#CreatePostgreSQLDatabaseProvider">CreatePostgreSQLDatabaseProvider</a><br/>
+                                    <a href="#CreateMySQLDatabaseProvider">CreateMySQLDatabaseProvider</a><br/>
+                                    <a href="#DBErrorToStr">DBErrorToStr</a><br/>
+                                    <br/>
+                               </td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                    <a href="#IDatabaseProvider">IDatabaseProvider</a><br/>
+                                    <a href="#IDatabase">IDatabase</a><br/>
+                                    <a href="#UDatabase">UDatabase</a><br/>
+                                    <a href="#IPreparedStatement">IPreparedStatement</a><br/>
+                                    <a href="#IDataSet">IDataSet</a><br/>
+                                    <br/>
+                               </td></tr>
+        <tr><td><b>Data types</b></td><td>
+                                      <a href="#DB_EXEC_FETCH_ALL">DB_EXEC_FETCH_ALL</a><br/>
+                                      <a href="#db_error_t">db_error_t</a><br/>
+                                      <br/>
+                                  </td></tr>
+            <tr><td><b>Examples</b></td><td>
+                                          <a href="#example">Code Example</a><br>
+                                          <br>
+                                      </td></tr>
+    </table>    
+    
+    
+	<h1>Public functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="language-cpp">extern IDatabaseProvider * CreatePostgreSQLDatabaseProvider();
+extern IDatabaseProvider * CreateMySQLDatabaseProvider();</code></pre>
+    <p>
+        This functions will be used to create a database provider, wich will return an instance to an IDatabase instance for the database engine to use.
+        Note that the returned instance must be deleted, if no longer needed.
+    </p>
+
+    <div id="CreatePostgreSQLDatabaseProvider" class="fnhead" style="margin-top:5px">CreatePostgreSQLDatabaseProvider</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns a IDatabaseProvider which creates an IDatabase instance using the PostgreSQL database driver.
+    </dd>
+    
+    <div id="CreateMySQLDatabaseProvider" class="fnhead" style="margin-top:5px">CreateMySQLDatabaseProvider</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns a IDatabaseProvider which creates an IDatabase instance using the MySQL database driver.
+        
+        <h4>Remarks</h4>
+        Because the official MySQL library doesn't support asynchronous communication, the driver itself will run in a seperate task to support
+        nonblocking database operations.
+    </dd>
+
+    <h2>Helper functions</h2>
+    <pre><code class="language-cpp">inline const char * DBErrorToStr(db_error_t err);</code></pre>
+    <div id="DBErrorToStr" class="fnhead" style="margin-top:5px">DBErrorToStr</div>
+    <dd>
+        Converts the given databas_error_t value to a human readable format. The result will be just a string of the name
+        of the enum itself. To get a real error message, call IDatabase::GetLastErrorMessage() instead.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">db_error_t <b>err</b></td><td>The error to convert to a string.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The name of the error enum as a string.
+    </dd>
+    
+    
+    <h1>Classes</h1>
+    <h2 id="IDatabaseProvider">IDatabaseProvider</h2>
+<pre><code class="language-cpp">class IDatabaseProvider {
+public:
+    virtual ~IDatabaseProvider() {}
+    virtual class IDatabase * CreateDatabase(class IIoMux * const iomux, class UDatabase * const user, class IInstanceLog * log) = 0;
+};</code></pre>
+    <p>
+        A database provider is needed to create an IDatabase instance. What kind of database driver used by the returned instance is defined
+        by the type of IDatabaseProvider itself. The IDatabase instance returned by an IDatabaseProvider must be deleted, if no longer used.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">CreateDatabase</div>
+    <dd>
+        Creates the IDatabase instance.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The IIoMux instance of the app.</td></tr>
+            <tr><td class="param">class UDatabase * const <b>user</b></td><td>The UDatabase instance to receive the callbacks.</td></tr>
+            <tr><td class="param">class IInstanceLog * <b>log</b></td><td>The IInstanceLog instance used for logging purposes. The flag LOG_DATABASE must be set to enable IDatabase logging.</td></tr>
+        </table>
+        
+        <h4>Return Value</h4>
+        The create IDatabase intsance, that must be deleted if no longer used.
+    </dd>
+
+    <h2 id="IDatabase">IDatabase</h2>
+    <pre><code class="C++">lass IDatabase {
+public:
+    virtual ~IDatabase() {}
+    virtual void Connect(const char * address, const char * dbname, const char * user, const char * password);
+    virtual bool Connected();
+    virtual void Shutdown();
+    virtual size_t QueryPrint(char * buffer, size_t bufferSize, const char * sqlcmd, ...);
+    virtual size_t QueryPrintV(char * buffer, size_t bufferSize, const char * sqlcmd, va_list argList);
+    virtual void ExecSQL(UDatabase * const user, dword flags, const char * sqlcmd, ...);
+    virtual void ExecSQLV(UDatabase * const user, dword flags, const char * sqlcmd, va_list argList);
+    virtual void InsertSQL(UDatabase * const user, const char * sqlcmd, ...);
+    virtual void InsertSQLV(UDatabase * const user, const char * sqlcmd, va_list argList);
+    virtual void BeginTransaction(UDatabase * const user, const char * lockTableCmd = nullptr);
+    virtual void EndTransaction(UDatabase * const user, bool doRollback = false);
+    virtual void PrepareStatement(UDatabase * user, const char * sqlcmd);
+    virtual void ExecSQL(UDatabase * const user, dword flags, class IPreparedStatement * const statement);
+    virtual void InsertSQL(UDatabase * const user, class IPreparedStatement * const statement);
+    virtual size_t EscapeSearchLiterals(const char * value, char * buffer, size_t bufferSize);
+    virtual const char * GetLastErrorMessage();
+};</code></pre>
+    <p>
+        This is the main calss that handels the communication between the Application and the database server. The interface is primarly for executing queries while the results
+        of that queries need to be handled by an <a href="">UDatabase</a> instance. Each queries posted will be add to an internal queue and processed with the fifo priciple.
+        Queries posted during a call of BeginTransaction() and EndTransaction() will be part of that transaction. Nested transactions are not allowed.
+    </p>
+    <p>
+        When sending SQL queries, a user can be given to override the default user set with IDatabaseProvider::CreateDatabase(). If an other user than the default one is given
+        to IDatabase::BeginTransaction(), all queries posted of that user will be prioritized because of that transaction. So queries posted from other users (or with no special
+        user to use the default one) will be placed at the end of the queue, until the user who opens the tansaction closes it (IDatabase::EndTransaction()). This shows also a
+        limitation at this point: if multiple UDatabase instances as users are needed for one transaction (e. G. by starting a transaction to update a set of data from different
+        sources), it won't work as long as there is some kind of "master" user the other ones. Gladly there is a solution. For that case,
+        <a href="../lib/database_switch.htm">DatabaseSwitch</a> can be used.
+    </p>
+    <p>
+        Using multiple users will also raise the question, how error handling worlks. Actually that depends on the error and how that error will
+        influence the internal state of IDatabase:
+    </p>
+    <ul>
+        <li>
+            If an SQL command of a user failes, all pending commands of the user that sends that user will be removed from the internal queue.
+            Then the user itself will receive an UDatabase::DatabaseError(). If the user had an active transaction, IDatabase will make a rollback
+            and unlock tables if they are locked.<br/><br/>
+        </li>
+        <li>
+            If an critical error occures that makes it impossible to continue using IDatabase, all pending commands of all users will be discarded. If there
+            is an active transaction, it will be rolled back. Then the UDatabase::DatabaseError() function will be called for all those users who had pending
+            queries inside the queue. After all the users had been informed, IDatabase internaly will call Shutdown() to close the database connection and
+            call UDatabase::DatabaseShutdown() callback of the main user.
+        </li>
+    </ul>
+
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">Connect</div>
+    <dd>
+        Establishes a connection to the database server.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>address</b></td><td>The address to the database server. Can be an IPv4 or IPv6 address, an URI or nullptr to connecto to the local server using much faster unix domain sockets (recommended for connecting to the PostgreSQL server on the AppPlatform).</td></tr>
+            <tr><td class="param">const char * <b>dbname</b></td><td>The name of the database to connect to.</td></tr>
+            <tr><td class="param">const char * <b>user</b></td><td>The user to use for the connection.</td></tr>
+            <tr><td class="param">const char * <b>dbname</b></td><td>The password for that user.</td></tr>
+        </table>
+        
+        <h4>Callbacks</h4>
+        If the connection had been established, UDatabase::DatabaseConnectComplete() will be called. If an error leads to an UDatabase::DatabaseShutdown() callback with an error code to indicate
+        what was going wrong.
+    </dd>
+
+    <div class="fnhead">Connected</div>
+    <dd>
+        <h4>Return value</h4>
+        Return true, if IDatabase is connected to the server, else false.
+        
+        <h4>Remarks</h4>
+        After calling IDatabase::Shutdown(), Connected() will return false even if the connection to the server still exists. So Connected() cannot be used for
+        celanup or shutdown checks, instead handle them inside the UDatabase::DatabaseShutdown() callback.
+    </dd>
+    
+    <div class="fnhead">Shutdown</div>
+    <dd>
+        Closes the database connection. If there are pending queries inside the queue, those will be handled first before the connection actually will be closed.
+
+        <h4>Callbacks</h4>
+        After the connection had been closed, UDatabase::DatabaseShutdown() will be called.
+    </dd>
+    
+    <div class="fnhead">QueryPrint</div>
+    <dd>
+        Used to build up a query string. The query will be stored inside buffer with a maximum of bufferSize. The SQL command itself has to be passed in sqlcmd.
+        That string could have placeholders, which will be replaced with the values of the data given in a variable parameters list after sqlcmd. The used
+        placeholder must combine with the data given. Also (depending on the placeholder) some critical characters will be escaped. Using QueryPrint is an
+        elegant way to dynamically build up queries while preventing SQL interjection from user input at the same time.<br/><br/>
+        Note that wile IDatabase::ExecSQL() does the same (which means, the SQL query with the variable parameters can directly given to ExecSQL()), QueryPrint()
+        helps to bild up a SQL query that can be insert into an other for nested SQL queries, or to pepare a query for later use.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>buffer</b></td><td>The buffer to store the processed query string to.</td></tr>
+            <tr><td class="param">size <b>bufferSize</b></td><td>The size of the given buffer.</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">... <b>...</b></td><td>Additional values for the placeholders. Must be the same order and datatypes as the placeholders defines them.</td></tr>
+        </table>
+        
+        <h4>Return value</h4>
+        The size of the final query string.
+        
+        <h4>Remarks</h4>
+        The function supports the following placeholders:
+        <ul>
+            <li><b>%i</b> Placeholder for an integer</li>
+            <li><b>%u</b> Placeholder for an unsigned integer (dword)</li>
+            <li><b>%lli</b> Placeholder for an 64 bit integer (long64)</li>
+            <li><b>%llu</b> Placeholder for an 64 bit unsigned integer (ulong64)</li>
+            <li><b>%b</b> Placeholder for a bool</li>
+            <li>
+                <b>%q</b> Placeholder for a string that will be copied directly, without quoting or escaping of the strings data.
+                Can be used to insert an alrady prepared query string.
+            </li>
+            <li>
+                <b>%du</b> Placeholder for a buffer. The value of the buffer will be copied as a hex string, starting with \x. Note
+                that an additional parameter must be passed (size_t) to tell the size of the buffer.
+            </li>
+            <li><b>%s</b> Placeholder for a string. The string will be enclosed by '.</li>
+            <li><b>%S</b> Placeholder for a string. The string will be enclosed by ".</li>
+            <li><b>%n</b> Placeholder for a string that will be insert to the SQL command without enclosing it to ' or ".</li>
+            <li><b>%e</b> Same as %n with the exception that search literals (like _ and &amp;) will be escaped to use them as charater and not as search wildcard.</li>
+            <li>
+                <b>%p</b> Suffix to pass a pointer instead of a value.
+                Only in combination with integer or bool variants (%pi, %pu, %pb, %plli, %pllu).
+                When using with prepared statements, that suffix will be ignored.
+                <b>Note:</b> This can be used to set a field to NULL by pasing NULL
+                instead of a valid pointer. If you need to set a string field to NULL,
+                simply pass NULL when using %s, %S or %n.
+            </li>
+            <li><b>%%</b> An escaped % sign. </li>
+        </ul>
+    </dd>
+ 
+    <div class="fnhead">QueryPrintV</div>
+    <dd>
+        Does the same as QueryPrint. The difference here is that a pointer to the variable parameters can be passed.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>buffer</b></td><td>The buffer to store the processed query string to.</td></tr>
+            <tr><td class="param">size <b>bufferSize</b></td><td>The size of the given buffer.</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command to execute. Can contain placeholders.</td></tr>
+            <tr><td class="param">va_list <b>argList</b></td><td>Pointer to the start of the variable parameters.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The size of the final query string.        
+    </dd>
+
+    <div class="fnhead">ExecSQL (overloaded)</div>
+    <dd>
+        Executes the given SQL command. SQL query given can contain place holders to put variable values inside the queries. Also by using that
+        placeholders, the values (especially strings) will be used in a way to prevent SQL interjection. The function internally calls IDatabase::QueryPrint(),
+        so preparing the query first and passing it to ExecSQL() actually will be a bad idea performance wise. However, in some cases QueryPrint() is still
+        a nice helper to prepare various queries for later use.<br/><br/>
+        Note: for the placeholders and datatypes supported, look to the <a href="#QueryPrint">QueryPrint</a> description.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">dword <b>flags</b></td><td>Additional flags. Can be 0 or DB_EXEC_FETCH_ALL is supported to get all results at once (see <a href="#IDataSet">IDataSet</a> for details).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">... <b>...</b></td><td>Additional values for the placeholders. Must be the same order and datatypes as the placeholders defines them.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseExecSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+
+        <h4>Remarks</h4>
+        Note that there is a limit of a maximum length for SQL commands of 250*1024-1 (255999) characters. This is the size for the finaly SQL query string,
+        after parsing all placeholders and inserting the values for them at the prorpriate place.
+    </dd>
+
+    <div class="fnhead">ExecSQL (overloaded)</div>
+    <dd>
+        Executes the given prepared statement. See <a href="#IPreparedStatement">IPreparedStatement</a> to learn more about how to create and use them.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">dword <b>flags</b></td><td>Additional flags. Can be 0 or DB_EXEC_FETCH_ALL is supported to get all results at once (see <a href="#IDataSet">IDataSet</a> for details).</td></tr>
+            <tr><td class="param">IPreparedStatement * const <b>preparedStatement</b></td><td>The prepared statement to execute.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseExecSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+    </dd>
+    
+    <div class="fnhead">ExecSQLV</div>
+    <dd>
+        Same as IDatabase::ExecSQL(), so that instead of a variable list of parameters for the placeholders, a pointer to the start of the variable list must be given. For more information
+        about the function see the describtion of IDatabase::ExecSQL() above.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">dword <b>flags</b></td><td>Additional flags. Can be 0 or DB_EXEC_FETCH_ALL is supported to get all results at once (see <a href="#IDataSet">IDataSet</a> for details).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">va_list <b>argList</b></td><td>Pointer to the start of the variable parameters.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseExecSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+
+        <h4>Remarks</h4>
+        Note that there is a limit of a maximum length for SQL commands of 250*1024-1 (255999) characters. This is the size for the finaly SQL query string,
+        after parsing all placeholders and inserting the values for them at the prorpriate place.
+    </dd>
+    
+    <div class="fnhead">InsertSQL (overloaded)</div>
+    <dd>
+        Executes a query as a query to insert data. The difference in compartion to IDatabase::ExecSQL() is, that UDatabase::DatabaseInserSQLResult() will be called after execution,
+        holding the ID of the new insert dataset. The rules for the sqlcmd and the placeholder are the same as for IDatabase::ExecSQL() and IDatabse::QueryPrint(). So look to the
+        IDatabase::QueryPrint() description for more details. Like IDatabase::ExecSQL(), InsertSQL() calls IDatabase::QueryPrint() internally to pepare the given SQL command.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">... <b>...</b></td><td>Additional values for the placeholders. Must be the same order and datatypes as the placeholders defines them.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseInserSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+
+        <h4>Remarks</h4>
+        Note that there is a limit of a maximum length for SQL commands of 250*1024-1 (255999) characters. This is the size for the finaly SQL query string,
+        after parsing all placeholders and inserting the values for them at the prorpriate place.<br/>
+        To make it work, it is necessary that the data base table you're going to address with an InsertSQL() call, has a field named id, wich must be an 64bit, autoincrement
+        primary key field. Read the PostgreSQL or MySQL documentation to know how to create such a field. For PostgreSQL there is no need to add the 'RETURNING id' part to the query, because
+        it will be added by the InsertSQL() function.
+    </dd>
+
+    <div class="fnhead">InsertSQL (overloaded)</div>
+    <dd>
+        Executes the given prepared statement to insert data. See <a href="#IPreparedStatement">IPreparedStatement</a> to learn more about how to create and use them.
+        The difference in compartion to IDatabase::ExecSQL() is, that UDatabase::DatabaseInserSQLResult() will be called after execution, holding the ID of the
+        new insert dataset.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">IPreparedStatement * const <b>preparedStatement</b></td><td>The prepared statement to execute.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseInserSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+
+        <h4>Remarks</h4>
+        To make it work, it is necessary that the data base table you're going to address with an InsertSQL() call, has a field named id, wich must be an 64bit, autoincrement
+        primary key field. Read the PostgreSQL or MySQL documentation to know how to create such a field. For PostgreSQL, the 'RETURNING id' part must be added to the query when creating
+        the prepared statement via IDatabase::PrepareQuery.
+    </dd>
+    
+    <div class="fnhead">InsertSQLV</div>
+    <dd>
+        Same as IDatabase::InsertSQL(), so that instead of a variable list of parameters for the placeholders, a pointer to the start of the variable list must be given. For more information
+        about the function see the describtion of IDatabase::InsertSQL() above.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result of the SQL execution (or nullptr, to call the default user).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command string to process. Can contain placeholders.</td></tr>
+            <tr><td class="param">va_list <b>argList</b></td><td>Pointer to the start of the variable parameters.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UDatabase::DatabaseInserSQLResult() will be called, or UDatabase::DatabaseError(), if an error occures.
+
+        <h4>Remarks</h4>
+        Note that there is a limit of a maximum length for SQL commands of 250*1024-1 (255999) characters. This is the size for the finaly SQL query string,
+        after parsing all placeholders and inserting the values for them at the prorpriate place.<br/><br/>
+        To make it work, it is necessary that the data base table you're going to address with an InsertSQL() call, has a field named id, wich must be an 64bit, autoincrement
+        primary key field. Read the PostgreSQL or MySQL documentation to know how to create such a field.
+    </dd>
+    
+    <div class="fnhead">BeginTransaction</div>
+    <dd>
+        Will start a transaction block. After calling this function, all SQL queries posted by other users than the one who was given to BeginTransaction() will be
+        put to the and of the list (including other BeginTransaction() calls). So it is guaranteed that only the SQL queries from the user who started the transaction
+        will also be part of it. If nescesarry, an additional SQL command for locking a table can be given. More information about that can be found in the documentation
+        of PostgreSQL or MySQL. A transaction can be closed by calling IDatabase::EndTransaction().
+        
+            it must be given to lockTableCmd.
+            <b>Note:</b> Never send a lock command with a normal ExecSQL, or the lock will not been
+            canceld if an error occures. BeginTransaction() will call LockQueue() to group the commands.
+            On success, UDatabase::ExecSQLResult() will be called.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to callback with the result after starting the transaction.</td></tr>
+            <tr><td class="param">const char * <b>lockTableCmd</b></td><td><i>(Default: nullptr)</i> An additional SQL command to lock tables or nullptr, if no additional command should be send.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        After starting the transaction, UDatabase::DatabaseBeginTransactionResult() will be called.
+
+        <h4>Remarks</h4>
+        If a table must be locked, only do that with IDatabase::BeginTransaction(). Never send a lock command directly using IDatabase::ExecSQL(), or the table won't be unlocked automatically!
+        If there are other commands in the queue, they will be processed before. So UDatabase::DatabaseBeginTransactionResult() really will be called <i>after</i> the transaction is active. So that
+        callback will be the best place to send SQL commands for that transaction.
+    </dd>
+    
+    <div class="fnhead">EndTransaction</div>
+    <dd>
+        Will end a transaction. If needed, each change made during the active transaction can be rolled back when the flag is set to do so. Note that on an internal error of IDatabase
+        (e. g. some SQL command posted has a syntax error), the transaction automatically will be rolled back and closed. So there is no need to call EndTransaction() in case of a
+        database related error. If a table had been lock by IDatabase::BeginTransaction(), that table will be unlocked.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to close the transaction for. Must be the same as given to IDatabase::BeginTransaction().</td></tr>
+            <tr><td class="param">bool <b>roolBack</b></td><td><i>(Default: false)</i> If true, IDatabase will rollback each changed made since the call of IDatabase::BeginTransaction().</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        After ending the transaction, UDatabase::DatabaseEndTransactionResult() will be called.
+    </dd>
+
+    <div class="fnhead">EscapeSearchLiterals</div>
+    <dd>
+        Escapes search literals used in LIKE queries so that they are not interpreted as search pattern by the database (e.g. 'Search%' will be 'Search\%' afterwards).
+        In PostgreSQL and MySQL, the patterns '%' and '_' are escaped. So those will be interpreted as characters. If you whant to call IDatabase::ExecSQL() or
+        IDatabase::InsertSQL() using a query string, it will be better to use the %e placeholder, which does the same. However, EscapeSeaerchLiterals() will come
+        in handy when using a string as as value for prepared statements.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>value</b></td><td>The string the holds (or can hold) search literals to escape.</td></tr>
+            <tr><td class="param">const char * <b>buffer</b></td><td>The buffer to store the escaped string to.</td></tr>
+            <tr><td class="param">size_t <b>bufferSize</b></td><td>The size of the buffer to store the data to.</td></tr>
+        </table>
+
+        <h4>Remarks</h4>
+        The buffer given must be big enough to hold the result. So to be on the safe side, it should be able to hold strlen(value) * 2 + 1 bytes.
+    </dd>
+    
+    <div class="fnhead">PrepareStatement</div>
+    <dd>
+        Creates a prepared statement for the given SQL query. See <a href="#IPreparedStatement">IPreparedStatement</a> for details.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">UDatabase * const <b>user</b></td><td>The user to receive the prepared statement (or nullptr to use the default user).</td></tr>
+            <tr><td class="param">const char * <b>sqlcmd</b></td><td>The SQL command to create the prepared statment for.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        After creating the prepares tatement, UDatabase::DatabasePrepareStatementResult() will be called. The IPraparedStatement instance given to that callback must
+        be deleted if no longer needed. In case of an error, the IDatabase will call UDatabase::DatabaseError().
+        
+        <h4>Remarks</h4>
+        For PostgreSQL, if the created perpared statement is an INSERT statement and so will be passed to IDatabase::InsertSQL(), the "RETURNING id" statement must be added to the query!
+    </dd>
+    
+    <div class="fnhead">GetLastErrorMessage</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the error message of the last error occurred.
+        
+        <h4>Remarks</h4>
+        GetLastErrorMessage() helps to log the error or to see what acutally was wrong. UDatabase::DatabaseError() will be a good place to call the message. Don't save the pointer
+        returned. Instead, of the error message should be stored for later use, you must make a copy of it.
+    </dd>
+    
+    
+    <h2 id="IPreparedStatement">IPreparedStatement</h2>
+    <pre><code class="C++">class IPreparedStatement {
+public:
+    virtual ~IPreparedStatement() {}
+    virtual void SetParam(dword idx, int value);
+    virtual void SetParam(dword idx, dword value);
+    virtual void SetParam(dword idx, long64 value);
+    virtual void SetParam(dword idx, ulong64 value);
+    virtual void SetParam(dword idx, bool value);
+    virtual void SetParam(dword idx, double value);
+    virtual void SetParam(dword idx, int * value);
+    virtual void SetParam(dword idx, dword * value);
+    virtual void SetParam(dword idx, long64 * value);
+    virtual void SetParam(dword idx, ulong64 * value);
+    virtual void SetParam(dword idx, double * value);
+    virtual void SetParam(dword idx, bool * value);
+    virtual void SetParam(dword idx, const char * value);
+    virtual void SetParam(dword idx, const byte * buffer, size_t size);
+};</code></pre>
+    <p>
+        Prepared statements are some kind of ready-to-use SQL queries. While they needs some managament overhead (create them, stored them on some place for usage
+        and deleted them when no longer used), they have some other advantage: ease of use and performance. As a thumb rule you can say: for
+        each SQL query that is used more than once on a regular basis, it is worth to use a prepared statement. Because when using prepared statment (after
+        creating them), there is no need to build up an SQL string, escape strings to prevent SQL injection and also there is no need to parse the SQL
+        string again on the database server side. So using prepared statements (while consuming a little memory footprint) can spead up the applications
+        performance a bit. That said, according to the documentation of PostgreSQL and MySQL, prepared statements can also have no benefit at all or even
+        slow down the performance under some circumstances. So finally it depends on tests. However, using prepared statements for often called SQL queries will
+        be a good start.
+    </p>
+    <p>
+        To create an IPreparedStatement instance, call IDatabase::PrepareStatement(). The instance will then passed to UDatabase::DatabasePrepareStatementResult() and must
+        be deleted, if no longer used. To execute a prepared statement, simply set the parameters and pass it to IDatabase::ExecSQL() or IDatabase::InsertSQL().
+        The index of a parameter depends on the position of the parameters place holder in the SQL string. So for a query like "select * from users where user_name=%s and
+        age > %i", the index of the parameter for %s will be 0, and for the parameter for %i 1. The placeholders have the same format as for IDatabase::QueryPrint(), so read
+        the description of that function for more information. However, because of the nature of prepared statements, there are some differences for the placeholders:
+    </p>
+    <ul>
+        <li>%p will be ignored. To pass a pointer, use one of the IPreparedStatement::SetParam() functions that accept the pointer of the format needed.</li>
+        <li>%s, %S and %n will be handled in the same way: the string will be used without beeing enclosed by ' or ".</li>
+        <li>%s is not supported. Use %s instead and call IDatabase::EscapeSearchLiterals() to get the same effect.</li>
+    </ul>
+    <p>
+        After the parameters had been set and the prepared statment instance had been passed to IDatabase::ExecSQL() or IDatabase::InsertSQL(), the IPreparedStatement instance
+        can directly be used again and the parameters can be changed. Because the prepared statements will manage the parameters internally by reference counting so that they
+        are fixed as soon as the prepared statement instance sits inside the IDatabase execution queue.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">SetParam (overloaded)</div>
+    <dd>
+        Set the parameters for the query. There are various functions for the different datatypes supported by IDatabase as well as a version that accepts a pointer for that
+        datatype. When passing nullptr to that pointer, the datafield inside the database will be set to NULL. See the source code part above for details.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>idx</b></td><td>The index of the parameter value to set.</td></tr>
+            <tr><td class="param">various types <b>value</b></td><td>The value for that parameter.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        It can be that you must do some typecasting to let the compiler now, which overloaded function you actually whant to use. If e. G. SetParam() will be called with value 1,
+        the compiler must know, how to interpret this number: as dword, long64, bool, ...
+    </dd>
+
+    <div class="fnhead">SetParam (overloaded)</div>
+    <dd>
+        This version takes three arguments instead as two like the others. It is for passing buffers and so does also need the buffer size.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>idx</b></td><td>The index of the parameter value to set.</td></tr>
+            <tr><td class="param">const byte * <b>buffer</b></td><td>The buffer holding the data to write to the database.</td></tr>
+            <tr><td class="param">size_t <b>size</b></td><td>The size of the buffer.</td></tr>
+        </table>
+    </dd>
+
+    <h2 id="IDataSet">IDataSet</h2>
+    <pre><code class="C++">class IDataSet {
+public:
+    virtual ~IDataSet() {}
+
+    virtual size_t GetColumnCount();
+    virtual bool Eot();
+    virtual void Next();
+    virtual void FetchNextRow();
+    virtual bool IsSingleRowMode();
+    virtual ulong64 GetAffectedRows();
+
+    virtual const char * GetColumnName(int column);
+    virtual int GetColumnID(const char * columnName);
+
+    virtual bool ColumnIsNull(const char * columnName);
+    virtual bool ColumnIsNull(int column);
+
+    virtual int GetIntValue(const char * columnName);
+    virtual dword GetUIntValue(const char * columnName);
+    virtual long64 GetLong64Value(const char * columnName);
+    virtual ulong64 GetULong64Value(const char * columnName);
+    virtual bool GetBoolValue(const char * columnName);
+    virtual double GetDoubleValue(const char * columnName);
+    virtual const char * GetStringValue(const char * columnName);
+    virtual const char * GetStringValueWithNull(const char * columnName);
+    virtual size_t GetDataSize(const char * columnName);
+    virtual const byte * GetDataValue(const char * columnName);
+
+    virtual int GetIntValue(int column);
+    virtual dword GetUIntValue(int column);
+    virtual long64 GetLong64Value(int column);
+    virtual ulong64 GetULong64Value(int column);
+    virtual bool GetBoolValue(int column);
+    virtual double GetDoubleValue(int column);
+    virtual const char * GetStringValue(int column);
+    virtual const char * GetStringValueWithNull(int column);
+    virtual size_t GetDataSize(int column);
+    virtual const byte * GetDataValue(int column);
+};</code></pre>
+    <p>
+        After executing a SQL query, the result of that query will given to the UDatabase user in form of an IDataSet instance. By using that instance, the data of the
+        query result can be accessed. After prpcessomg all data, the application must delete the IDataSet instance to let the IDatabase process the next SQL query from
+        the internal queue. So it is alos not allowes to store the IDataSet for some later use, because it will block the whole database system. An IDataSet with instance
+        will be passes to UDataset::DatabaseExecSQLResult() and should be processed before the function returns.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">GetColumnCount</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the number of columns available in the result set.
+    </dd>
+
+    <div class="fnhead">Eot</div>
+    <dd>
+        <h4>Return value</h4>
+        True, of the end of the result table had been reached, else false.
+        
+        <h4>Remarks</h4>
+        If Eot returnes true, the IDataSet intsance must be deleted to let IDataset continue processing the next SQL query inside the internal queue.
+    </dd>
+
+    <div class="fnhead">Next</div>
+    <dd>
+        Set the internal row pointer to the next row to get the data out of it. This should be used in a loop to process all data from the query.
+        Please use it with care, because if processing the data takes a lot of time, it will block the whole asynchronous system for your application. Before
+        accessing data, IDataSet::Eot() must be called to make sure that there is data available.
+
+        <h4>Remarks</h4>
+        Only call Next() if the query for that result had been executed with the DB_EXEC_FETCH_ALL flag or use IDataset::FetchNextRow() instead.
+    </dd>
+    
+    <div class="fnhead">FetchNextRow</div>
+    <dd>
+        Fetches the next row from the server. This is the asynchronous way of processing each row. After calling this function, UDatabase::DatabaseExecSQLResult() can be leaved
+        and will be called again from IDatabase, when the next row had ben read. You must check the return of IDataSet::Eot() before accessing the row data to make sure, that
+        there is data available.
+        
+        <h4>Callbacks</h4>
+        UDataset::DatasetExecSQLResult() will be called
+    </dd>
+    
+    <div class="fnhead">IsSingleRowMode</div>
+    <dd>
+        Can be used to check, if the data can be process with IDataSet::Next() or IDataSet::FetchNextRow(). Single-row-mode means, that the result will be fetched line by line
+        from the server (which is the default if the flag DB_EXEC_FETCH_ALL was not given to IDatabase::ExecSQL()).
+        
+        <h4>Return value</h4>
+        True, if the dataset uses single-row-mode and the rows must be read calling IDataSet::FetchNextRow(). Fals, if all the rows had been received from the database server and
+        IDataSet::Next() must be used to process the rows.
+    </dd>
+    
+    <div class="fnhead">GetAffectedRows</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the number of rows affected by the query (which actually is then number of rows IDataSet provides).
+    </dd>
+
+    <div class="fnhead">GetColumnName</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column to get the name for. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        Returns the name of the culumn.
+    </dd>
+    
+
+    <div class="fnhead">GetColumnID</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The Name of the column to get the index for.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The index of the column or -1, if the column name canot be found inside the list of columns.
+    </dd>
+
+    <div class="fnhead">ColumnIsNull (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column to check. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        True, if the value of the column is NULL, else false.
+    </dd>
+    
+    <div class="fnhead">ColumnIsNull (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column to check.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        True, if the value of the column is NULL, else false.
+    </dd>
+
+    <div class="fnhead">GetIntValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as integer.
+    </dd>
+
+    <div class="fnhead">GetIntValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as integer.
+    </dd>
+    
+    <div class="fnhead">GetUIntValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as integer.
+    </dd>
+
+    <div class="fnhead">GetUIntValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as dword.
+    </dd>
+
+    <div class="fnhead">GetLong64Value (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as long64.
+    </dd>
+
+    <div class="fnhead">GetLong64Value (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as long64.
+    </dd>
+
+    <div class="fnhead">GetULong64Value (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as ulong64.
+    </dd>
+
+    <div class="fnhead">GetULong64Value (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as ulong64.
+    </dd>
+
+    <div class="fnhead">GetBoolValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as bool.
+    </dd>
+
+    <div class="fnhead">GetBoolValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as bool.
+    </dd>
+    
+    <div class="fnhead">GetDoubleValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as double.
+    </dd>
+
+    <div class="fnhead">GetDoubleValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as doubel.
+    </dd>
+    
+    <div class="fnhead">GetStringValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as string. If the column is NULL, an empty string will be returned.
+    </dd>
+
+    <div class="fnhead">GetStringValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as string. If the column is NULL, an empty string will be returned.
+    </dd>
+    
+    <div class="fnhead">GetStringValueWithNull (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as string. If the column is NULL, nullptr will be returned.
+    </dd>
+
+    <div class="fnhead">GetStringValueWithNull (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The data value of the column as string. If the column is NULL, nullptr will be returned.
+    </dd>
+    
+    <div class="fnhead">GetDataSize (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        The number of binary data bytes hold by the column.
+        
+        <h4>Remarks</h4>
+        To get the binary data itself, call IDataSet::GetDataValue().
+    </dd>
+
+    <div class="fnhead">GetDataSize (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the value from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The number of binary data bytes hold by the column.
+        
+        <h4>Remarks</h4>
+        To get the binary data itself, call IDataSet::GetDataValue().
+    </dd>
+    
+    <div class="fnhead">GetDataValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>column</b></td><td>The index of the column get the data from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        Returns the binary data of the column.
+        
+        <h4>Remarks</h4>
+        Got get the number of bytes hold by the column, call IDataSet::GetDataSize().
+    </dd>
+
+    <div class="fnhead">GetDataValue (overloaded)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>columnName</b></td><td>The name of the column get the data from. Must be between 0 and IDataSet::GetColumnCount() - 1.</td></tr>
+        </table>
+
+        Returns the binary data of the column.
+        
+        <h4>Remarks</h4>
+        Got get the number of bytes hold by the column, call IDataSet::GetDataSize().
+    </dd>
+    
+    
+    
+    
+    
+    
+
+    <h2 id="UDatabase">UDatabase</h2>
+    <pre><code class="C+*">class UDatabase {
+public:
+    virtual void DatabaseConnectComplete(IDatabase * const database) {};
+    virtual void DatabaseShutdown(IDatabase * const database, db_error_t reason) {};
+    virtual void DatabaseError(IDatabase * const database, db_error_t error) = 0;
+    virtual void DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset) {};
+    virtual void DatabaseInsertSQLResult(IDatabase * const database, ulong64 id) {};
+    virtual void DatabaseBeginTransactionResult(IDatabase * const database) {};
+    virtual void DatabaseEndTransactionResult(IDatabase * const database) {};
+    virtual void DatabasePrepareStatementResult(IDatabase * const database, class IPreparedStatement * statement) {};
+};</code></pre>
+    <p>
+        Each database request will lead to a result, wich will be redirected to an UDatabase instance. An app must provide at least on UDatabase instance to pass to IDatabase, but
+        also can have multiple UDatabase objects to pass to database related calls. That user passed to a function (like IDatabase::ExecSQL()) will receive the result of the SQL
+        query to execute. If nullptr will be passed as user to that functions, the default user (given to IDatabaseProvider::CreateDatabase()) will be used for callbacks.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">DatabaseConnectComplete</div>
+    <dd>
+        Will be called when the connection to the database server had been established.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">DatabaseShutdown</div>
+    <dd>
+        Will be called after the connection had been closed or if an error occurred when tried to establish the connection. The reason provides details
+        about what happend.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+            <tr><td class="param">db_error_t <b>reason</b></td><td>The reason why the connection had been closed.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        This callback will be a good place to delete the IDatabase instance. However, this should only be done from the same UDatabase instance that
+        was given to IDatabaseProvider::CreateDatabase().
+    </dd>
+
+    <div class="fnhead">DatabaseError</div>
+    <dd>
+        Will be called when an error occures while executing a command. The user whis query raised an error will receive that callback. In that case, all
+        pending SQL queries inside the internal queue of IDatabase will be discared and an active transaction will be be rolled back and closed (befor this callback raises).
+        If a critical error occures, all queries inside the queue will be discared and all users will receive UDatabase::DatabaseError(), before the main user receives
+        a UDatabase::DatabaseShutdown().
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+            <tr><td class="param">db_error_t <b>error</b></td><td>The rror that occured.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">DatabaseExecSQLResult</div>
+    <dd>
+        Will be called after executing an SQL query, providing the result of that call. The given dataset should be handled here and must be deleted,
+        if no longer needed to let IDatabase process the next query of the internal queue. If the dataset is in sinngle row mode (because of fetching each
+        row in an asynchronous way), DatabaseExecSQLResult() will be recalled after receiving the next row. For this, IDataSet::FetchNextRow() must be used.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+            <tr><td class="param">IDataset * <b>dataset</b></td><td>The IDataset instance providing the result of the query.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        Don't delete the IDataset after calling IDataset::FetchNextRow(). Also, don't forget to delete the IDataSAet instance if you no longer
+        need it, of the database system will block forever.
+    </dd>
+    
+    <div class="fnhead">DatabaseInsertSQLResult</div>
+    <dd>
+        Will be called after the execution of IDatabase::InsertSQL(), providing the id of the newly insert row.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+            <tr><td class="param">ulong64 <b>id</b></td><td>The ID of the new insert row.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        To use IDatabse::InsertSQL() and this callback, the table to insert a row must provide a field named ID. That field must
+        hold a 64bit value and must be defined to autoincrement. More information can be found in the PostgreSQL or MySQL documentation.
+    </dd>
+
+    <div class="fnhead">DatabaseBeginTransactionResult</div>
+    <dd>
+        Will be called after a transaction had been started because of a previous call to IDatabase::BeginTransaction(). So this callback will be the right
+        place to start posting SQL requests that will be part of the transaction.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        After a transaction had been started, all IDatabase::ExecSQL() or IDatabase::InsertSQL() calls will be put to the end of the queue and ignroed, if
+        they are not for the same user as the one who started the transaction. To use multiple users for results of transaction queries, use the
+        <a href="../lib/database_switch.htm">DatabaseSwitch</a> helper class.
+    </dd>
+
+    <div class="fnhead">DatabaseEndTransactionResult</div>
+    <dd>
+        Will be called after a transaction had been closed because of a previous call to IDatabase::EndTransaction().
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">DatabasePrepareStatementResult</div>
+    <dd>
+        When creating a prepared statement by calling IDatabase::PrepareStatement(), the result will be passed to UDatabase::DatabasePrepareStatementResult() by the
+        given IPreparedStatement instance. To execute that instance, it must be given to IDatabase::ExecSQL() or IDatabase::InsertSQL(). It also must be deleted by
+        the app, if no longer used.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IDatabase * const <b>database</b></td><td>The calling database instance.</td></tr>
+            <tr><td class="param">IPreparedStatement * <b>statement</b></td><td>The instance to use for executing the prepared statement.</td></tr>
+        </table>
+    </dd>
+    
+    <h1>Data types</h1>
+    <h2>Defines / Statics</h2>
+    <pre><code style="laguage-cpp">#define DB_EXEC_FETCH_ALL    0x01</code></pre>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td id="DB_EXEC_FETCH_ALL"><b>DB_EXEC_FETCH_ALL</b></td><td>Can be passed to IDatabase::ExecSQL() to request all result rows. In that case, the results will be completely loaded into the apps
+                                                               memory. To access it, the data must be processed in a loop by calling IDataSet::Next().</td></tr>
+        </table>
+    </dd>
+    
+    <h2 id="db_error_t">db_error_t</h2>
+<pre><code style="laguage-cpp">typedef enum {
+    DB_OK = 0,
+    DB_SHUTDOWN_NORMAL = DB_OK,
+    DB_ERR_CONNECT_FAILED,
+    DB_ERR_SQL_COMMAND_FAILED,
+    DB_ERR_SHUTDOWN_STATE,
+    DB_ERR_SERVER_ERROR
+} db_error_t;</code></pre>
+    <p>
+       This enum is used determine the reason why a database connection had been closed. The values are:
+    </p>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td><b>DB_OK</b></td><td>Everything is fine, the shutdown is the result of a previous IDatabase::Shutdown() call.</td></tr>
+            <tr><td><b>DB_SHUTDOWN_NORMAL</b></td><td>Same as DB_OK. Recommendet to use for better readable code.</td></tr>
+            <tr><td><b>DB_ERR_CONNECT_FAILED</b></td><td>The conenction to the database failed. Enable logging to get details.</td></tr>
+            <tr><td><b>DB_ERR_SQL_COMMAND_FAILED</b></td><td>An SQL command send failed to execute. Enable logging to see what was wrong with that query.</td></tr>
+            <tr><td><b>DB_ERR_SHUTDOWN_STATE</b></td><td>The app tried to execute a database command, while the shutdown of the database already is in process.</td></tr>
+            <tr><td><b>DB_ERR_SERVER_ERROR</b></td><td>An error occured on the database server side. Enable logging to see more details.</td></tr>
+        </table>
+    </dd>
+    
+    
+    <h2 id="Example">Code Example</h2>
+<pre><code class="C++">app::app(IIoMux * iomux)
+    : iomux(iomux)
+{
+    IDatabaseProvider * databaseProvider = CreatePostgreSQLDatabaseProvider();
+    this->database = databaseProvider->CreateDatabase(iomux, this, this);
+    delete databaseProvider;
+    this->database->Connect("127.0.0.1", "test_db", "user", "12345");
+}
+
+void app::DatabaseConnectComplete(IDatabase * const database)
+{
+    this->database->ExecSQL(this, 0, "select * from test_table where name=%s and id=%u", "Noname", 42);
+}
+
+void app::DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset)
+{
+    if (dataset->Eot()) {
+        delete dataset;
+        this->database->Shutdown();
+    }
+    else {
+        printf("%u | %s\n", dataset->GetIntValue("id"), dataset->GetStringValue("name"));
+        dataset->FetchNextRow();
+    }
+}
+
+void app::DatabaseShutdown(IDatabase * const database, db_error_t reason)
+{
+    if (reason != DB_SHUTDOWN_NORMAL) {
+        debug->printf("An error occured, look at the log of the app\n");
+    }
+    
+    delete this->database;
+    this->database = nullptr;
+}
+</code></pre>
+
+</body>
+</html>

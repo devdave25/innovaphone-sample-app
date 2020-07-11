@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Tutorial: PhoneInfo API</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript">
+        function toggleSpoiler(id) {
+            var e = document.getElementById(id);
+            if (e.style.display == "none") e.style.display = "";
+            else e.style.display = "none";
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Tutorial: PhoneInfo API</h1>
+
+    <p>
+        In this tutorial you will learn how to use the PhoneInfo API in an app.
+    </p>
+    <ul>
+        <li>
+            We will build a small hidden app (no UI in appclient) that is monitoring call activity.
+        </li>
+        <li>
+            For every call the app will try to fetch context information related to the remote party.
+        </li>
+        <li>
+            The app will then provide this context information to the Phone-App (or Softphone-App).
+        </li>
+        <li>
+            Phone-App (or Softphone-App) will show this context information on the call.
+        </li>
+    </ul>
+    <p>
+        <button name="preview" style="height:30px; font-size:14px" onclick="toggleSpoiler('preview')">Preview</button><br />
+        <img id="preview" style="display:none" src="PhoneInfoApi.png">
+    </p>
+
+    <h2>Conventions</h2>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name <i>NewApp1</i> and the company name <i>Company</i>.
+        For testing we use the user admin.<br />
+        Your filenames might be different according to your settings.
+    </p>
+
+    <h2>Step by step</h2>
+
+    <h3>Cleanup template</h3>
+    <p>
+        Remove parts you don't need for a hidden App
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('cleanup-js')">Code spoiler JS</button>
+        <div id="cleanup-js" style="display:none">
+            <code class="language-js">
+                <pre>
+var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+app.checkBuild = true;
+app.onconnected = function (domain, user, dn, appdomain) {
+    console.debug("NewApp1::wsConnected()");
+}</pre>
+            </code>
+        </div>
+    </p>
+
+    <h3>Make your App a provider of API "com.innovaphone.phoneinfo"</h3>
+    <p>
+        Start providing API "com.innovaphone.phoneinfo" in your main JS file.
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('provide-api')">Code spoiler JS</button>
+        <div id="provide-api" style="display:none">
+            <code class="language-js">
+                <pre>
+<mark>var phoneInfoApi = null;</mark>
+var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+app.checkBuild = true;
+app.onconnected = function (domain, user, dn, appdomain) {
+    console.debug("NewApp1::wsConnected()");
+<mark>    phoneInfoApi = phoneInfoApi || start.provideApi("com.innovaphone.phoneinfo");
+    phoneInfoApi.onmessage.attach(onPhoneInfoApiMessage);</mark>
+}</pre>
+            </code>
+        </div>
+    </p>
+
+    <h3>Make your App a handler for API messages of "com.innovaphone.phoneinfo"</h3>
+    <p>
+        Add handler function for API messages "CallAdded", "CallUpdated", "CallRemoved".<br />
+        Keep every call during lifetime in a list.<br />
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('onmessage')">Code spoiler JS</button>
+        <div id="onmessage" style="display:none">
+            <code class="language-js">
+                <pre>
+var phoneCalls = [];
+function onPhoneInfoApiMessage(sender, obj) {
+    console.debug("NewApp1::onPhoneInfoApiMessage() call=" + JSON.stringify(obj.msg));
+    var key = obj.consumer + ":" + obj.msg.id;
+    if (obj.msg.mt == "CallAdded") {
+        var call = { src: obj.consumer, id: obj.msg.id, guid: obj.msg.guid };
+        phoneCalls[key] = call;
+    }
+    else if (obj.msg.mt == "CallUpdated") {
+        var call = { src: obj.consumer, id: obj.msg.id, guid: obj.msg.guid, dir: obj.msg.dir, num: obj.msg.num, sip: obj.msg.sip, dn: obj.msg.dn, state: obj.msg.state }
+        phoneCalls[key] = call;
+    }
+    else if (obj.msg.mt == "CallRemoved") {
+        delete phoneCalls[key];
+    }
+}
+</pre>
+            </code>
+        </div>
+    </p>
+
+    <h3>Database search</h3>
+    <p>
+        Send request to backend on AP to search database as soon as the call reaches certain state.<br />
+        Add code to handling of "CallUpdated" message.
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('searchDatabase-js')">Code spoiler JS</button>
+        <div id="searchDatabase-js" style="display:none">
+            <code class="language-js">
+                <pre>
+    ...
+    else if (obj.msg.mt == "CallUpdated") {
+        var call = { src: obj.consumer, id: obj.msg.id, guid: obj.msg.guid, dir: obj.msg.dir, num: obj.msg.num, sip: obj.msg.sip, dn: obj.msg.dn, state: obj.msg.state }
+        phoneCalls[key] = call;
+<mark>        if ("Ringback,Queued,Alerting,Connected".includes(call.state)) {
+            app.sendSrc({ mt: "Search", num: call.num, sip: call.sip, dn: call.dn }, function (msg) {
+                onSearchResult({ key: key, data: msg.data });
+            });
+        }</mark>
+    }
+    ...
+</pre>
+            </code>
+        </div>
+    </p>
+    <p>
+        On App service side you add handling of "Search" message to you CPP code.<br />
+        Here you should will execute DB query and wait for completion.<br />
+        To keep this tutorial simple we create a response with some fake information.
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('searchDatabase-cpp')">Code spoiler CPP</button>
+        <div id="searchDatabase-cpp" style="display:none">
+            <code class="language-cpp">
+                <pre>
+void NewApp1Session::AppWebsocketMessage(class json_io & msg, word base, const char * mt, const char * src)
+{
+    ...
+    else if (!strcmp(mt, "Search")) {
+        const char* num = msg.get_string(base, "num");
+        const char* sip = msg.get_string(base, "sip");
+        if (this->CheckSession()) {
+            char sb[1000 * 1000];
+            class json_io send(sb);
+            word base = send.add_object(0xffff, nullptr);
+            send.add_string(base, "mt", "SearchResult");
+            if (this->currentSrc) send.add_string(base, "src", this->currentSrc);
+            word data = send.add_object(base, "data");
+            send.add_string(data, "firstname", "Albert");
+            send.add_string(data, "lastname", "Einstein");
+            send.add_string(data, "date_of_birth", "14 March 1879");
+            send.add_string(data, "address", "Germany, Italy, Switzerland, Austria, Belgium, United States");
+            send.add_string(data, "phonenumber", num ? num : sip);
+            send.add_string(data, "misc", "General relativity, Quantum mechanics, Nobel Prize in Physics");
+            send.add_string(data, "image", "data:image/jpeg;base64,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");
+            this->SendResponse(send, sb);
+        }
+    }
+    ...
+}
+</pre>
+            </code>
+        </div>
+    </p>
+    <h3>Deliver search result to Phone-App</h3>
+    <p>
+        On JS side of you App the function onSearchResult() will be called now.<br />
+        Make your App a consumer of API "com.innovaphone.phone" and deliver search result to Phone-App using the "CallInfo" message.
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('search-result')">Code spoiler JS</button>
+        <div id="search-result" style="display:none">
+            <code class="language-js">
+                <pre>
+var phoneApi = start.consumeApi("com.innovaphone.phone");
+
+function onSearchResult(result) {
+    console.debug("NewApp1::onSearchResult() result=" + JSON.stringify(result));
+    var key = result.key, data = result.data;
+    var call = phoneCalls[key];
+    if (call) {
+        var html = "Call related info from NewApp1";
+        phoneApi.send({ mt: "CallInfo", id: call.id, guid: call.guid, html: html }, call.src);
+    }
+}
+</pre>
+            </code>
+        </div>
+    </p>
+
+    <h3>Make hidden App is started automatically by Appclient whenever a new call is created</h3>
+    <p>
+        You can make your App <i>hidden</i> by declaring this characteristic in the <b>AppInfo</b> of your App.
+    </p>
+    <p>
+        You can make your App <i>getting auto-started</i> by declaring your App as provider of an API.<br />
+        You must do this in the CPP part of your App service on the AppPlatform.
+        Here we declare your App as provider of "com.innovaphone.phoneinfo".<br />
+        On any call activity the Appclient will auto-start all Apps that are providers of "com.innovaphone.phoneinfo".
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('autostart')">Code spoiler CPP</button>
+        <div id="autostart" style="display:none">
+            <code class="language-cpp">
+                <pre>
+void NewApp1Session::AppWebsocketAppInfo(const char * app, class json_io & msg, word base)
+{
+    msg.add_bool(base, "hidden", true);
+    word apis = msg.add_object(base, "apis");
+    msg.add_object(apis, "com.innovaphone.phoneinfo");
+}
+</pre>
+            </code>
+        </div>
+    </p>
+
+    <h2>Generating more sophisticated context information</h2>
+
+    <h3>Using innovaphone.ui1 to generate HTML</h3>
+    <p>
+        Use <b>innovaphone.ui1.Div</b> and <b>innovaphone.ui1.Node</b> to generate structured HTML which will be passed to Phone-App.<br />
+        Use <b>texts.text()</b> to have language-dependend text strings on UI.<br />
+        Add text strings to <b>template1texts.js</b> for every supported language.
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('innovaphone.ui1')">Code spoiler JS</button>
+        <div id="innovaphone.ui1" style="display:none">
+            <code class="language-js">
+                <pre>
+function onSearchResult(result) {
+    console.debug("NewApp1::onSearchResult() result=" + JSON.stringify(result));
+    var key = result.key, data = result.data;
+    var call = phoneCalls[key];
+    if (call) {
+        var heading = ((call.dir == "i") ? texts.text("incoming_call_from") : texts.text("outgoing_call_to")) + " " + (call.num || call.sip || "");
+        var html = new innovaphone.ui1.Div("display: flex; flex-direction: column; background-color: var(--yellow); font-size: 16px; padding: 5px;");
+        var head = html.add(new innovaphone.ui1.Div()).addText(heading);
+        var table = html.add(new innovaphone.ui1.Node("table"));
+        Object.keys(data).forEach(function (attr) {
+            var tr = table.add(new innovaphone.ui1.Node("tr"));
+            tr.add(new innovaphone.ui1.Node("td", "white-space:nowrap", texts.text(attr) + ":"));
+            if (data[attr]) {
+                if (attr !== "image") tr.add(new innovaphone.ui1.Node("td", null, data[attr]));
+                else tr.add(new innovaphone.ui1.Node("td")).addHTML("&lt;img src='" + data[attr] + "'/&gt;");
+            }
+        });
+        phoneApi.send({ mt: "CallInfo", id: call.id, guid: call.guid, html: html.container.outerHTML }, call.src);
+    }
+}</pre>
+            </code>
+        </div>
+    </p>
+    <p>
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('template1texts.js')">Code spoiler JS</button>
+        <div id="template1texts.js" style="display:none">
+            <code class="language-js">
+                <pre>
+var manufacturer = manufacturer || {};
+manufacturer.template1Texts = {
+    en: {
+        count: "count",
+        reset: "reset",
+<mark>        incoming_call_from: "Incoming call from",
+        outgoing_call_to: "Outgoing call to",
+        firstname: "First Name",
+        lastname: "Last Name",
+        date_of_birth: "Date of Birth",
+        address: "Address",
+        phonenumber: "Phonenumber",
+        misc: "Misc",
+        image: "Image",</mark>
+    },
+    de: {
+        count: "zählen",
+        reset: "rücksetzen",
+<mark>        incoming_call_from: "Eingehender Ruf von",
+        outgoing_call_to: "Abgehender Ruf zu",
+        firstname: "Vorname",
+        lastname: "Nachname",
+        date_of_birth: "Geburtsdatum",
+        address: "Adresse",
+        phonenumber: "Telefonnummer",
+        misc: "Sonstiges",
+        image: "Bild",</mark>
+    }
+}</pre>
+            </code>
+        </div>
+    </p>
+
+</body>
+</html>

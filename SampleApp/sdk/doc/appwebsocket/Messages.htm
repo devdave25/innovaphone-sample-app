@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Messages protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Messages</h1>
+
+    <p>
+        The PbxMessages protocol is available on AppWebsocket connections to the Messages App.
+        There are different applications for this protocol
+	</p>
+    <dl>
+        <dt>Store Chat messages</dt>
+        <dd>
+            The PBX Messages object uses this protocol to store chat messages, for users having
+            this object as messages object configured.
+        </dd>
+        <dt>Retrieve Chat messages</dt>
+        <dd>
+            A chat client can use this protocol to retrieve stored chat messages. For this
+            the <a href="PbxMessages.htm">PbxMessages</a> protocol is used to forward messages
+            of this protocol from the AppWebsocket connection to the PBX to the messages App.
+        </dd>
+        <dt>Post messages in general</dt>
+        <dd>
+            The Topic App or other Apps can use the Protocol to post messages, and monitor for
+            posted messages with filters based on hashtags and topics.
+        </dd>
+    </dl>
+
+	<a name="General structure"><h2>General structure</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": string,
+}</code></pre><br/>
+
+    <dl>
+        <dt>src</dt>
+        <dd>
+            The AppWebsocket src mechanism is supported on the interface. So a src
+            property may be used
+        </dd>
+        <dt>mt</dt>
+        <dd>
+            The message type identifies the requested operation
+        </dd>
+    </dl>
+
+    <p>
+        Note: No api property is used by the Messages protocol. The messages sent on an AppWebsocket
+        connection to an App implementing the Messages protocol are interpreted by default as belonging
+        to the Messages protocol.
+    </p>
+
+	<u>Messages to the Messages App</u>
+
+	<ul>
+		<li><a href="#Post">Post</a>
+            - Post a message
+        </li>
+		<li><a href="#ReadChats">ReadChats</a>
+            - Read the list of chat destinations
+        </li>
+		<li><a href="#ReadChat">ReadChat</a>
+            - Read messages of a chat destination
+        </li>
+		<li><a href="#CreateFileBuffer">CreateFileBuffer</a>
+            - Create a file buffer, to which an attachment can be uploaded. A URL is returned
+            to which the file can be posted. This URL is also send with the chat message
+        </li>
+		<li><a href="#WriteGroup">WriteGroup</a>
+            - Create or update a group. The sip URI of the group is created
+        </li>
+		<li><a href="#ReadGroups">ReadGroups</a>
+            - Read the list of available Groups
+        </li>
+		<li><a href="#WriteMember">WriteMember</a>
+            - Add a member to a group or delete a member of a group
+        </li>
+		<li><a href="#SetFilter">SetFilter</a>
+            - Set a filter to receive messages matching this filter
+        </li>
+		<li><a href="#Discussion">Discussion</a>
+            - Read the messages belonging to a discussion
+        </li>
+		<li><a href="#Attachments">Attachments</a>
+            - Read the attachments to a message
+        </li>
+		<li><a href="#SetRead">SetRead</a>
+            - Mark a message as read
+        </li>
+		<li><a href="#Update">Update</a>
+            - Update a message
+        </li>
+		<li><a href="#Delete">Delete</a>
+            - Delete a message
+        </li>
+		<li><a href="#GetMore">GetMore</a>
+            - Get more, older messages
+        </li>
+	</ul>
+
+	<u>Messages from the Messages App</u>
+
+	<ul>
+		<li><a href="#PostResult">PostResult</a>
+            - Confirmation of a message being posted
+        </li>
+		<li><a href="#ReadChatsInd">ReadChatsInd</a>
+            - A chat destination is returned with this message
+        </li>
+		<li><a href="#ReadChatsResult">ReadChatsResults</a>
+            - Send as response to ReadChats as last message
+        </li>
+		<li><a href="#ReadChatInd">ReadChatInd</a>
+            - A chat message is returned with this message
+        </li>
+		<li><a href="#ReadChatResult">ReadChatResult</a>
+            - Send as response to ReadChat as last message
+        </li>
+		<li><a href="#CreateFileBufferResult">CreateFileBufferResult</a>
+            - Send when the file buffer is created
+        </li>
+		<li><a href="#WriteGroupResult">WriteGroupResult</a>
+            - Send when the group is created
+        </li>
+		<li><a href="#ReadGroupsInd">ReadGroupsInd</a>
+            - A group is returned
+        </li>
+		<li><a href="#ReadGroupsResult">ReadGroupsResult</a>
+            - Send as response to ReadGroups as last message
+        </li>
+		<li><a href="#WriteMemberResult">WriteMemberResult</a>
+            - Send when write member is complete
+        </li>
+		<li><a href="#Add">Add</a>
+            - Send as response to a SetFilter, to add a message to the display of messages matching
+            the filter
+        </li>
+		<li><a href="#SetFilterResult">SetFilterResult</a>
+            - Send as response to a SetFilter after the initial list of messages was sent (Add).
+        </li>
+		<li><a href="#DiscussionResult">DiscussionResult</a>
+            - Send as response to Discussion after the list of messages was sent (Add).
+        </li>
+		<li><a href="#AttachmentsResult">AttachmentsResult</a>
+            - Send as response to Discussion after the list of messages was sent (Add).
+        </li>
+		<li><a href="#SetReadResult">SetReadResult</a>
+            - SetRead is complete
+        </li>
+		<li><a href="#UpdateResult">UpdateResult</a>
+            - Update complete
+        </li>
+		<li><a href="#DeleteResult">DeleteResult</a>
+            - Delete complete
+        </li>
+		<li><a href="#GetMoreResult">GetMoreResult</a>
+            - GetMore complete
+        </li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - Objects used for this protocol</div>
+
+	<a name="Post"><h2>Post</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Post",
+    "author": string,
+    "filterSrc": string,
+    "type": unsigned,
+    "repliesTo": ulong64,
+    "topic": string,
+    "text": string,
+    "notify": [string, ...],
+    "tags": [string, ...],
+    "attach": string
+}</code></pre>
+
+    <p>
+        Post a message
+    </p>
+
+    <dl>
+        <dt>author</dt>
+        <dd>
+            The sip URI of the author of the message. If the author is from the local domain
+            only the user part of the URI is used
+        </dd>
+        <dt>filterSrc</dt>
+        <dd>
+            Optionally a the src used by a messages display using SetFilter, in which context this
+            message is posted, so that it does not need to be sent back as updated.
+        </dd>
+        <dt>type</dt>
+        <dd>
+            Optional type of the message. If no type is given 0 is assumed, which is a normal message.
+            The type 1 is reserved for chat messages.
+        </dd>
+        <dt>repliesTo</dt>
+        <dd>
+            If set it refers to the id of another message and indicates that this message is a reply
+            to this other message.
+        </dd>
+        <dt>topic</dt>
+        <dd>
+            Required. Indicates the SIP uri of the topic. Topics are used to structure the message
+            storage and to control access. The sip URI of any App object, the user has given
+            access to may be used as topic.
+        </dd>
+        <dt>text</dt>
+        <dd>
+            The text of the message coded as HTML.
+        </dd>
+        <dt>notity</dt>
+        <dd>
+            Array of SIP URIs of users, which shall be notified about this message
+        </dd>
+        <dt>tags</dt>
+        <dd>
+            Array of tags associated to this message.
+        </dd>
+        <dt>attach</dt>
+        <dd>
+            List of URL encoded URLs seperated by blank. From these URLs the files are read and
+            stored as attachment on the message.
+        </dd>
+    </dl>
+
+	<a name="PostResult"><h2>PostResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "PostResult",
+    "error": bool,
+    "session": ulong64,
+    "key": ulon64,
+    "id": ulong64,
+    "addsTo"; ulong64
+}</code></pre>
+
+    <p>
+        Send as response to Post.
+    </p>
+
+    <dl>
+        <dt>error</dt>
+        <dd>
+            true indicates, that the post has failed
+        </dd>
+        <dt>session, key</dt>
+        <dd>
+            Session which can be used to POST attachments
+        </dd>
+        <dt>id</dt>
+        <dd>
+            The id of the new message
+        </dd>
+        <dt>addsTo</dt>
+        <dd>
+            The id of the discussion, this message belongs to
+        </dd>
+    </dl>
+
+	<a name="ReadChats"><h2>ReadChats</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChats",
+    "topic": string,
+    "unread": bool
+}</code></pre>
+
+    <p>
+        Read all destinations of the stored chat messages.
+    </p>
+
+    <dl>
+        <dt>topic</dt>
+        <dd>
+            The topic for which the messages are read. The topic is typically the SIP uri of
+            the user, as chat messages are stored in the personal topic of the user.
+        </dd>
+        <dt>unread</dt>
+        <dd>
+            If true, chat destinations with an unread count only are returned.
+        </dd>
+    </dl>
+
+	<a name="ReadChatsInd"><h2>ReadChatsInd</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChatsInd",
+    "sip": string,
+    "dn": string,
+    "grp": bool,
+    "timestamp": ulong64,
+    "unread": unsigned
+}</code></pre>
+
+    <p>
+        Returns a chat destination
+    </p>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            SIP URI of the destinatio
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name of the destination
+        </dd>
+        <dt>grp</dt>
+        <dd>
+            If true the destination is a group
+        </dd>
+        <dt>timestamp</dt>
+        <dd>
+            The timestaamp of the last message to or from this destination
+        </dd>
+        <dt>unread</dt>
+        <dd>
+            Number of unread messages. Returned only if requested with the unread property
+            in ReadChats
+        </dd>
+    </dl>
+
+	<a name="ReadChatsResult"><h2>ReadChatsResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChatsResult",
+}</code></pre>
+
+    <p>
+        Send as response to ReadChats as last message
+    </p>
+
+	<a name="ReadChat"><h2>ReadChat</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChat",
+    "topic": string,
+    "sip": string,
+    "older": ulong64,
+    "noind": bool,
+    "count": unsigned,
+    "session": ulong64,
+    "user": string
+}</code></pre>
+
+    <p>
+        Read all destinations of the stored chat messages.
+    </p>
+
+    <dl>
+        <dt>topic</dt>
+        <dd>
+            The topic from which messages are read. Typically the SIP URI of the user, as chat
+            messages are stored in the personal topic of the user
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            The chat destination
+        </dd>
+        <dt>older</dt>
+        <dd>
+            If present, only messages older then this timestamp are read
+        </dd>
+        <dt>noind</dt>
+        <dd>
+            If set no messages are returned, but only the unread status is cleared
+        </dd>
+        <dt>count</dt>
+        <dd>
+            The maximum number of messages to be read
+        </dd>
+        <dt>session, user</dt>
+        <dd>
+            Set by the PBX within the PbxMessages API to verify that the user is allowed to read
+            these messages. So when using this message thru PbxMessages a Session needs to be
+            established with the Session message and these properties should be omitted.
+        </dd>
+    </dl>
+
+	<a name="ReadChatInd"><h2>ReadChatInd</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChatInd",
+    "msg": <a href="#msg">msg</a>
+}</code></pre>
+
+    <p>
+        Returns a chat message
+    </p>
+
+    <dl>
+        <dt>msg</dt>
+        <dd>
+            An object containing the message
+        </dd>
+    </dl>
+
+	<a name="ReadChatResult"><h2>ReadChatResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadChatResult",
+}</code></pre>
+
+    <p>
+        ReadChat is complete
+    </p>
+
+	<a name="CreateFileBuffer"><h2>CreateFileBuffer</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "CreateFileBuffer",
+    "name": string
+}</code></pre>
+
+    <p>
+        Create a file buffer.
+    </p>
+
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The file name. Only used for display purposes. No need to be unique in any way
+        </dd>
+    </dl>
+
+	<a name="CreateFileBufferResult"><h2>CreateFileBufferResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "CreateFileBufferResult",
+    "id": ulong64,
+    "url": string
+}</code></pre>
+
+    <p>
+        Indicate the file buffer is create
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            Id of the buffer. Used to delete the file buffer
+        </dd>
+        <dt>url</dt>
+        <dd>
+            URL which can be used to POST the file to
+        </dd>
+    </dl>
+
+	<a name="WriteGroup"><h2>WriteGroup</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "WriteGroup",
+    "id": ulong64,
+    "dn": string,
+    "user": string
+}</code></pre>
+
+    <p>
+        Create/Update a group
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the group. If present, the message is used to update an existing group
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name of the group. If this is not present, the group is deleted
+        </dd>
+        <dt>user</dt>
+        <dd>
+            When using this Api thru PbxMessages, this property is added by the PBX
+        </dd>
+    </dl>
+
+	<a name="WriteGroupResult"><h2>WriteGroupResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "WriteGroupResult",
+    "id": ulong64,
+    "sip": string
+}</code></pre>
+
+    <p>
+        Indicate the group is written
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            Id of the group
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            SIP URI of the group. This can be used to send messages to the group.
+        </dd>
+    </dl>
+
+	<a name="ReadGroups"><h2>ReadGroups</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadGroups",
+    "user": string
+}</code></pre>
+
+    <p>
+        Read all available groups
+    </p>
+
+    <dl>
+        <dt>user</dt>
+        <dd>Added by the PBX, if this message was sent thru PbxMessages</dd>
+    </dl>
+
+	<a name="ReadGroupsInd"><h2>ReadGroupsInd</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadGroupsInd",
+    "id": ulong64,
+    "sip": string
+    "dn": string
+}</code></pre>
+
+    <p>
+        Returns a group
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>The id of the group. Used for edit/delete</dd>
+        <dt>sip</dt>
+        <dd>The SIP URI of the group</dd>
+        <dt>dn</dt>
+        <dd>The display name of the group</dd>
+    </dl>
+
+	<a name="ReadGroupsResult"><h2>ReadGroupsResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "ReadGroupsResult",
+}</code></pre>
+
+    <p>
+        ReadGroups is complete
+    </p>
+
+	<a name="WriteMember"><h2>WriteMember</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "WriteMember",
+    "id": ulong64,
+    "grp": ulong64,
+    "member": string,
+    "admin": bool
+}</code></pre>
+
+    <p>
+        Create/Update a group member
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the member. If present, the message is used to update an existing member.
+        </dd>
+        <dt>grp</dt>
+        <dd>
+            id of the group
+        </dd>
+        <dt>member</dt>
+        <dd>
+            SIP URI of the member
+        </dd>
+        <dt>admin</dt>
+        <dd>
+            If true this member is a group admin, who may edit the group and add/remove members
+        </dd>
+    </dl>
+
+	<a name="WriteMemberResult"><h2>WriteMemberResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "WriteMemberResult"
+}</code></pre>
+
+    <p>
+        Indicate the member is written
+    </p>
+
+	<a name="SetFilter"><h2>SetFilter</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "SetFilter",
+    "count": unsigned,
+    "addsTo": ulong64,
+    "liked": bool,
+    "filter": <a href="#filter">filter</a>
+}</code></pre>
+
+    <p>
+        Read all available groups
+    </p>
+
+    <dl>
+        <dt>count</dt>
+        <dd>
+            The maximum number of messages initially returned
+        </dd>
+        <dt>addsTo</dt>
+        <dd>
+            Only messages belonging to the discussion identified by this id are returned
+        </dd>
+        <dt>liked</dt>
+        <dd>
+            If set to true only messages which are liked by other users are returned.
+        </dd>
+    </dl>
+
+	<a name="Add"><h2>Add</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Add",
+    "addsTo": ulong64,
+    "repliesTo": ulong64,
+    "author": string,
+    "dn": string,
+    "topic": string,
+    "text": string,
+    "timestamp": ulong64,
+    "rtimestamp": ulong64,
+    "replies": unsigned,
+    "likes": unsigned,
+    "like": bool,
+    "read": ulong64,
+    "unread": unsigned
+}</code></pre>
+
+    <p>
+        This message is sent to add a message to the display of messages matching to a given filter.
+    </p>
+
+    <dl>
+        <dt>addsTo</dt>
+        <dd>
+            The id of the discussion this message is assigned to.
+        </dd>
+        <dt>repliesTo</dt>
+        <dd>
+            The id of the message, this message is a reply to.
+        </dd>
+        <dt>author</dt>
+        <dd>
+            SIP URI of the author
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name of the author
+        </dd>
+        <dt>topics</dt>
+        <dd>
+            SIP URI of the topic
+        </dd>
+        <dt>text</dt>
+        <dd>
+            The message text
+        </dd>
+        <dt>timestamp</dt>
+        <dd>
+            The timestamp, when this message was posted
+        </dd>
+        <dt>rtimestamp</dt>
+        <dd>
+            The timestamp of the latest message belonging to the same discussion
+        </dd>
+        <dt>replies</dt>
+        <dd>
+            The number of replies to this message
+        </dd>
+        <dt>likes</dt>
+        <dd>
+            The number of likes of this message
+        </dd>
+        <dt>like</dt>
+        <dd>
+            true if liked by the user requesting this message
+        </dd>
+        <dt>unread</dt>
+        <dd>
+            Number of unread messages, which are posted as reply to this message.
+        </dd>
+    </dl>
+
+	<a name="SetFilterResult"><h2>SetFilterResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "SetFilterResult"
+}</code></pre>
+
+    <p>
+        Send as response to SetFilter, after the initial list of messages are sent.
+    </p>
+
+	<a name="Discussion"><h2>Discussion</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Discussion",
+    "discussion": ulong64,
+    "count": unsigned
+}</code></pre>
+
+    <p>
+        Read the messages belonging to a discussion
+    </p>
+
+    <dl>
+        <dt>discussion</dt>
+        <dd>
+            The id of the discussion as provided as addsTo property in an Add message
+        </dd>
+        <dt>count/dt>
+        <dd>
+            The maximum number of messages sent
+        </dd>
+    </dl>
+
+	<a name="DiscussionResult"><h2>DiscussionResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "DiscussionResult"
+}</code></pre>
+
+    <p>
+        Indicate that all requested messages are sent for the Discussion.
+    </p>
+
+	<a name="Attachments"><h2>Attachments</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Attachments",
+    "id": ulong64
+}</code></pre>
+
+    <p>
+        Read the list of attachments of a message
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the message.
+        </dd>
+    </dl>
+
+	<a name="AttachmentsResult"><h2>AttachmentsResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "AttachmentsResult",
+    "files": [<a href="#file">file</a>, ...]
+}</code></pre>
+
+    <p>
+        Provides the list of attachments
+    </p>
+
+    <dl>
+        <dt>files</dt>
+        <dd>
+            An array of objects decribing a file
+        </dd>
+    </dl>
+
+	<a name="SetRead"><h2>SetRead</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "SetRead",
+    "id": ulong64
+}</code></pre>
+
+    <p>
+        Mark a message as read
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the message.
+        </dd>
+    </dl>
+
+	<a name="SetReadResult"><h2>SetReadResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "SetReadResult",
+    "id": ulong64
+}</code></pre>
+
+    <p>
+        SetRead complete
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the message.
+        </dd>
+    </dl>
+
+	<a name="Update"><h2>Update</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Update",
+    "id": ulong64,
+    "text": string,
+    "notify": [string, ...],
+    "tags": [string, ...]
+}</code></pre>
+
+    <p>
+        Update a message
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the message to be updated
+        </dd>
+        <dt>text</dt>
+        <dd>
+            The text of the message coded as HTML.
+        </dd>
+        <dt>notity</dt>
+        <dd>
+            Array of SIP URIs of users, which shall be notified about this message
+        </dd>
+        <dt>tags</dt>
+        <dd>
+            Array of tags associated to this message.
+        </dd>
+    </dl>
+
+	<a name="UpdateResult"><h2>UpdateResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "UpdateResult",
+    "error": bool,
+    "session": ulong64,
+    "key": ulon64
+}</code></pre>
+
+    <p>
+        Send as response to Update.
+    </p>
+
+    <dl>
+        <dt>error</dt>
+        <dd>
+            true indicates, that the post has failed
+        </dd>
+        <dt>session, key</dt>
+        <dd>
+            Session which can be used to POST attachments
+        </dd>
+    </dl>
+
+	<a name="Delete"><h2>Delete</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "Delete",
+    "id": ulong64
+}</code></pre>
+
+    <p>
+        Delete a message
+    </p>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the message.
+        </dd>
+    </dl>
+
+	<a name="DeleteResult"><h2>DeleteResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "DeleteResult",
+    "error": bool
+}</code></pre>
+
+    <p>
+        Delete complete
+    </p>
+
+    <dl>
+        <dt>error</dt>
+        <dd>
+            True if delete failed.
+        </dd>
+    </dl>
+
+	<a name="GetMore"><h2>GetMore</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "GetMore",
+    "count": unsigned,
+    "addsTo": ulong64,
+    "liked": bool,
+    "read": bool,
+    "timestamp": ulong64,
+    "id": id
+}</code></pre>
+
+    <p>
+        Get more message related to a given filter. src is used to identify the filter in this case.
+        The messages are sent with an Add message.
+    </p>
+
+    <dl>
+        <dt>count</dt>
+        <dd>
+            Maximum number of messages to be read
+        </dd>
+        <dt>addsTo</dt>
+        <dd>
+            Limit messages to the discussion identified by this
+        </dd>
+        <dt>liked</dt>
+        <dd>
+            Only liked messages
+        </dd>
+        <dt>read</dt>
+        <dd>
+            Include information about number of unread messages
+        </dd>
+        <dt>timestamp</dt>
+        <dd>
+            Messages older then this timestamp
+        </dd>
+        <dt>id</dt>
+        <dd>
+            Exclude the message identified by this id
+        </dd>
+    </dl>
+
+	<a name="GetMoreResult"><h2>GetMoreResult</h2></a>
+
+	<pre><code class="json">{
+    "src": string,
+    "mt": "GetMoreResult"
+}</code></pre>
+
+    <p>
+        GetMore complete
+    </p>
+
+    <!-- Objects ------------------------------------------------------------------------------ -->
+
+    <a name="Objects"><h2>Objects</h2></a>
+
+	<a name="msg"><h3>msg</h3></a>
+
+	<pre><code class="json">{
+    "id": ulong64,
+    "author": string,
+    "dn": string,
+    "text": string,
+    "timestamp": ulong64,
+    "attached": [<a href="#attach">attach</a>]
+}</code></pre>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            Id of the message. Used to delete or update
+        </dd>
+        <dt>author</dt>
+        <dd>
+            SIP URI of the author
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name of the author
+        </dd>
+        <dt>text</dt>
+        <dd>
+            The message text
+        </dd>
+        <dt>timestamp</dt>
+        <dd>
+            The timestamp of the message
+        </dd>
+        <dt>attached</dt>
+        <dd>
+            Array of objects decribing attachments.
+        </dd>
+    </dl>
+
+	<a name="attach"><h3>attach</h3></a>
+
+	<pre><code class="json">{
+    "name": string,
+    "url": string
+}</code></pre>
+
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name of the attachment.
+        </dd>
+        <dt>url</dt>
+        <dd>
+            The URL which can be used to download the attachment.
+        </dd>
+    </dl>
+
+	<a name="filter"><h3>filter</h3></a>
+
+	<pre><code class="json">{
+    "op": string,
+    "topics": [string, ...],
+    "tags": [string, ...],
+    "authors": [string, ...],
+    "notifies": [string, ...],
+    "filters": [<a href="#filter">filter</a>, ...]
+}</code></pre>
+
+    <dl>
+        <dt>op</dt>
+        <dd>
+            The operation, which shall be used for the items in the filter. Default is "and", meaning
+            that all items must match. The other available operation is "or".
+        </dd>
+        <dt>topics</dt>
+        <dd>
+            The topics, which should match. With an and operation, more then one topic does not make
+            sense, because a message is only assigned to a single topic.
+        </dd>
+        <dt>tags</dt>
+        <dd>
+            Tags of the message, which should match
+        </dd>
+        <dt>authors</dt>
+        <dd>
+            The author, which should match. With an and operation, more then one author does not make
+            sense, because a message only has one author.
+        </dd>
+        <dt>notifies</dt>
+        <dd>
+            SIP URIs of users, which are notified with this message
+        </dd>
+        <dt>filters</dt>
+        <dd>
+            List of filters which are combined to this filter with the same operation.
+        </dd>
+    </dl>
+
+	<a name="file"><h3>file</h3></a>
+
+	<pre><code class="json">{
+    "id": ulong64,
+    "url": string,
+    "name": string
+}</code></pre>
+
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the file
+        </dd>
+        <dt>url</dt>
+        <dd>
+            An URL, which can be used to download the file in the context of the current session.
+        </dd>
+        <dt>name</dt>
+        <dd>
+            The name of the file. This is used for display purposes only.
+        </dd>
+    </dl>
+</body>
+</html>

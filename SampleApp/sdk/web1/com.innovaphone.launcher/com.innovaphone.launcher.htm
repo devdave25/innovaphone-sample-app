@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - launcher api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.launcher</h1>
+
+    <p>
+        The com.innovaphone.launcher api enables apps to communicate with the launcher itself, e.g. to send notifications etc.
+	</p>
+
+	<a name="consumeApi"><h2>consumeApi</h2></a>
+    
+    <p>
+        The client consumeApi function is used to access the Api:
+    </p>
+
+	<pre><code class="json">var dis = start.consumeApi("com.innovaphone.launcher")</code></pre><br/>
+
+    <h2>Messages</h2></a>
+    <a href="#AddLocalNotification" style="text-decoration:none;">AddLocalNotification</a><br/>
+    <a href="#LocalNotificationClicked" style="text-decoration:none;">LocalNotificationClicked callback</a><br/>
+    <a href="#RemoveLocalNotification" style="text-decoration:none;">RemoveLocalNotification</a><br/>
+    
+    <a name="AddLocalNotification"><h2>AddLocalNotification</h2></a>
+
+    <p>
+        Adds a notification, which will be opened by the corresponding launcher. You can receive user actions on this notification!
+    </p>
+    <pre><code class="javascript">var title = "Call by " + (call.getDN() || call.getURI() || call.getE164() || str.anonymous);
+var largeIcon = call.getURI() ? self.avatarApi.url(call.getURI(), "240", call.getDN()) : null;
+launcherApi.send({ mt: "AddLocalNotification", title: title, text: null, acceptTitle: str.connect, rejectTitle: str.reject, largeIcon: largeIcon }, "*", call.id().toString());</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>src </b></td><td>A unique src for this notification. This src is also used to remove the notification later.</td></tr>
+        <tr><td class="param">string <b>type </b></td><td>The type of the notification ("Default", "PhoneCall" or "ChatMessage").</td></tr>
+        <tr><td class="param">string <b>title </b></td><td>The title of the notification.</td></tr>
+        <tr><td class="param">string <b>text </b></td><td>The text of the notification (e.g. chat message).</td></tr>
+        <tr><td class="param">string <b>smallIcon </b></td><td>A smallIcon of the notification.</td></tr>
+        <tr><td class="param">string <b>largeIcon </b></td><td>A largeIcon of the notification (e.g. a URL to a profile picture).</td></tr>
+        <tr><td class="param">string <b>soundUrl </b></td><td>A URL with a sound file to play. It can be set to "*" to play a default sound.</td></tr>
+        <tr><td class="param">string <b>buttonTitle </b></td><td>The button title for a one button notification or a third "view" button in a call notification.</td></tr>
+        <tr><td class="param">string <b>acceptTitle </b></td><td>The accept button title for a call notification.</td></tr>
+        <tr><td class="param">string <b>rejectTitle </b></td><td>The reject button title for a call notification.</td></tr>
+        <tr><td class="param">string <b>replyTitle </b></td><td>The reply button title for a chat notification.</td></tr>
+    </table>
+    
+    <h4>Remarks</h4>
+    Basically you can establish five kinds of notifications with the *Title parameters:
+    <table style="margin-left:-12px">
+        <tr><td><b>chat</b> notification</td><td>type:"ChatMessage", set replyTitle</td></tr>
+        <tr><td><b>call</b> notification</td><td>type:"PhoneCall", set rejectTitle and acceptTitle (buttonTitle optional)</td></tr>
+        <tr><td><b>one button</b> notification</td><td>type:"Default", set buttonTitle</td></tr>
+        <tr><td><b>two button</b> notification</td><td>type:"Default", set rejectTitle and acceptTitle</td></tr>
+        <tr><td><b>no button</b> notification</td><td>type:"Default", do not set any *Title</td></tr>
+    </table>
+    
+    <a name="LocalNotificationClicked"><h2>LocalNotificationClicked callback</h2></a>
+
+    <p>
+        This callback is triggered through the api on user interaction with the notification.
+    </p>
+    <pre><code class="javascript">launcherApi.onmessage.attach(function (consumer, obj) {
+    if (obj.msg.mt == "LocalNotificationClicked") {
+        if (obj.msg.action == "accept") {       // accepted        
+        }
+        else if (obj.msg.action == "reject") {  // rejected            
+        }
+        else if (obj.msg.action == "reply") {   // reply with input
+            // obj.msg.replyText contains the text
+        }
+        else {                                  // default action, e.g. open the current chat/call/etc.
+        }
+        self.BringToFront();
+    }
+});</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>src </b></td><td>The src for this notification.</td></tr>
+        <tr><td class="param">string <b>action </b></td><td>Can be empty or accept|reject|reply.</td></tr>
+        <tr><td class="param">string <b>replyText </b></td><td>The reply text.</td></tr>
+    </table>
+    
+    <a name="RemoveLocalNotification"><h2>RemoveLocalNotification</h2></a>
+
+    <p>
+        Removes an existing notification.
+    </p>
+    <pre><code class="javascript">launcherApi.send({ mt: "RemoveLocalNotification" }, "*", call.id().toString());</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>src </b></td><td>The original src of the notification.</td></tr>
+    </table>
+</body>
+</html>

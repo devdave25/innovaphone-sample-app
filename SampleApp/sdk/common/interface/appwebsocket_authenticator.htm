@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - AppWebsocket cross-service authentication</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>AppWebsocket cross-service authentication</h1>
+    <p>
+        The login for appwebsocket connections can be done in two ways.
+        <ul>
+            <li>Using the service username and password (as done by the PBX).</li>
+            <li>Asking the PBX for a login. For that the client user or service needs to have access to the target service, configured in the PBX.</li>
+        </ul>
+        The <a href="#IAppWebsocketAuthenticator">IAppWebsocketAuthenticator</a> interface is used by <a href="appwebsocket_client.htm#IAppWebsocketClient">IAppWebsocketClient</a> for the latter option.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/services.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IAppWebsocketAuthenticator">IAppWebsocketAuthenticator</a><br>
+                <a href="#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="IAppWebsocketAuthenticator"><h2>IAppWebsocketAuthenticator</h2></a>
+    <pre><code class="C++">class IAppWebsocketAuthenticator {
+public:
+    virtual ~IAppWebsocketAuthenticator() {};
+    virtual void SetUser(class UAppWebsocketAuthenticator * user) = 0;
+    virtual void GetLogin(const char * app, const char * challenge) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    The interface provides the GetLogin function for getting a login for the desired service.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">SetUser</div>
+    <dd>
+        Sets the <a href="#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a> object that shall receive the callbacks.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class UAppWebsocketAuthenticator * <b>user</b></td><td>The <a href="#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a> object that shall receive the callbacks.</td></tr>
+        </table>
+    </dd>
+    <div class="fnhead">GetLogin</div>
+    <dd>
+        Requests an appwebsocket login for a specified app instance. Will result in one of the callbacks defined by <a href="#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a>.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">cconst char * <b>app</b></td><td>The SIP URI of the remote app service.</td></tr>
+            <tr><td class="param">cconst char * <b>challenge</b></td><td>The challenge specified by the remote app service.</td></tr>
+        </table>
+    </dd>
+
+    <a name="UAppWebsocketAuthenticator"><h2>UAppWebsocketAuthenticator</h2></a>
+    <pre><code class="C++">class UAppWebsocketAuthenticator {
+public:
+    virtual void AppWebsocketAuthenticatorClosed(class IAppWebsocketAuthenticator * authenticator) = 0;
+    virtual void AppWebsocketAuthenticatorGetLoginResult(class IAppWebsocketAuthenticator * authenticator, 
+        const char * domain, 
+        const char * sip, 
+        const char * guid, 
+        const char * dn, 
+        const char * pbxObj, 
+        const char * app, 
+        const char * info, 
+        const char * digest, 
+        const char * salt, 
+        const char * key) = 0;
+    virtual void AppWebsocketAuthenticatorGetLoginError(class IAppWebsocketAuthenticator * authenticator) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for applications that use the library.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">AppWebsocketAuthenticatorClosed</div>
+    <dd>
+        The connection used for authentication was closed during the request. Thus the authentication has failed.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketAuthenticator *  <b>authenticator</b></td><td>A pointer to the source of the callback.</td></tr>
+        </table>
+    </dd>
+    <div class="fnhead">AppWebsocketAuthenticatorGetLoginResult</div>
+    <dd>
+        The PBX granted access to the remote app instance and returned the given parameters for login.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketAuthenticator *  <b>authenticator</b></td><td>A pointer to the source of the callback.</td></tr>
+            <tr><td class="param">const char * <b>domain</b></td><td>The domain of the client.</td></tr>
+            <tr><td class="param">const char * <b>sip</b></td><td>The SIP URI of the client.</td></tr>
+            <tr><td class="param">const char * <b>guid</b></td><td>The GUID of the client.</td></tr>
+            <tr><td class="param">const char * <b>dn</b></td><td>The display name of the client.</td></tr>
+            <tr><td class="param">const char * <b>pbxObj</b></td><td>The name of the PBX object of the remote app instance.</td></tr>
+            <tr><td class="param">const char * <b>app</b></td><td>The app name of the remote app instance.</td></tr>
+            <tr><td class="param">const char * <b>info</b></td><td>A JSON structure containing additional info about the client.</td></tr>
+            <tr><td class="param">const char * <b>digest</b></td><td>The response digest prooving the successful authentication.</td></tr>
+            <tr><td class="param">const char * <b>salt</b></td><td>A salt that is used for the encryption of the key parameter.</td></tr>
+            <tr><td class="param">const char * <b>key</b></td><td>An encrypted session key for the connection between the client and the remote app service.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        All the paramters are protected by the digest. They must not be modified before passing them to the remote app service. Otherwise the authentication will fail.
+    </dd>
+</body>
+</html>

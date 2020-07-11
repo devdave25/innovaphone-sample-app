@@ -1,5 +1,5 @@
 .vs/
 SampleApp/arm-debug/
-SampleApp/sdk/
 SampleApp/x86_64-debug/
+SampleApp/lib/
 Debug/

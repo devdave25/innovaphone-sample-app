@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - files.h</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>files.h</h1>
+
+    <p>
+        Interface for asyncronous reading and writing of files in an &lt;app-instance&gt;.files folder.
+        The file to be read/written is identified by a ulong64 id, which is converted to a filename with
+        _sprintf(name, "%llu", id).
+	</p>
+    <p>
+        Note: currently the implementation is blocking, but could be changed to non-blocking without change
+        to the app.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/files.h<br><br></td></tr>
+        <tr><td><b>Public functions</b></td><td>
+            <a href="#CreateFilesProvider">CreateFilesProvider</a><br>
+            <a href="#CreateTempFilesProvider">CreateTempFilesProvider</a><br>
+            <br>
+        </td></tr>
+        <tr><td><b>Classes</b></td><td>
+            <a href="#IFilesProvider">IFilesProvider</a><br>
+            <a href="#IFiles">IFiles</a><br>
+            <a href="#IFilesWrite">IFilesWrite</a><br>
+            <a href="#IFilesRead">IFilesRead</a><br>
+            <a href="#IFilesWrite">IFilesDel</a><br>
+            <a href="#IFilesWrite">IFilesWrite</a><br>
+            <a href="#ITempFilesProvider">ITempFilesProvider</a><br>
+            <a href="#ITempFiles">ITempFiles</a><br>
+            <br/>
+        </td></tr>
+    </table>
+
+    <h1>Public functions</h1>
+
+    <h2 id="CreateFilesProvider">CreateFilesProvider</h2>
+
+    <pre><code class="C++">class IFilesProvider * CreateFilesProvider(class IIoMux * iomux);</code></pre>
+
+    <p>
+        Function to allocate the FilesProvider resource, to be called from the app-main,
+        so that the real FileProvider can be replaced by a unit-test implementation.
+    </p>
+
+    <h2 id="CreateTempFilesProvider">CreateTempFilesProvider</h2>
+
+    <pre><code class="C++">class ITempFilesProvider * CreateTempFilesProvider(class IIoMux * iomux);</code></pre>
+
+    <p>
+        Function to allocate the TempFilesProvider Resource, to be called from the app-main, so that the read
+        Fileprovider could be replaced by a unit-test implementation
+    </p>
+
+	<h1>Classes</h1>
+
+    <h2 id="IFilesProvider">IFilesProvider</h2>
+
+    <pre><code class="C++">class IFilesProvider {
+public:
+    virtual ~IFilesProvider() {}
+    virtual class IFiles * CreateFiles(class IInstanceLog * const log, const char * serviceId, const char * path) = 0;
+};</code></pre>
+
+    <h3 class="fnhead" id="IFilesProvider::CreateFiles>">ITempFiles::CreateTempFiles</h3>
+
+    <p>
+        Allocate the FilesProvider for a given instance. 
+        serviceId should be AppService->GetAppServiceId(),  path should be the same as the dbName,
+        it is used to create the actual path on the system for the files in the form
+        /apps/&lt;serviceId&gt;/&lt;dbName&gt;.files, which is a folder created by the taskmanager
+        for the app. log is used to log dependent of the log flag LOG_FILES.
+    </p>
+	
+    <h2 id="IFiles">IFiles</h2>
+
+    <pre><code class="C++">class IFiles {
+public:
+    virtual ~IFiles() {}
+    virtual class IFilesWrite * Write(class UTask * user, ulong64 id) = 0;
+    virtual class IFilesRead * Read(class UTask * user, ulong64 id, unsigned length, unsigned offset = 0, bool progress = false) = 0;
+    virtual class IFilesDel * Del(class UTask * user, ulong64 id) = 0;
+};</code></pre>
+
+    <p>
+        Interface class to initiate the read and write operations
+    </p>
+
+    <h3 class="fnhead" id="IFiles::Write>">IFiles::Write</h3>
+
+    <p>
+        Initiates a write operation. The allocated IFilesWrite class is derived from ITask, so the ITask/UTask
+        mechanisms are used for progress and completion
+    </p>
+
+    <h3 class="fnhead" id="IFiles::Read>">IFiles::Read</h3>
+
+    <p>
+        Initiates a read operation. The allocated IFilesRead class is derived from ITask, so the ITask/UTask
+        mechanisms are used for progress and completion. <b>length</b> is the length of the initial block,
+        to be read. This block is available at the first TaskProgress callback.
+        <b>offset</b> is the offset inside the file from which reading should start.
+        <b>progress</b> indicates that a TaskProgress call should be used always when the data
+        is available, even if this is the last data. In this case TaskComplete is
+        called after the next read, when the file is closed.
+    </p>
+
+    <h3 class="fnhead" id="IFiles::Del>">IFiles::Del</h3>
+
+    <p>
+        Initiates a delete operation. The allocated IFilesDel class is derived from ITask, so the ITask/UTask
+        mechanisms are used for completion.
+    </p>
+
+    <h2 id="IFilesWrite">IFilesWrite</h2>
+
+    <pre><code class="C++">class IFilesWrite : public ITask {
+public:
+    virtual void Write(const byte * data, unsigned length, bool last) = 0;
+    virtual ulong64 GetId() const = 0;
+    virtual const char * GetAbsoluteFileName() const = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3 class="fnhead" id="IFilesWrite::Write>">IFilesWrite::Write</h3>
+
+    <p>
+        Write a block of data to the file. This function may be called in the TaskProgress
+        callback or assynchronously after the first TaskProgress call. The passed buffer
+        may be freed on return from the call. <b>last</b> indicates the last block of data, when
+        set the file is closed and the task completes.
+    </p>
+
+    <h3 class="fnhead" id="IFilesWrite::GetId>">IFilesWrite::GetId</h3>
+
+    <p>
+        Returns the id of the file.
+    </p>
+    
+    <h3 class="fnhead" id="IFilesWrite::GetAbsoluteFileName>">IFilesWrite::GetAbsoluteFileName</h3>
+
+    <p>
+    </p>
+
+    <h3 class="fnhead" id="IFilesWrite::Close>">IFilesWrite::Close</h3>
+
+    <p>
+        Returns the absolute path file name of the file, if needed for a command execution.
+    </p>
+
+    <h2 id="IFilesRead">IFilesRead</h2>
+
+    <pre><code class="C++">class IFilesRead : public ITask {
+public:
+    virtual void Read(unsigned length, bool last) = 0;
+    virtual void Get(const byte * & data, unsigned & length) const = 0;
+    virtual void Close() = 0;
+};</code></pre>
+
+    <h3 class="fnhead" id="IFilesRead::Read>">IFilesWrite::Read</h3>
+
+    <p>
+        Initiates reading of the next block. May be called after TaskProgress for the
+        previous block.
+    </p>
+
+    <dl>
+        <dt>last</dt>
+        <dd>
+            Indicates that this is the last block of data to read. The task terminates
+            after this, even if there is more data available
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="IFilesRead::Get>">IFilesWrite::GetId</h3>
+
+    <p>
+        Get a pointer to the read block of data. May be called after the TaskProgress
+        for the read operation. The pointer is valid until the next call to Read. A length
+        of 0 indicates the end of file.
+    </p>
+    
+    <h3 class="fnhead" id="IFilesRead::Close>">IFilesWrite::Close</h3>
+
+    <p>
+        Returns the absolute path file name of the file, if needed for a command execution.
+    </p>
+
+    <h2 id="IFilesDel">IFilesDel</h2>
+
+    <pre><code class="C++">class IFilesDel : public ITask {
+public:
+};
+</code></pre>
+
+    <p>
+        ITask class for a delete operation
+    </p>
+
+    <h2 id="ITempFilesProvider">ITempFilesProvider</h2>
+
+    <pre><code class="C++">class ITempFilesProvider {
+public:
+    virtual ~ITempFilesProvider() {}
+    virtual class ITempFiles * CreateTempFiles(class IInstanceLog * const log, const char * serviceId, const char * path) = 0;
+};</code></pre>
+
+    <p>
+        Interface for asyncronous reading and writing of files in an &lt;app-instance&gt;.temp folder. The file
+        to be read/written is identified by a ulong64 id, which is converted to a filename with
+        _sprintf(name, "%llu", id).
+    </p>
+    <p>
+        Note: Currently the implementation is blocking, but could be changed to non-blocking without change
+        to the app.
+    </p>
+
+    <h3 class="fnhead" id="ITempFilesProvider::CreateTempFiles>">ITempFiles::CreateTempFiles</h3>
+
+    <p>
+        Allocate the TempFilesProvider for a given instance. <br />
+        serviceId should be AppService->GetAppServiceId(),  path should be the same as the dbName, it is used
+        to create the actual path on the system for the files in the form /apps/&lt;serviceId&gt;/&lt;dbName&gt;.temp, which
+        is a folder created by the taskmanager for the app.
+        log is used to log dependent of the log flag LOG_FILES.
+    </p>
+
+    <h2 id="ITempFiles">ITempFiles</h2>
+
+    <pre><code class="C++">class ITempFiles {
+public:
+    virtual ~ITempFiles() {}
+    virtual class IFilesWrite * Write(class UTask * user) = 0;
+    virtual class IFilesRead * Read(class UTask * user, ulong64 id, unsigned length, unsigned offset = 0, bool progress = false) = 0;
+    virtual class IFilesDel * Del(class UTask * user, ulong64 id) = 0;
+};</code></pre>
+
+    <p>
+        Interface class to initiate the read and write operations. IFilesWrite, IFilesRead and IFilesDel are defined in files.htm
+    </p>
+
+    <h3 class="fnhead" id="ITempFiles::Write">ITempFiles::Write</h3>
+
+    <p>
+        Initiates a write operation. The allocated IFilesWrite class is derived from ITask, so the ITask/UTask
+        mechanisms are used for progress and completion
+    </p>
+
+    <h3 class="fnhead" id="ITempFiles::Read">ITempFiles::Read</h3>
+
+    <p>
+        Initiates a read operation. The allocated IFilesRead class is derived from ITask, so the ITask/UTask
+        mechanisms are used for progress and completion. <b>length</b> is the length of the initial block,
+        to be read. This block is available at the first TaskProgress callback.
+    </p>
+    <h3 class="fnhead" id="ITempFiles::Del">ITempFiles::Del</h3>
+
+    <p>
+        Initiates a delete operation. The allocated IFilesDel class is derived from ITask, so the ITask/UTask
+        mechanisms are used for completion.
+    </p>
+
+</body>
+</html>

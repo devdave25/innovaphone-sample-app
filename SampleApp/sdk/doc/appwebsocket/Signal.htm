@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Signal - The innovaphone JSON signaling objects</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Signal</h1>
+
+    <p>
+        This is the documentation of the generic JSON representation of innovaphone signaling messages.
+        These messages are defined transport independent and are used inside different protocols implemented
+        in the PBX, the Gateway or different Apps. These signaling messages can be mapped to SIP or
+        H.323/EFC signaling.
+    </p>
+
+	<a name="General structure"><h2>General structure</h2></a>
+
+	<pre><code class="json">{
+    "type": "Signaling message type",
+    "...": "more properties"
+}</code></pre><br/>
+
+    <p>
+        A property <b>type</b> identifies the signaling message. The names used here are based on the
+        names defined in Q.931 ISDN signaling:
+    </p>
+
+    <dl>
+        <dt>type</dt>
+        <dd>Type</dd>
+    </dl>
+
+	<u>Message types</u>
+	<ul>
+		<li><a href="#sig_setup">setup</a> - Initiate a call</li>
+		<li><a href="#sig_accept">accept</a> - Call accepted on the local session, no signaling beyond this session</li>
+		<li><a href="#sig_info">info</a> - Used to send more dialing info</li>
+		<li><a href="#sig_progress">progress</a> - Used to signal call progress information like presence ofin-band tones or announcements</li>
+		<li><a href="#sig_call_proc">call_proc</a> - Indicate that dialing information is complete</li>
+		<li><a href="#sig_alert">alert</a> - Indicate that the call is alerting at the sender of this message</li>
+		<li><a href="#sig_conn">conn</a> - The sender of this message accepts the call</li>
+		<li><a href="#sig_disc">disc</a> - The call is disconnected end to end, but local tones/announcements may be present</li>
+		<li><a href="#sig_rel">rel</a> - Release the call</li>
+		<li><a href="#sig_channels">channels</a> - Media negotition info sent independent of any signaling state change</li>
+		<li><a href="#sig_facility">facility</a> - Supplementary services signaling</li>
+		<li><a href="#sig_user_info">user_info</a> - Transparent end to end user information</li>
+		<li><a href="#sig_media_info">media_info</a> - Media status information</li>
+	</ul>
+
+    <div><a href="#SignalingObjects">Signaling Objects</a> - Objects used for call signaling</div>
+    <div><a href="#FacilityObjects">Facility Objects</a> - Objects used for supplementary services</div>
+    <div><a href="#ChannelObjects">Channel Objects</a> - Objects used for media negotiation</div>
+	
+    <!-- Setup -------------------------------------------------------------------------------- -->
+
+	<a name="sig_setup"><h2>setup</h2></a>
+
+	<pre><code class="json">{
+    "type": "setup",
+    "bc": <a href="#BC">BearerCapability</a>
+    "cg": <a href="#EP">EP</a>,
+    "cd": <a href="#EP">EP</a>,
+    "complete": <a href="#complete">DialingComplete</a>,
+    "channel": <a href="#channel">Channel</a>,
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+    "uui":<a href="#UUI">UserUserInformation</a>,
+    "llc":<a href="#LLC">LowerLayerCompatibility</a>,
+    "hlc":<a href="#HLC">HigherLayerCompatibility</a>,
+    "pi":<a href="#PI">ProgressIndicator</a>,
+    "confId":<a href="#ConfId">ConferenceId</a>,
+    "callId":<a href="#CallId">CallId</a>,
+    "dsp":<a href="#DSP">Display</a>
+}</code></pre>
+
+    <p>
+        The setup message is used to start a call
+    </p>
+	
+    <!-- Accept ------------------------------------------------------------------------------- -->
+
+	<a name="sig_accept"><h2>accept</h2></a>
+
+	<pre><code class="json">{
+    "type": "accept"
+    "fty": [<a href="#fty">Fty,Fty, ...</a>]
+}</code></pre>
+
+    <p>
+        Used only together with some special supplementary services. See description there.
+    </p>
+
+    <!-- Info --------------------------------------------------------------------------------- -->
+
+	<a name="sig_info"><h2>info</h2></a>
+
+	<pre><code class="json">{
+    "type": "accept"
+    "cg": <a href="#EP">EP</a>,
+    "cd": <a href="#EP">EP</a>,
+    "complete": <a href="#complete">DialingComplete</a>,
+    "dsp":<a href="#DSP">Display</a>
+}</code></pre>
+
+    <p>
+        The info message is used for additional dialing information after a setup_ack message is
+        received or for additional information like charging display information when the call is
+        connected.
+    </p>
+
+    <!-- Progress ----------------------------------------------------------------------------- -->
+
+	<a name="sig_progress"><h2>progress</h2></a>
+
+	<pre><code class="json">{
+    "type": "progress",
+    "inband_info": <a href="#inband_info">InbandInfo</a>,
+    "cau":<a href=#CAU>Cause</a>
+    "pi":<a href="#PI">ProgressIndicator</a>,
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+}</code></pre>
+
+    <p>
+        Maps to the ISDN PROGRESS message. It is used to report, that in-band information is#
+        available in the call. Together with a cau property present it indicates that the call
+        was disconnected.
+    </p>
+
+    <!-- Call Proceeding ---------------------------------------------------------------------- -->
+
+	<a name="sig_call_proc"><h2>call_proc</h2></a>
+
+	<pre><code class="json">{
+    "type": "call_proc",
+    "inband_info": <a href="#inband_info">InbandInfo</a>,
+    "channel": <a href="#channel">Channel</a>,
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+}</code></pre>
+
+    <p>
+        Maps to the ISDN PROGRESS message. It is used to report, that in-band information is#
+        available in the call. Together with a cau property present it indicates that the call
+        was disconnected.
+    </p>
+
+    <!-- Alert -------------------------------------------------------------------------------- -->
+
+	<a name="sig_alert"><h2>alert</h2></a>
+
+	<pre><code class="json">{
+    "type": "alert",
+    "inband_info": <a href="#inband_info">InbandInfo</a>,
+    "pi":<a href="#PI">ProgressIndicator</a>,
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+    "channel": <a href="#channel">Channel</a>,
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+}</code></pre>
+
+    <p>
+        Indicates that the called endpoint is alerting.
+    </p>
+
+    <!-- Conn --------------------------------------------------------------------------------- -->
+
+	<a name="sig_conn"><h2>conn</h2></a>
+
+	<pre><code class="json">{
+    "type": "conn",
+    "uui":<a href="#UUI">UserUserInformation</a>,
+    "dsp":<a href="#DSP">Display</a>
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+    "channel": <a href="#channel">Channel</a>,
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+}</code></pre>
+
+    <p>
+        Indicates that the called endpoint has connected the call.
+    </p>
+
+    <!-- Disc --------------------------------------------------------------------------------- -->
+
+	<a name="sig_disc"><h2>disc</h2></a>
+
+	<pre><code class="json">{
+    "type": "disc",
+    "inband_info": <a href="#inband_info">InbandInfo</a>,
+    "cau":<a href=#CAU>Cause</a>
+    "pi":<a href="#PI">ProgressIndicator</a>,
+    "uui":<a href="#UUI">UserUserInformation</a>,
+    "dsp":<a href="#DSP">Display</a>
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+}</code></pre>
+
+    <p>
+        Sent by a network component to indicate that the remote endpoint has disconnected
+        the call, but still inband information may be available
+    </p>
+
+    <!-- Release ------------------------------------------------------------------------------ -->
+
+	<a name="sig_rel"><h2>rel</h2></a>
+
+	<pre><code class="json">{
+    "type": "rel",
+    "cau":<a href=#CAU>Cause</a>
+    "uui":<a href="#UUI">UserUserInformation</a>,
+    "dsp":<a href="#DSP">Display</a>
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+}</code></pre>
+
+    <p>
+        Releases the call.
+    </p>
+
+    <!-- Channels ----------------------------------------------------------------------------- -->
+
+	<a name="sig_channels"><h2>channels</h2></a>
+
+	<pre><code class="json">{
+    "type": "channels",
+    "channel": <a href="#channel">Channel</a>,
+    "channels_cmd": <a href="#channels_cmd">ChannelsCmd</a>,
+    "channels":<a href="#channels">Channels</a>,
+    "faststart":<a href="#faststart">Faststart</a>,
+}</code></pre>
+
+    <p>
+        Message used for media negotiation, if the information cannot be transported with
+        another signaling message
+    </p>
+
+    <!-- Facility ----------------------------------------------------------------------------- -->
+
+	<a name="sig_facility"><h2>facility</h2></a>
+
+	<pre><code class="json">{
+    "type": "facility",
+    "fty": [<a href="#fty">Fty,Fty, ...</a>],
+}</code></pre>
+
+    <p>
+        Used for facility objects if no other signaling message can be used.
+    </p>
+
+    <!-- User Info ---------------------------------------------------------------------------- -->
+
+	<a name="sig_user_info"><h2>user_info</h2></a>
+
+	<pre><code class="json">{
+    "type": "user_info",
+    "uui":<a href="#UUI">UserUserInformation</a>,
+}</code></pre>
+
+    <p>
+        Used for transparent user user information when a call is connected.
+    </p>
+
+    <!-- Signaling Objects -------------------------------------------------------------------- -->
+    	
+    <a name="SignalingObjects"><h2>Signaling Objects</h2></a>
+
+    <a name="BC"><div class="fnhead">BearerCapability</div></a>
+    
+    <p>
+        The ISDN Bearer Compatibility Information element as hex string. If not set an appropriate
+        value has to be chosen for the Bearer Capability when sending the call to ISDN, based
+        on channel. For calls without media channel (channel=0), a value of "a880" for calls with
+        media channel a value of "8090a2" is recommended.
+    </p>
+
+    <a name="CallId"><div class="fnhead">CallIdentifier</div></a>
+
+    <p>
+        The H.323 callIdentifier. This identifies a single leg of a call.
+    </p>
+
+    <a name="CAU"><div class="fnhead">Cause</div></a>
+
+    <pre><code class="json">{
+    "loc": "Location",
+    "num": "Cause"
+}</code></pre>
+
+    <p>
+        The ISDN Cause information element. Used to report error conditions or the reason why
+        a call was disconnected.
+    </p>
+
+    <dl>
+        <dt>loc</dt>
+        <dd>
+            The location of the cause as defined in Q.931
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The cause number as defined in Q.931
+        </dd>
+    </dl>
+
+    <a name="channel"><div class="fnhead">Channel</div></a>
+
+    <p>
+        Integer value indicating the channel used for a call. For calls without media a value
+        of 0 is used. For VOIP calls with media a value of -1 is used.
+    </p>
+
+    <a name="complete"><div class="fnhead">DialingComplete</div></a>
+
+    <p>
+        A boolean value, indicating that no more dialing information will be sent.
+    </p>
+
+    <a name="ConfId"><div class="fnhead">ConferenceID</div></a>
+
+    <p>
+        The H.323 conferenceID. This id is the same for all legs of a call.
+    </p>
+
+    <a name="diversion_entry"><div class="fnhead">Diversion Entry</div></a>
+
+    <pre><code class="json">{
+    "procedure": <a href="#diversion_procedure">Diversion Procedure</a>,
+    "remote_enabled": boolean
+    "served": <a href="#EP">EP</a>
+    "diverted_to": <a href="#EP">EP</a>
+}</code></pre>
+
+    <dl>
+        <dt>procedure</dt><dd>The diversion procedure</dd>
+        <dt>remote_enabled</dt><dd>True if enabled by endpoint</dd>
+        <dt>served</dt><dd>The endpoint which is diverted</dd>
+        <dt>diverted_to</dt><dd>The destination of the diversion</dd>
+    </dl>
+
+    <p>
+    <a name="diversion_procedure"><div class="fnhead">Diversion Procedure</div></a>
+
+    <p>
+        A string value identifying a call diversion procedure
+        <table>
+            <tr><td><b>ALWAYS</b></td><td>Call forward unconditional (CFU)</td></tr>
+            <tr><td><b>BUSY</b></td><td>Call on busy (CFB)</td></tr>
+            <tr><td><b>NO_ANSWER</b></td><td>Call forward on no response (CFNR)</td></tr>
+        </table>
+    </p>
+
+    <a name="EP"><div class="fnhead">EP</div></a>
+    
+    <pre><code class="json">{
+    "num": "phone number",
+    "sip": "sip uri"
+}</code></pre>
+
+    <p>
+        The EP object is used in general to address the endpoint of a call. The endpoint may be
+        addressed by a phone number or by a sip uri.
+    </p>
+
+    <dl>
+        <dt>num</dt>
+        <dd>
+            A phone number as used on the PSTN. It may consist of dialing digits ("0" ... "9", "*", "#")
+            and the following prefixes:
+            <table>
+                <tr><td><b>R</b></td><td>Presentation Restricted number, which means this number should not be forward out of the system</td></tr>
+                <tr><td><b>S</b></td><td>Subscriber number</td></tr>
+                <tr><td><b>N</b></td><td>National number</td></tr>
+                <tr><td><b>I</b></td><td>International number</td></tr>
+            </table>
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            A sip URI. If the call is to/from the local domain only the user part is used.
+        </dd>
+    </dl>
+
+    <a name="fty"><div class="fnhead">FTY</div></a>
+
+    <p>
+        An array of <a href="#FacilityObjects">FacilityObjects</a>.
+    </p>
+
+    <a name="HLC"><div class="fnhead">HigherLayerCompatibility</div></a>
+    
+    <p>
+        The ISDN Higher Layer Compatibility Information element as hex string. Only used together with
+        ISDN signaling.
+    </p>
+
+    <a name="inband_info"><div class="fnhead">InbandInfo</div></a>
+
+    <p>
+        Boolean value, which indicates that inband info is availabe in the call.
+    </p>
+
+    <a name="LLC"><div class="fnhead">LowerLayerCompatibility</div></a>
+    
+    <p>
+        The ISDN Lower Layer Compatibility Information element as hex string. Only used together with
+        ISDN signaling.
+    </p>
+
+    <a name="PI"><div class="fnhead">ProgressIndicator</div></a>
+    
+    <p>
+        Array of hex strings of ISDN Progress Indicator information elements. The hexstrings do not
+        include the type and length field of the information elements. Only used together with
+        ISDN signaling.
+    </p>
+
+    <a name="presence_activity"><div class="fnhead">Presence Activity</div></a>
+
+    <p>
+        Defines the current activity. Allowed values are:
+        <table>
+            <tr><td><b>busy</b></td><td>The user is busy</td></tr>
+        </table>
+    </p>
+
+    <a name="presence_contact"><div class="fnhead">Presence Contact</div></a>
+
+    <p>
+        The contact URI defines where this presence information originates from. New presence
+        information only overwrites the presence from the same contact URI. The following contact
+        URIs are used by innovaphone
+        <table>
+            <tr><td><b>tel:</b></td><td>The presence is set on the phone</td></tr>
+            <tr><td><b>im:</b></td><td>The presence is set on the client</td></tr>
+            <tr><td><b>cal:</b></td><td>The presence is set by the calendar</td></tr>
+        </table>
+    </p>
+
+    <a name="presence_note"><div class="fnhead">Presence Note</div></a>
+
+    <p>
+        A note entered by the user
+    </p>
+
+    <a name="presence_status"><div class="fnhead">Presence Status</div></a>
+
+    <p>
+        The status of the user in respect to the contact URI. This indicates if the device
+        of the user with this contact URI is active. Allowed values are "open", "closed".
+    </p>
+
+    <a name="remote_control"><div class="fnhead">Remote Control</div></a>
+
+    <p>
+        A string value defining a remote control operation. The following values are defined:
+        <table>
+            <tr><td><b>CONNECT</b></td><td></td></tr>
+            <tr><td><b>MULTICAST</b></td><td></td></tr>
+            <tr><td><b>ANNOUNCE</b></td><td></td></tr>
+            <tr><td><b>3PTY_TOGGLE</b></td><td></td></tr>
+            <tr><td><b>ACCEPT</b></td><td></td></tr>
+            <tr><td><b>CC_ON</b></td><td></td></tr>
+            <tr><td><b>CC_OFF</b></td><td></td></tr>
+            <tr><td><b>REC_ON</b></td><td></td></tr>
+            <tr><td><b>REC_OFF</b></td><td></td></tr>
+            <tr><td><b>3PTY_ON</b></td><td></td></tr>
+            <tr><td><b>3PTY_OFF</b></td><td></td></tr>
+            <tr><td><b>DTMF_DIGIT</b></td><td></td></tr>
+            <tr><td><b>ON_HOLD</b></td><td></td></tr>
+            <tr><td><b>MIC_ON</b></td><td></td></tr>
+            <tr><td><b>MIC_OFF</b></td><td></td></tr>
+            <tr><td><b>HANDSET</b></td><td></td></tr>
+            <tr><td><b>HEADSET</b></td><td></td></tr>
+            <tr><td><b>HANDSFREE</b></td><td></td></tr>
+            <tr><td><b>MONITOR_ON</b></td><td></td></tr>
+            <tr><td><b>MONITOR_OFF</b></td><td></td></tr>
+            <tr><td><b>INTRUDE_MONITOR</b></td><td></td></tr>
+            <tr><td><b>INTRUDE_CONFERENCE</b></td><td></td></tr>
+            <tr><td><b>RECEIVE_ON</b></td><td></td></tr>
+            <tr><td><b>RECEIVE_OFF</b></td><td></td></tr>
+            <tr><td><b>CONFERENCE_EXCLUSIVE_ON</b></td><td></td></tr>
+            <tr><td><b>CONFERENCE_EXCLUSIVE_OFF</b></td><td></td></tr>
+            <tr><td><b>KNOCK_ON</b></td><td></td></tr>
+            <tr><td><b>KNOCK_OFF</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_HOME</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_PHONE</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_FAVS</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_LIST</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_DIR</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_CONFIG</b></td><td></td></tr>
+            <tr><td><b>ACTIVATE_APP_CAMERA</b></td><td></td></tr>
+            <tr><td><b>HOLD</b></td><td></td></tr>
+            <tr><td><b>RETRIEVE</b></td><td></td></tr>
+        </table>
+    </p>
+    <a name="UUI"><div class="fnhead">UserUserInformation</div></a>
+
+    <p>
+        The ISDN/H.323 User User Information as string. The protocol discriminator is not included
+        and is assumed as hex 50. A maximimum length of 128 bytes is allowed.
+    </p>
+
+    <!-- Facility Objects --------------------------------------------------------------------- -->
+
+	<a name="FacilityObjects"><h2>Facility Objects</h2></a>
+
+    <pre><code class="json">{
+    "type": "Type of Facility element",
+    "...": "more properties"
+}</code></pre><br/>
+
+    <p>
+        Depending on the value of the type property, different objects are defined. The following
+        types are defined:
+        <table>
+            <tr><td><a href="#fty_ct_identify">ct_identify</a></td><td>Call Transfer Identify</td></tr>
+            <tr><td><a href="#fty_ct_identify_result">ct_identify_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_ct_initiate">ct_initiate</a></td><td></td></tr>
+            <tr><td><a href="#fty_ct_initiate_result">ct_initiate_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_ct_setup">ct_setup</a></td><td></td></tr>
+            <tr><td><a href="#fty_ct_setup_result">ct_setup_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_ct_complete">ct_complete</a></td><td></td></tr>
+            <tr><td><a href="#fty_diversion_interrogate">diversion_interrogate</a></td><td></td></tr>
+            <tr><td><a href="#fty_diversion_interrogate_result">diversion_interrogate_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_diversion_callreroute">diversion_callreroute</a></td><td></td></tr>
+            <tr><td><a href="#fty_diversion_calldeflection">diversion_calldeflection</a></td><td></td></tr>
+            <tr><td><a href="#fty_diverting_leg1">diverting_leg1</a></td><td></td></tr>
+            <tr><td><a href="#fty_diverting_leg2">diverting_leg2</a></td><td></td></tr>
+            <tr><td><a href="#fty_diverting_leg3">diverting_leg3</a></td><td></td></tr>
+            <tr><td><a href="#fty_diverting_leg4">diverting_leg4</a></td><td></td></tr>
+            <tr><td><a href="#fty_hold_notify">hold_notify</a></td><td></td></tr>
+            <tr><td><a href="#fty_retrieve_notify">retrieve_notify</a></td><td></td></tr>
+            <tr><td><a href="#fty_remote_hold">remote_hold</a></td><td></td></tr>
+            <tr><td><a href="#fty_remote_hold_result">remote_hold_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_remote_retrieve">remote_retrieve</a></td><td></td></tr>
+            <tr><td><a href="#fty_remote_retrieve_result">remote_retrieve_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_cp_park">cp_park</a></td><td></td></tr>
+            <tr><td><a href="#fty_cp_group_indication_on">cp_group_indication_on</a></td><td></td></tr>
+            <tr><td><a href="#fty_cp_group_indication_off">cp_group_indication_off</a></td><td></td></tr>
+            <tr><td><a href="#fty_cp_pick_req">cp_pick_req</a></td><td></td></tr>
+            <tr><td><a href="#fty_cp_pick_exe">cp_pick_exe</a></td><td></td></tr>
+            <tr><td><a href="#fty_call_waiting">call_waiting</a></td><td></td></tr>
+            <tr><td><a href="#fty_mwi_activate">mwi_activate</a></td><td></td></tr>
+            <tr><td><a href="#fty_mwi_deactivate">mwi_deactivate</a></td><td></td></tr>
+            <tr><td><a href="#fty_mwi_interrogate">mwi_interrogate</a></td><td></td></tr>
+            <tr><td><a href="#fty_mwi_interrogate_result">mwi_interrogate_result</a></td><td></td></tr>
+            <tr><td><a href="#fty_name_identification">name_identification</a></td><td></td></tr>
+            <tr><td><a href="#fty_co_alerting">co_alerting</a></td><td></td></tr>
+            <tr><td><a href="#fty_presence_publish">presence_publish</a></td><td></td></tr>
+            <tr><td><a href="#fty_presence_subscribe">presence_subscribe</a></td><td></td></tr>
+            <tr><td><a href="#fty_presence_notify">presence_notify</a></td><td></td></tr>
+            <tr><td><a href="#fty_dialog_info_subscribe">dialog_info_subscribe</a></td><td></td></tr>
+            <tr><td><a href="#fty_im_setup">im_setup</a></td><td></td></tr>
+            <tr><td><a href="#fty_im_message">im_message</a></td><td></td></tr>
+            <tr><td><a href="#fty_cli_override">cli_override</a></td><td></td></tr>
+            <tr><td><a href="#fty_innovaphone_remote_control">innovaphone_remote_control</a></td><td></td></tr>
+        </table>
+    </p>
+
+    <a name="fty_ct_identify"><div class="fnhead">ct_identify</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_identify"
+}</code></pre><br/>
+
+    <p>
+        For a call transfer of two active calls, with this facility an id is requested from one
+        active calls, which is sent to with ct_initiate to the other call.
+    </p>
+
+    <a name="fty_ct_identify_result"><div class="fnhead">ct_identify_result</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_identify_result",
+    "id": unsigned id
+    "dst": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        return the id requested by ct_identify
+    </p>
+
+    <a name="fty_ct_initiate"><div class="fnhead">ct_initiate</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_initiate",
+    "id": unsigned id
+    "dst": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        Initiate a call transfer, either to the other active call, which is identified by id, or
+        if id is not found to a new call to dst
+    </p>
+
+    <a name="fty_ct_initiate_result"><div class="fnhead">ct_initiate_result</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_initiate_result",
+    "error": unsigned error code
+    "cause": isdn cause code
+}</code></pre><br/>
+
+    <p>
+        Send when the call transfer is complete. This is either when it failed, then error is set
+        and if available cause, or when it succeeded. For a blind transfer (no id), the transfer
+        succeeded, when a call_proc, alert or conn from the new call is received
+    </p>
+
+    <a name="fty_ct_setup"><div class="fnhead">ct_setup</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_setup",
+    "id": unsigned id
+    "dst": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        Send with a new call created by a call transfer. id is the id sent with ct_initiate. dst
+        identifies the endpoint which sent the ct_initiate
+    </p>
+
+    <a name="fty_ct_setup_result">ct_setup_result<div class="fnhead"></div></a>
+
+    <pre><code class="json">{
+    "type": "ct_setup_result",
+}</code></pre><br/>
+
+    <p>
+        May be sent in response to ct_setup. No real meaning.
+    </p>
+
+    <a name="fty_ct_complete"><div class="fnhead">ct_complete</div></a>
+
+    <pre><code class="json">{
+    "type": "ct_complete",
+    "remote": <a href="#EP">EP</a>
+    "remote_name": Remote Name Id,
+    "call_status": State of call,
+    "end":
+}</code></pre><br/>
+
+    <p>
+        Send to transferd endpoints to announce the new endpoint to which they are connected.
+        call_status and end are not used.
+    </p>
+
+    <a name="fty_diversion_interrogate"><div class="fnhead">diversion_interrogate</div></a>
+
+    <pre><code class="json">{
+    "type": "diversion_interrogate",
+    "procedure": <a href="#diversion_procedure">Diversion Procedure</a>
+    "served": <a href="#EP">EP</a>
+    "interrogating": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        Used to interrogate the PBX for set call diversions.
+    </p>
+    <dl>
+        <dt>procedure</dt>
+        <dd>
+            The procedure, which shall be interrogated
+        </dd>
+        <dt>served</dt>
+        <dd>
+            Optional the endpoint which is interrogated. Does not work for any other then the
+            interrogating endpoint on innovaphone PBX
+        </dd>
+        <dt>interrogating</dt>
+        <dd>
+            Optional the endpoint interrogating
+        </dd>
+    </dl>
+
+    <a name="fty_diversion_interrogate_result"><div class="fnhead">diversion_interrogate_result</div></a>
+
+    <pre><code class="json">{
+    "type": "diversion_interrogate_result",
+    "procedure": <a href="#diversion_procedure">Diversion Procedure</a>,
+    "error": error code if interrogate failed
+    "num": number of entries
+    "list": [<a href="#diversion_entry">Diversion Entry</a>]
+}</code></pre><br/>
+
+    <p>
+        Returns a list of diversions
+    </p>
+
+    <a name="fty_diversion_callreroute"><div class="fnhead">diversion_callreroute</div></a>
+
+    <pre><code class="json">{
+    "type": "diversion_callreroute",
+    "last_rerouting": <a href="#EP">EP</a>,
+    "called": <a href="#EP">EP</a>,
+    "calling": <a href="#EP">EP</a>,
+    "served": <a href="#EP">EP</a>,
+    "reason": <a href="#diversion_procedure">Diversion Procedure</a>
+}</code></pre><br/>
+
+    <p>
+        Request the rerouting of the call
+    </p>
+    <dl>
+        <dt>called</dt>
+        <dd>
+            Destination to the call is rerouted
+        </dd>
+        <dt>last_rerouting, calling, served</dt>
+        <dd>
+            Only used innovaphone PBX internally
+        </dd>
+    </dl>
+
+    <a name="fty_diversion_calldeflection"><div class="fnhead">diversion_calldeflection</div></a>
+
+    <pre><code class="json">{
+    "type": "diversion_calldeflection"
+}</code></pre><br/>
+
+    <p>
+        Not implemented
+    </p>
+
+    <a name="fty_diverting_leg1"><div class="fnhead">diverting_leg1</div></a>
+
+    <pre><code class="json">{
+    "type": "diverting_leg1",
+    "reason": <a href="#diversion_procedure">Diversion Procedure</a>
+    "nominated": <a href="#EP">EP</a>,
+    "redirecting": <a href="#EP">EP</a>,
+}</code></pre><br/>
+
+    <p>
+        Send to the caller of an diverted call, when a diversion is performed
+    </p>
+    <dl>
+        <dt>nominated</dt><dd>the new destination of the call</dd>
+        <dt>redirecting</dt><dd>the endpoint which initiated the diversion</dd>
+    </dl>
+
+    <a name="fty_diverting_leg2"><div class="fnhead">diverting_leg2</div></a>
+
+    <pre><code class="json">{
+    "type": "diverting_leg2",
+    "diverting": <a href="#EP">EP</a>,
+    "original_called": <a href="#EP">EP</a>,
+    "diverting_name": String,
+    "original_called_name": String
+}</code></pre><br/>
+
+    <p>
+        Send with the call to the new destination of the diversion
+    </p>
+    <dl>
+        <dt>diverting</dt>
+        <dd>
+            The endpoint performing the last diversion
+        </dd>
+        <dt>original_called</dt>
+        <dd>
+            The original called endpoint, only present if there is more then one
+            diversion
+        </dd>
+    </dl>
+
+    <a name="fty_diverting_leg3"><div class="fnhead">diverting_leg3</div></a>
+
+    <pre><code class="json">{
+    "type": "diverting_leg3",
+    "redirection": <a href="#EP">EP</a>,
+}</code></pre><br/>
+
+    <p>
+        Sent to the caller of the diverted call, with the conn message
+    </p>
+
+    <a name="fty_diverting_leg4"><div class="fnhead">diverting_leg4</div></a>
+
+    <pre><code class="json">{
+    "type": "diverting_leg4",
+    "reason": <a href="#diversion_procedure">Diversion Procedure</a>,
+    "nominated": <a href="#EP">EP</a>,
+    "redirecting": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        On innovaphone PBX this message is only used to inform an endpoint about update of
+        configured diversions, by sending this message without reason, nominated or redirecting
+        property.
+    </p>
+
+    <a name="fty_hold_notify"><div class="fnhead">hold_notify</div></a>
+
+    <pre><code class="json">{
+    "type": "hold_notify"
+}</code></pre><br/>
+
+    <p>
+        Informs the endpoint that the peer endpoint of the call has initiated a hold
+    </p>
+
+    <a name="fty_retrieve_notify"><div class="fnhead">retrieve_notify</div></a>
+
+    <pre><code class="json">{
+    "type": "retrieve_notify"
+}</code></pre><br/>
+
+    <p>
+        Informs the endpoint that the peer endpoint of the call has initiated a retrieve
+    </p>
+
+    <a name="fty_remote_hold"><div class="fnhead">remote_hold</div></a>
+
+    <pre><code class="json">{
+    "type": "remote_hold",
+}</code></pre><br/>
+
+    <p>
+        Request the call to be held
+    </p>
+
+    <a name="fty_remote_hold_result"><div class="fnhead">remote_hold_result</div></a>
+
+    <pre><code class="json">{
+    "type": "remote_hold_result"
+}</code></pre><br/>
+
+    <p>
+        No real meaning, hold does not fail
+    </p>
+
+    <a name="fty_remote_retrieve"><div class="fnhead">remote_retrieve</div></a>
+
+    <pre><code class="json">{
+    "type": "remote_retrieve"
+}</code></pre><br/>
+
+    <p>
+        Request a held call to be retrieved
+    </p>
+
+    <a name="fty_remote_retrieve_result"><div class="fnhead">remote_retrieve_result</div></a>
+
+    <pre><code class="json">{
+    "type": "remote_retrieve_result"
+}</code></pre><br/>
+
+    <p>
+        No real meaning, retrieve does not fail
+    </p>
+
+    <a name="fty_cp_park"><div class="fnhead">cp_park</div></a>
+
+    <pre><code class="json">{
+    "type": "cp_park",
+    "parking": <a href="#EP">EP</a>,
+    "parked": <a href="#EP">EP</a>,
+    "parked_to": <a href="#EP">EP</a>,
+    "park_position": unsigned
+}</code></pre><br/>
+
+    <p>
+        Used to park a call at a new destination. If initiated by an endpoint only parked_to is
+        used to address the new endpoint
+    </p>
+
+    <a name="fty_cp_group_indication_on"><div class="fnhead">cp_group_indication_on</div></a>
+
+    <pre><code class="json">{
+    "type": "cp_group_indication_on",
+    "callId": <a href="#callId">CallId</a>
+    "member": <a href="#EP">EP</a>,
+    "parked_calling": <a href="#EP">EP</a>,
+    "parked_to_alerting": <a href="#EP">EP</a>,
+    "parked_to_alerting_ext": <a href="#EP">EP</a>,
+    "park_position": unsigned,
+    "inbound_call": bool,
+    "duration": unsigned,
+    "name_id_calling": string,
+    "name_id_alerting": string,
+    "sig_call_state": unsigned
+}</code></pre><br/>
+
+    <p>
+        This object is used on configured group indication to announce a call that may be picked. This
+        can either be a parked or an alerting call.
+        On dialog sibscription calls, this object is used for any active calls at the monitored
+        destination
+    </p>
+    <dl>
+        <dt>callId</dt>
+        <dd>
+            CallIdentifier of the call
+        </dd>
+        <dt>member</dt>
+        <dd>
+            The monitored endpoint
+        </dd>
+        <dt>parked_calling</dt>
+        <dd>
+            Identifies the endpoint which was calling for parked or alerting calls, or in general
+            the remote end of the call
+        </dd>
+        <dt>parked_to_alerting</dt>
+        <dd>
+            The local end of the call. Typlically identical to member
+        </dd>
+        <dt>park_position</dt>
+        <dd>
+            Park position if the is a parked call, which was parked to a position
+        </dd>
+        <dt>inbound_call</dt>
+        <dd>
+            True if is a call initiated by the parked_to_alerting endpoint, which means it is
+            the other call direction, as would be an alerting call.
+        </dd>
+        <dt>duration</dt>
+        <dd>
+            Duration of the call in seconds
+        </dd>
+        <dt>name_id_calling</dt>
+        <dd>
+            Name Id to parked_calling
+        </dd>
+        <dt>name_id_alerzing</dt>
+        <dd>
+            Name Id to parked_to_alerting
+        </dd>
+        <dt>sig_call_state</dt>
+        <dd>
+            innovaphone call state definition
+        </dd>
+    </dl>
+
+    <a name="fty_cp_group_indication_off"><div class="fnhead">cp_group_indication_off</div></a>
+
+    <pre><code class="json">{
+    "type": "cp_group_indication_off",
+    "callId": <a href="#callId">CallId</a>,
+    "member": <a href="#EP">EP</a>,
+    "clear_all": bool
+}</code></pre><br/>
+
+    <p>
+        On configured group indications, this message indicates, that the call is not in a state
+        anymore in which it can be picked. For dialog subscriptions this message is sent, when
+        the call was released.
+    </p>
+    <dl>
+        <dt>callId</dt>
+        <dd>
+            CallIdentifier of the call
+        </dd>
+        <dt>member</dt>
+        <dd>
+            The monitored endpoint
+        </dd>
+        <dt>clear_all</dt>
+        <dd>
+            All calls of the monitored endpoint are not monitored anymore
+        </dd>
+    </dl>
+
+    <a name="fty_cp_pick_req"><div class="fnhead">cp_pick_req</div></a>
+
+    <pre><code class="json">{
+    "type": "cp_pick_req",
+    "callId": <a href="#callId">CallId</a>,
+    "picking": <a href="#EP">EP</a>,
+    "parked_calling": <a href="#EP">EP</a>,
+    "parked_to_alerting": <a href="#EP">EP</a>,
+    "park_position": unsigned
+}</code></pre><br/>
+
+    <p>
+        Send in a setup message of a no media call to request to pick a call. If successful
+        the picked call will be sent with the facility pick_exe to the picking endpoint
+    </p>
+    <dl>
+        <dt>callId</dt>
+        <dd>
+            CallIdentifier, if a specific call shall be picked
+        </dd>
+        <dt>picking</dt>
+        <dd>
+            The picking endpoint, which may not be any other then the originator of the pickup
+            call
+        </dd>
+        <dt>parked_calling</dt>
+        <dd>
+            Optionally the remote endpoint of the picked call to identify the call
+        </dd>
+        <dt>parked_to_alerting</dt>
+        <dd>
+            Endpoint where the call is picked
+        </dd>
+        <dt>park_position</dt>
+        <dd>
+            Identify the position if only a call parked to a given position is to be picked
+        </dd>
+    </dl>
+
+    <a name="fty_cp_pick_exe"><div class="fnhead">cp_pick_exe</div></a>
+
+    <pre><code class="json">{
+    "type": "cp_pick_exe",
+    "callId": <a href="#callId">CallId</a>,
+    "picking": <a href="#EP">EP</a>,
+    "parked_calling": <a href="#EP">EP</a>
+}</code></pre><br/>
+
+    <p>
+        Sent with the setup of a picked call
+    </p>
+    <dl>
+        <dt>callId</dt>
+        <dd>CallIdentifier of the picked call</dd>
+        <dt>picking</dt>
+        <dd>
+            Endpoint requesting the picking
+        </dd>
+        <dt>parked_calling</dt>
+        <dd>
+            The endpoint from where the call was picked
+        </dd>
+    </dl>
+
+    <a name="fty_call_waiting"><div class="fnhead">call_waiting</div></a>
+
+    <pre><code class="json">{
+    "type": "call_waiting"
+}</code></pre><br/>
+
+    <p>
+        Included in a alert message if the call is waiting, which means another call is currently
+        active at the called endpoint
+    </p>
+
+    <a name="fty_mwi_activate"><div class="fnhead">mwi_activate</div></a>
+
+    <pre><code class="json">{
+    "type": "mwi_activate",
+    "served_user": <a href="#EP">EP</a>,
+    "message_center": <a href="#EP">EP</a>,
+    "originating_user": <a href="#EP">EP</a>,
+    "time": string,
+    "service": unsigned,
+    "number": unsigned,
+    "priority"
+}</code></pre><br/>
+
+    <p>
+        Send in a setup of a no media call to activate message waiting indication
+    </p>
+
+    <a name="fty_mwi_deactivate"><div class="fnhead">mwi_deactivate</div></a>
+
+    <pre><code class="json">{
+    "type": "mwi_deactivate",
+    "served_user": <a href="#EP">EP</a>,
+    "message_center": <a href="#EP">EP</a>,
+    "service": unsigned,
+    "call_back": unsigned
+}</code></pre><br/>
+
+    <p>
+        Send in a setup of a no media call to deactivate a message waiting indication
+    </p>
+
+    <a name="fty_mwi_interrogate"><div class="fnhead">mwi_interrogate</div></a>
+
+    <pre><code class="json">{
+    "type": "mwi_interrogate",
+    "served_user": <a href="#EP">EP</a>,
+    "message_center": <a href="#EP">EP</a>,
+    "service": unsigned,
+    "call_back": unsigned
+}</code></pre><br/>
+
+    <p>
+        Send in a setup of a no media call to interrogate active message waiting indications.
+    </p>
+
+    <a name="fty_mwi_interrogate_result"><div class="fnhead">mwi_interrogate_result</div></a>
+
+    <pre><code class="json">{
+    "type": "mwi_interrogate_result",
+    "sub": <a href="#fty_mwi_activate">mwi_activate</a>
+}</code></pre><br/>
+
+    <p>
+        Returns last mwi_activate
+    </p>
+
+    <a name="fty_name_identification"><div class="fnhead">name_identification</div></a>
+
+    <pre><code class="json">{
+    "type": "name_identification",
+    "name": string
+}</code></pre><br/>
+
+    <p>
+        Included in setup, alert or conn messages to indicate the display name of the sender
+    </p>
+
+    <a name="fty_co_alerting"><div class="fnhead">co_alerting</div></a>
+
+    <pre><code class="json">{
+    "type": "co_alerting"
+}</code></pre><br/>
+
+    <p>
+        ?
+    </p>
+
+    <a name="fty_presence_publish"><div class="fnhead">presence_publish</div></a>
+
+    <pre><code class="json">{
+    "type": "presence_publish",
+    "status": <a href="#presence_status">Presence Status</a>,
+    "activity": <a href="#presence_activity">Presence Activity</a>,
+    "note": <a href="#presence_note">Presence Note</a>,
+    "contact": <a href="#presence_contact">Presence Contact</a>
+}</code></pre><br/>
+
+    <p>
+        This object is sent in a setup message of a no media call to publish a presence item
+    </p>
+
+    <a name="fty_presence_subscribe"><div class="fnhead">presence_subscribe</div></a>
+
+    <pre><code class="json">{
+    "type": "presence_subscribe"
+}</code></pre><br/>
+
+    <p>
+        This object is included in the setup message of a no media call to indicate, that this is
+        a presence subscription
+    </p>
+
+    <a name="fty_presence_notify"><div class="fnhead">presence_notify</div></a>
+
+    <pre><code class="json">{
+    "type": "presence_notify",
+    "status": <a href="#presence_status">Presence Status</a>,
+    "activity": <a href="#presence_activity">Presence Activity</a>,
+    "note": <a href="#presence_note">Presence Note</a>,
+    "contact": <a href="#presence_contact">Presence Contact</a>
+}</code></pre><br/>
+
+    <p>
+        This object is sent in a facility message of a presence subscription call to indicate the
+        current presence status.
+    </p>
+
+    <a name="fty_dialog_info_subscribe"><div class="fnhead">dialog_info_subscribe</div></a>
+
+    <pre><code class="json">{
+    "type": "dialog_info_subscribe"
+}</code></pre><br/>
+
+    <p>
+        This object is included in the setup message of a no media call to indicate, that this is
+        a dialog info subscription. The dialog information is then sent with cp_group_indication objects
+        in facility messages.
+    </p>
+
+    <a name="fty_im_setup"><div class="fnhead">im_setup</div></a>
+
+    <pre><code class="json">{
+    "type": "im_setup"
+}</code></pre><br/>
+
+    <p>
+    <p>
+        This object is included in the setup message of a no media call to indicate, that this is
+        a instant messaging (chat) call.
+    </p>
+    </p>
+
+    <a name="fty_im_message"><div class="fnhead"></div></a>
+
+    <pre><code class="json">{
+    "type": "im_message",
+    "sender": string,
+    "sender_dn": string,
+    "subject": string,
+    "participants": string,
+    "data"; string,
+    "attach": string,
+    "typing": bool,
+    "mime": string,
+    "more": bool
+}</code></pre><br/>
+
+    <p>
+        This object is sent with a facility message within a instant messging call to transmit chat
+        messages
+    </p>
+    <dl>
+        <dt>sender</dt>
+        <dd>
+            SIP URI of the sender of the message
+        </dd>
+        <dt>sender_dn</dt>
+        <dd>
+            Display name of the sender
+        </dd>
+        <dt>subject</dt>
+        <dd>
+            A subject line of the message
+        </dd>
+        <dt>participants</dt>
+        <dd>
+            Comma separated list of participants in a group chat (not supported anymore)
+        </dd>
+        <dt>data</dt>
+        <dd>
+            The message data formated according the mime type
+        </dd>
+        <dt>typing</dt>
+        <dd>
+            True if sender is typing
+        </dd>
+        <dt>mime</dt>
+        <dd>
+            The mime type of the message. It is recommended to use html
+        </dd>
+        <dt>more</dt>
+        <dd>
+            true if the data of the message is not complete and more data follows in more messages
+        </dd>
+    </dl>
+
+    <a name="fty_cli_override"><div class="fnhead">cli_override</div></a>
+
+    <pre><code class="json">{
+    "type": "cli_override"
+}</code></pre><br/>
+
+    <p>
+        If present in a call the PBX uses the calling line identification from the setup instead
+        of replacing it by what is defined for the endpoint.
+    </p>
+
+    <a name="fty_innovaphone_remote_control"><div class="fnhead">innovaphone_remote_control</div></a>
+
+    <pre><code class="json">{
+    "type": "innovaphone_remote_control",
+    "control": <a href="#remote_control">Remote Control</a>,
+    "digit": string
+}</code></pre><br/>
+
+    <p>
+        Maybe sent in signaling messages to perform remote control operations at the phone. Some
+        operations may use digit as argument.
+    </p>
+
+    <!-- Channel Objects ---------------------------------------------------------------------- -->
+
+	<a name="ChannelObjects"><h2>Channel Objects</h2></a>
+
+    <a name="channels_cmd"><div class="fnhead">ChannelsCmd</div></a>
+
+    <p>
+        The channels_cmd property implements the SIP offer/answer as the H.323EFC Proposal/Select
+        procedure. The basic idea is, that one side sends an offer for media descriptions (proposal)
+        and the other side chooses supported media descriptions and sends these back as answer (select).
+    </p>
+    <p>
+        In addition to this basic procedure, media can be closed or one side can request an new offer
+        from the other side.
+    </p>
+    <p>
+        This result in the following string values for the channels_cmd property:
+        <table>
+            <tr><td><b>NONE</b></td><td>No media negotiation is associated with this message</td></tr>
+            <tr><td><b>SELECT</b></td><td>Select a media channels. The accompanied channels property must contain the answer</td></tr>
+            <tr><td><b>PROPOSAL</b></td><td>Send a media offer (proposal), the accompanied channels property must contain the offer</td></tr>
+            <tr><td><b>REQUEST</b></td><td>Request a new offer (proposal)</td></tr>
+            <tr><td><b>CLOSE</b></td><td>Close all media channels</td></tr>
+        </table>
+    </p>
+
+    <a name="channels"><div class="fnhead">Channels</div></a>
+
+	<pre><code class="json">{
+    "source": <a href="#chs_source">Source</a>,
+    "id": <a href="#chs_id">Id</a>,
+    "guid": <a href="#chs_guid">GUID</a>,
+    "key":<a href="#chs_key">Key</a>,
+
+    "audio_rtcp_mux":<a href="#chs_rtcp_mux">Audio RTCP multiplxing</a>,
+    "t38_rtcp_mux":<a href="#chs_rtcp_mux">T.38 RTCP multiplxing</a>,
+    "video_rtcp_mux":<a href="#chs_rtcp_mux">Video RTCP multiplxing</a>,
+    "collab_rtcp_mux":<a href="#chs_rtcp_mux">Collab RTCP multiplxing</a>,
+
+    "audio_setup_role":<a href="#chs_setup_role">Audio Setup Role</a>,
+    "t38_setup_role":<a href="#chs_setup_role">T.38 Setup Role</a>,
+    "video_setup_role":<a href="#chs_setup_role">Video Setup Role</a>,
+    "collab_setup_role":<a href="#chs_setup_role">Collab Setup Role</a>,
+
+    "audio_ice":<a href="#chs_ice">Audio ICE</a>,
+    "t38_ice":<a href="#chs_ice">T.38 ICE</a>,
+    "video_ice":<a href="#chs_ice">Video ICE</a>,
+    "collab_ice":<a href="#chs_ice">Collab ICE</a>,
+
+    "ch":[<a href="#chs_ch">Channel,...</a>]
+}</code></pre>
+
+    <p>
+        The Channels object is a complete media description for the call. Together with a channels_cmd
+        of "PROPOSAL", it is a media offer (proposal) and together with a channels_cmd of "SELECT" it
+        is a media answer (select).
+    </p>
+
+    <a name="chs_source"><div class="fnhead">Source</div></a>
+
+    <p>
+        This is a string defining the source of the media channels. Based on the source different
+        modes of operations may be used in signaling entities. The following values are defined:
+        <table>
+            <tr>
+                <td><b>LOCAL</b></td>
+                <td>
+                    The channels are originating from a local physical interface like a ISDN or
+                    Conference channel. This is only used on an interface, where these channels
+                    are sent back to the same system (e.g. EpSignal). On a remote system the channels
+                    are useless, because no RTP entities are associated with these.
+                </td>
+            </tr>
+            <tr>
+                <td><b>REMOTE</b></td>
+                <td>
+                    Generic remote channels, from any kind of VOIP signaling. The remote side has
+                    RTP entities associated with these, so the channels can be terminated.
+                </td>
+            </tr>
+            <tr>
+                <td><b>RELAY</b></td>
+                <td>
+                    Used on interfaces where the channels are sent back to the same system (e.g.
+                    EpSignal) to switch both ends of the signaling in a Media Relay (RTP Proxy) mode.
+                </td>
+            </tr>
+            <tr>
+                <td><b>H323</b></td>
+                <td>
+                    Same es REMOTE, but from a H.323 non EFC entity. This means that media
+                    re-negotiation is not possible.
+                </td>
+            </tr>
+            <tr>
+                <td><b>H323EFC</b></td>
+                <td>
+                    Same as REMOTE, but from a H.323EFC entity. Full media negotiation support.
+                </td>
+            </tr>
+            <tr>
+                <td><b>SKINNY</b></td>
+                <td>
+                    Obsolete. Reserved for the Cisco Skinny protocol.
+                </td>
+            </tr>
+            <tr>
+                <td><b>SIP</b></td>
+                <td>
+                    Same as REMOTE, but from a SIP entity. Full media negotiation support.
+                </td>
+            </tr>
+        </table>
+    </p>
+
+    <a name="chs_id"><div class="fnhead">Id</div></a>
+
+    <p>
+        An unsigned integer, as id of the channels (???/tac)
+    </p>
+
+    <a name="chs_guid"><div class="fnhead">GUID</div></a>
+
+    <p>
+        A hex string for a 16 bytes GUID, which identifies the system from which these channels
+        originate. If this is forwared to the other end of the call it is used to detect if the
+        call is terminated on the same system again, so that a local PCM connection may be switched.
+    </p>
+
+    <a name="chs_key"><div class="fnhead">Key</div></a>
+
+	<pre><code class="json">{
+    "tag": SRTP tag as unsigned integer,
+    "mode": SRTP Mode,
+    "mki": MKI,
+    "mki_len": MKI length,
+    "b": hexstring of SRTP key,
+}</code></pre>
+    
+    <p>
+        The SRTP key used for the audio channel, in case no DTLS can be done.
+    </p>
+
+    <a name="chs_rtcp_mux"><div class="fnhead">RTCP Mux</div></a>
+
+    <p>
+        Boolean value indicating the RTCP multiplexing can be done, meaning that RTP and RTCP
+        is sent on the same UDP port. The side sending the offer can set this value to true
+        if it supports RTCP multiplexing. The side sending the answer may send back a value
+        of true in this case to turn on RTCP multiplexing.
+    </p>
+
+    <a name="chs_setup_role"><div class="fnhead">Setup Role</div></a>
+
+    <p>
+        This string property may be added, if not the default ICE setup role shall be used, which
+        is defined by who is sending the offer and who the answer.
+    </p>
+    <p>
+        The following values are defined:
+        <table>
+            <tr><td><b>active</b></td><td>???/tac/msc</td></tr>
+            <tr><td><b>passive</b></td><td>???/tac/msc</td></tr>
+            <tr><td><b>actpass</b></td><td>???/tac/msc</td></tr>
+            <tr><td><b>holdconn</b></td><td>???/tac/msc</td></tr>
+        </table>
+    </p>
+
+    <a name="chs_ice"><div class="fnhead">ICE</div></a>
+
+	<pre><code class="json">{
+    "lite": Only ICE lite support,
+    "fingerprint": ICE fingerprint as hexstring,
+    "usr": ICE authentication user,
+    "pwd": ICE authentication password,
+    "candidate": [<a href="#chs_ice_candidate">Candidate, ...</a>],
+}</code></pre>
+
+    <p>
+        The ICE parameters for the respective channel
+    </p>
+
+    <a name="chs_ice_candidate"><div class="fnhead">Candidate</div></a>
+
+	<pre><code class="json">{
+    "addr": address,
+    "r_addr": ???/msc,
+    "rtp": ?,
+    "rtcp": ?,
+    "r_rtp": ?,
+    "r_rtcp": ?,
+    "rtp_prio": ?,
+    "rtcp_prio": ?,
+    "type": ?,
+    "foundation": ?
+}</code></pre>
+
+    <p>
+        The ICE candiates, which where locally found and transmitted to the other side, so that
+        ICE testing can find a matching pair.
+    </p>
+
+    <a name="chs_ch"><div class="fnhead">Channel</div></a>
+
+	<pre><code class="json">{
+    "coder": Coder,
+    "number": Number ???/tac,
+    "xmit": xmit,
+    "rate": recv,
+    "addr": Media address,
+    "port": Media Port,
+    "mc_addr": Multicast address,
+    "mc_port": Multicast port,
+    "pt": Payload type,
+    "flags": Flags
+}</code></pre>
+
+    <dl>
+        <dt>Coder</dt>
+        <dd>
+            The coder used for this media channel. The following Coder values are defined:
+            <table>
+                <tr><td><b>G711_A</b></td><td>G.711 A-Law</td></tr>
+                <tr><td><b>G711-u</b></td><td>G.711 u-Law</td></tr>
+                <tr><td><b>G723_53</b></td><td>G.723 using low bitrate</td></tr>
+                <tr><td><b>G723_63</b></td><td>G.723 using high bitrate</td></tr>
+                <tr><td><b>G729</b></td><td>G.729</td></tr>
+                <tr><td><b>G729A</b></td><td>G.729 reduced complexity</td></tr>
+                <tr><td><b>G729B</b></td><td>G.729 including comfort noice updates</td></tr>
+                <tr><td><b>G729AB</b></td><td>G.729 reduced complexity, with comfort noice upüdates</td></tr>
+                <tr><td><b>T38UDP</b></td><td>T.38 Fax</td></tr>
+                <tr><td><b>G722</b></td><td>G.722</td></tr>
+                <tr><td><b>XPARENT</b></td><td>Bit transparent coder</td></tr>
+                <tr><td><b>H264</b></td><td>H.264 Video</td></tr>
+                <tr><td><b>JRFB</b></td><td>Innovaphone Json Remote Frame Buffer protocol for application sharing</td></tr>
+                <tr><td><b>OPUS_NB</b></td><td>Opus narrow band</td></tr>
+                <tr><td><b>OPUS_WB</b></td><td>Opus wide band</td></tr>
+                <tr><td><b>VPB</b></td><td>VP8 Video</td></tr>
+            </table>
+        </dd>
+        <dt>Number</dt>
+        <dd>?</dd>
+        <dt>xmit</dt>
+        <dd>
+            Packetization for transmitting in ms. With the offer a proposed value is sent,
+            which may be reduced in the answer.
+        </dd>
+        <dt>recv</dt>
+        <dd>
+            Packetization for receiving in ms. With the offer a proposed value is sent,
+            which may be reduced in the answer.
+        </dd>
+        <dt>addr/port</dt>
+        <dd>
+            Transport address to receive media. This is the RTP port. The RTCP port is assumed to
+            be port+1
+        </dd>
+        <dt>mc_addr/port</dt>
+        <dd>
+            Multicast address if the the media is to be sent to a multicast address.
+        </dd>
+        <dt>pt</dt>
+        <dd>
+            The payload type if not the default payload types are used, or if not default
+            payload type is defined for the coder
+        </dd>
+        <dt>flags</dt>
+        <dd>?</dd>
+    </dl>
+
+    <a name="faststart"><div class="fnhead">Faststart</div></a>
+
+    <p>
+        Array of H.323 faststart elements, coded as hex strings.
+    </p>
+</body>
+</html>

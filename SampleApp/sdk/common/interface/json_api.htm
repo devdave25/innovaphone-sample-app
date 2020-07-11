@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Framework for JSON APIs on websocket connections</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Framework for JSON APIs on websocket connections</h1>
+    <p>
+        AppWebsocket connections use JSON messages for communication. Those messages are normaly received and processed by the application.
+        But sometimes it is wanted to build modules for re-occurring communication types that can be reused. This can be done using JSON APIs.
+        The idea is that many JSON APIs can be attached to a single AppWebsocket connection and each of them processes the JSON messages with a specific "api" attribute.
+    </p>
+    <p>
+        This framework provides base classes and interfaces that are needed to implement JSON APIs and attach them to a connection.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/json_api.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#JsonApiContext">JsonApiContext</a><br>
+                <a href="#UJsonApiContext">UJsonApiContext</a><br>
+                <a href="#JsonApi">JsonApi</a><br>
+                <a href="#IJsonApiConnection">IJsonApiConnection</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+
+    <a name="JsonApiContext"><h2>JsonApiContext</h2></a>
+
+    <pre><code class="C++">class JsonApiContext {
+public:
+    JsonApiContext() {
+        providers = 0;
+    }
+    void RegisterJsonApi(class UJsonApiContext * provider) {
+        provider->next = providers;
+        providers = provider;
+    }
+    class JsonApi * CreateJsonApi(const char * name, class IJsonApiConnection * connection, class json_io & msg, word base) {
+        for (class UJsonApiContext * p = providers; p; p = p->next) {
+            if (!strcmp(name, p->Name())) return p->CreateJsonApi(connection, msg, base);
+        }
+        return 0;
+    }
+    class JsonApi * JsonApiRequested(const char * name, class IJsonApiConnection * connection) {
+        for (class UJsonApiContext * p = providers; p; p = p->next) {
+            if (!strcmp(name, p->Name())) return p->JsonApiRequested(connection);
+        }
+        return 0;
+    }
+    class UJsonApiContext * providers;
+};</code></pre>
+
+    <h3>Overview</h3>
+    <p>
+        The class JsonApiContext must be used as base class by an object using other Json Api
+        implementations. Typically the instance class of an app uses this class as base class.
+        This class is passed as argument on the constructor of AppWebsocket so that for incoming
+        messages an api implementation can be found.
+    </p>
+
+    <h3>Public functions</h3>
+
+    <a name="RegisterJsonApi"><div class="fnhead">RegisterJsonApi</div></a>
+    <dl><dd>
+        This function is called for each api implementaion which shall be used. The api implementation
+        is added to the list of "providers"
+    </dd></dl>
+
+    <a name="CreateJsonApi"><div class="fnhead">CreateJsonApi</div></a>
+    <dl><dd>
+        This function is used to add actively an AppWebsocketSession to an api implementation,
+        when the app has determined that a given cooonection can be used for the api. For example
+        if a connection is incoming from a PBX this connection can be used for the replicator to
+        replicate a user table, so CreateJsonApi is called.
+    </dd></dl>
+
+    <a name="JsonApiRequested"><div class="fnhead">JsonApiRequested</div></a>
+    <dl><dd>
+        This function is called by AppWebsocket if a message is received addressing a new api.
+        The list of providers is searched for a matching provider and if found the JsonApiRequested
+        function of the provider is called.
+    </dd></dl>
+
+    <a name="UJsonApiContext"><h2>UJsonApiContext</h2></a>
+
+    <pre><code class="C++">class UJsonApiContext {
+public:
+    virtual class JsonApi * CreateJsonApi(class IJsonApiConnection * connection, class json_io & msg, word base) = 0;
+    virtual class JsonApi * JsonApiRequested(class IJsonApiConnection * connection) { return 0; };
+    virtual const char * Name() = 0;
+    class UJsonApiContext * next;
+};</code></pre>
+
+    <h3>Overview</h3>
+    <p>
+        This class is used as base class by an api implementation. With this class the api is
+        added to the list of providers for a given JsonApiContext.
+    </p>
+
+    <h3>Public functions</h3>
+
+    <a name="CreateJsonApi"><div class="fnhead">CreateJsonApi</div></a>
+    <dl><dd>
+        Called to add a AppWebsocketConnection to the Api implementation. The message used to decide
+        if the AppWebsocket can be used by the api implementation is passed as json_io object.
+    </dd></dl>
+
+    <a name="JsonApiRequested"><div class="fnhead">JsonApiRequested</div></a>
+    <dl><dd>
+        Called if a message with an api matching the name of this provider was received, for which
+        no JsonApi existed, so that the api provider can create a JsonApi object.
+    </dd></dl>
+
+    <a name="JsonApi"><h2>JsonApi</h2></a>
+
+    <pre><code class="C++">class JsonApi {
+public:
+    virtual ~JsonApi() {};
+    <a href="#Name">virtual const char * Name() = 0;</a>
+    <a href="#JsonApiStart">virtual void JsonApiStart() {};</a>
+    <a href="#Message">virtual void Message(class json_io & msg, word base, const char * mt, const char * src) = 0;</a>
+    <a href="#JsonApiConnectionClosed">virtual void JsonApiConnectionClosed() = 0;</a>
+};</code></pre>
+
+    <h3>Overview</h3>
+    <p>
+        This is the base class for JSON APIs. One instance can be attached to one connection.
+        So for each connection the application has to create a new JsonApi instance.
+    </p>
+
+    <h3>Public functions</h3>
+
+    <a name="Name"><div class="fnhead">Name</div></a>
+    <dl><dd>
+        <h4>Return value</h4>
+        The name of the API, e.g. "com.innovaphone.provisioning".
+    </dd></dl>
+
+    <a name="JsonApiStart"><div class="fnhead">JsonApiStart</div></a>
+    <dl><dd>
+        Can be called by the application to start the API. This is needed when the local API object needs to send an initial message before any other API messages are received.
+    </dd></dl>
+
+    <a name="Message"><div class="fnhead">Message</div></a>
+    <dl><dd>
+        Processes an incoming message. This function is called by the associated IJsonApiConnection.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    The JSON structure containing the message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>mt</b></td>
+                <td>
+                    The message type of the message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>src</b></td>
+                <td>
+                    The src is used for multiplexing on the remote side. If specified, all answers to this message should contain the same src value.
+                </td>
+            </tr>
+        </table>
+    </dd></dl>
+
+    <a name="JsonApiConnectionClosed"><div class="fnhead">JsonApiConnectionClosed</div></a>
+    <dl><dd>
+        Called by the associated IJsonApiConnection if the connection was closed. Implementation must not do any more function calls to the IJsonApiConnection and shutdown (delete) themselves.
+    </dd></dl>
+
+    <a name="IJsonApiConnection"><h2>IJsonApiConnection</h2></a>
+
+    <pre><code class="C++">class IJsonApiConnection {
+public:
+    virtual ~IJsonApiConnection() {}
+    <a href="#RegisterJsonApi">virtual void RegisterJsonApi(class JsonApi * api) = 0;</a>
+    <a href="#UnRegisterJsonApi">virtual void UnRegisterJsonApi(class JsonApi * api) = 0;</a>
+    <a href="#JsonApiMessage">virtual void JsonApiMessage(class json_io & msg, char * buffer) = 0;</a>
+    <a href="#JsonApiMessageComplete">virtual void JsonApiMessageComplete() = 0;</a>
+    <a href="#JsonApiPermission">virtual bool JsonApiPermission(const char * api) = 0;</a>
+};</code></pre>
+
+    <h3>Overview</h3>
+    <p>
+        This interface represents a websocket connection that supports plugging-in JsonApi instances.
+        A well-known implementation of the interface is AppWebsocket.
+    </p>
+
+    <h3>Public functions</h3>
+
+    <a name="RegisterJsonApi"><div class="fnhead">RegisterJsonApi</div></a>
+    <dl><dd>
+        Attaches a JsonApi object to the connection. The object will start receiving the incoming websocket messages with the "api" attibute specified by the object.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class JsonApi * <b>api</b></td>
+                <td>
+                    The JsonApi object that shall be attached.
+                </td>
+            </tr>
+        </table>
+    </dd></dl>
+
+    <a name="UnRegisterJsonApi"><div class="fnhead">UnRegisterJsonApi</div></a>
+    <dl><dd>
+        Removes a JsonApi object from the connection. The object will stop receiving messages.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class JsonApi * <b>api</b></td>
+                <td>
+                    The JsonApi object that shall be removed.
+                </td>
+            </tr>
+        </table>
+    </dd></dl>
+
+    <a name="JsonApiMessage"><div class="fnhead">JsonApiMessage</div></a>
+    <dl><dd>
+        To be called by JsonApi objects to send a message over the connection.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    A JSON structure containing the message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>buffer</b></td>
+                <td>
+                    A buffer that is big enough to contain the whole encoded message including NULL termination.
+                </td>
+            </tr>
+        </table>
+    </dd></dl>
+
+    <a name="JsonApiMessageComplete"><div class="fnhead">JsonApiMessageComplete</div></a>
+    <dl><dd>
+        To be called by JsonApi objects if they have finished processing the last Message callback and are ready to receive the next message.
+    </dd></dl>
+
+    <a name="JsonApiPermission"><div class="fnhead">JsonApiPermission</div></a>
+    <dl><dd>
+        This function is used internally to check if access to a certain API shall be granted.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>api</b></td>
+                <td>
+                    The name of the API.
+                </td>
+            </tr>
+        </table>
+        <h4>Return value</h4>
+        true if access to the API is granted, false otherwise.
+    </dd></dl>
+</body>
+</html>

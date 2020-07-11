@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - phoneInfo api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.phoneinfo</h1>
+    <p>
+        This API is used for communication with phone/softphone apps.
+        This API is closely related to API "com.innovaphone.phone".
+        If an App provides this API it receives messages "CallAdded" and "CallUpdated" and "CallRemoved".
+        An App can provide call-related display information to the phone app (e.g. about remote party).
+    </p>
+
+    <h2><a name="provideApi">provideApi</a></h2>
+    <p>
+        The provideApi function is used to subscribe for API messages:
+    </p>
+    <pre><code class="javascript">var phoneinfoApi = start.provideApi("com.innovaphone.phoneinfo");
+phoneinfoApi.onmessage.attach(function (sender, obj) {
+    switch (obj.msg.mt) {
+    case "CallAdded":
+        break;
+    case "CallUpdated":
+        break;
+    case "CallRemoved":
+        break;
+    }
+});</code></pre>
+    
+
+    <h2><a name="messages">Messages</a></h2>
+    <a href="#CallAdded" style="text-decoration:none;">CallAdded</a>,
+    <a href="#CallUpdated" style="text-decoration:none;">CallUpdated</a>,
+    <a href="#CallRemoved" style="text-decoration:none;">CallRemoved</a>
+
+    <h3><a name="CallAdded">CallAdded</a></h3>
+    <p>
+        Send by Phone-App to all API providers whenever a new call is born.
+    </p>
+    <pre><code class="json">{
+    mt: "CallAdded",
+    id: 1,
+    guid: "fff79c5bd2115d0109f400903341035b"
+}</code></pre>
+    
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>mt</b></td><td>message type [mandatory]</td></tr>
+        <tr><td class="param">number <b>id</b></td><td>uniqe call-id [mandatory]</td></tr>
+        <tr><td class="param">string <b>guid</b></td><td>globally uniqe call-id [optional]</td></tr>
+    </table>
+
+    <h3><a name="CallUpdated">CallUpdated</a></h3>
+    <p>
+        Send by Phone-App to all API providers whenever call's attributes have changed.
+    </p>
+    <pre><code class="json">{
+    mt: "CallUpdated",
+    id: 1,
+    guid: "fff79c5bd2115d0109f400903341035b",
+    dir: "i",
+    num: "200",
+    sip: "charlie.chaplin",
+    dn: "Sir Charles Spencer Chaplin",
+    state: "Connected"
+ }</code></pre>
+    
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>mt</b></td><td>message type [mandatory]</td></tr>
+        <tr><td class="param">number <b>id</b></td><td>uniqe call-id [mandatory]</td></tr>
+        <tr><td class="param">string <b>guid</b></td><td>globally uniqe call-id [optional]</td></tr>
+        <tr><td class="param">string <b>dir</b></td><td>"i" for inbound call or "o" for outbound call [mandatory]</td></tr>
+        <tr><td class="param">string <b>num</b></td><td>Phonenumber (e.g. 202 or +49 7031 73009 0) [optional]</td></tr>
+        <tr><td class="param">string <b>sip</b></td><td>SIP-URI (e.g. charlie.chaplin or charlie.chaplin@unitedartists.com) [optional]</td></tr>
+        <tr><td class="param">string <b>dn</b></td><td>Displayname [optional]</td></tr>
+        <tr><td class="param">string <b>state</b></td><td>Setup | Dialing | Ringback | Queued | Alerting | Connected | Holding | Held | Disconnected [mandatory]</td></tr>
+    </table>
+
+    <h3><a name="CallRemoved">CallRemoved</a></h3>
+    <p>
+        Send by Phone-App to all API providers whenever a call has died.
+    </p>
+    <pre><code class="json">{
+    mt: "CallRemoved",
+    id: 1,
+    guid: "fff79c5bd2115d0109f400903341035b"
+}</code></pre>
+    
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>mt</b></td><td>message type [mandatory]</td></tr>
+        <tr><td class="param">number <b>id</b></td><td>uniqe call-id [mandatory]</td></tr>
+        <tr><td class="param">string <b>guid</b></td><td>globally uniqe call-id [optional]</td></tr>
+    </table>
+
+    <h2><a name="example">Example</a></h2>
+    <p>
+        An App can provide call-related display information to the phone app (e.g. about remote party).<br />
+        See API "com.innovaphone.phone" for details.
+    </p>
+    <pre><code class="javascript">var phoneApi = start.consumeApi("com.innovaphone.phone");
+var phoneinfoApi = start.provideApi("com.innovaphone.phoneinfo");
+phoneinfoApi.onmessage.attach(function (sender, obj) {
+    switch (obj.msg.mt) {
+    case "CallAdded":
+        break;
+    case "CallUpdated":
+        if (obj.msg.state == "Connected") {
+            phoneApi.send({ mt: "CallInfo", id: obj.msg.id, guid: obj.msg.guid, html: "&lt;div&gt;Here's my info&lt;/div&gt;" }, obj.consumer);
+        }
+        break;
+    case "CallRemoved":
+        break;
+    }
+});</code></pre>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - dns</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>dns</h1>
+    <p>
+        The DNS interface is for DNS lookups. Note that this class is - while be used asynchrounosly - internal using a thread for the look up stuff.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/timezone.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                    <a href="#IDns">IDns</a><br/>
+                                    <a href="#UDns">UDns</a><br/>
+                                    <br/>
+                               </td></tr>
+        <tr><td><b>Data types</b></td><td>
+                                      <a href="#DNS_DEFAULT_TIMEOUT">DNS_DEFAULT_TIMEOUT</a><br/>
+                                      <br/>
+                                  </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                      <a href="#example">Code Example</a><br/>
+                                      <br/>
+                                  </td></tr>
+    </table>    
+    
+    <h1>Classes</h1>
+    <h2 id="IDns">IDns</a></h2>
+    <pre><code class="C++">class IDns {
+public:
+    static IDns * Create(class IIoMux * const iomux);
+    virtual ~IDns() {};
+    virtual void GetHostByName(const char * host, class UDns * const user, class IInstanceLog * const log, dword timeout = DNS_DEFAULT_TIMEOUT, bool all = false);
+};
+</code></pre>  
+
+    <h3>Public functions</h3>
+    <div class="fnhead">Create (static)</div>
+    <p>
+        <dd>
+            Creates an instance of IDns. iomux has to be a iomux instance IDns can use. The returned instance needs to be deleted after it is no longer used. Note that the IDns
+            uses a thread to make the DNS lookup to not block the application. Generally this won't be a problem for the application, because the result of the lookup will be
+            send to the mainthread of the application (or at least to the thread of the given iomux) in an synchronized way.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The <a href="../os/iomux.htm">IIoMux</a> instance used by IDns.</td></tr>
+            </table>
+
+            <h4>Return value</h4>
+            The IDns instance the application can use for for DNS lookups. Note that this instance must be released by the application, if no longer used.
+        </dd>
+    </p>
+
+    <div class="fnhead">GetHostByName</div>
+    <p>
+        <dd>
+            Starts the lookup of the given host. The lookup requests will be cached internally and handled in a fifo order. The interface uses the DNS servers defined in the local network
+            settings of the AppPlatform.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>host</b></td><td>The hostname (e. g. "innovaphone.com").</td></tr>
+                <tr><td class="param">class UDns * <b>user</b></td><td>The UDns instance callback after the name has been resolved (or an error occurred).</td></tr>
+                <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The IInstanceLog instance to write logging messages to. Only used, if LOG_DNS is enabled.</td></tr>
+                <tr><td class="param">dword <b>timeout</b></td><td><i>(Default: DNS_DEFAULT_TIMEOUT)</i> The timeout in milliseconds to wait until the request will be canceled if the DNS server won't answer.</td></tr>
+                <tr><td class="param">bool <b>all</b></td><td><i>(Default: false)</i> If that flag is set, all IP addresses found for the hostname will be reported, else only the first one.</td></tr>
+            </table>
+
+            <h4>Callbacks</h4>
+            UDns::DnsGetHostByNameResult() will be called, passing the IP address for the given hostname. If all is set to true, the function can be called multiple times. If an error occures,
+            the addr parameter of the callback function will be nullptr. See <a href="#UDns">UDns</a>.
+        </dd>
+    </p>
+
+    <h2 id="UDns">UDns</a></h2>
+    <pre><code class="C++">class UDns {
+public:
+    virtual void DnsGetHostByNameResult(const char * addr, bool isIPv6);
+};
+</code></pre>  
+    
+    <div class="fnhead">DnsGetHostByNameResult</div>
+    <p>
+        <dd>
+            When calling IDns::GetHostByName(), an instance of UDns must be passed as user. So the application must provide a class instance that implements UDns. After a DNS lookup,
+            this function will be called. If the flag all of IDnsGetHostByName() has ben set to true, DnsGetHostByNameResult() can be called multiple times, one time for each DNS entry
+            found.
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>addr</b></td><td>The TCP/IP address of the hostname given to IDns::GetHostByName(). If an error occured, addr will be nullptr.</td></tr>
+                <tr><td class="param">bool <b>isIPv6</b></td><td>True, if the address given in addr is an IPv6 address, or false, if it is IPv4.</td></tr>
+            </table>
+        </dd>
+    </p>
+
+    <h1>Data types</h1>
+    <h2>Defines / Statics</h2>
+    <table style="margin-left: 20px">
+        <tr><td><a name="DNS_DEFAULT_TIMEOUT"></a><b>DNS_DEFAULT_TIMEOUT</b></td><td>The default timeout for DNS lookup requests (5000ms).</td></tr>
+    </table>
+
+    <h2 id="example">Code Example</a></h2>
+    <pre><code class="C++">app::app(IIoMux * iomux)
+    : iomux(iomux)
+{
+    this->dns = IDns::Create(iomux);
+    this->dns->GetHostByName("innovaphone.com", this);
+}
+
+void app::DnsGetHostByNameResult(const char * addr, bool isIPv6)
+
+{
+    if (addr == nullptr) debug->printf("DNS lookup of innovaphone.com failed\n");
+    else debug->printf("ip address of innovaphone.com = %s\n", addr);
+
+    delete this->dns;
+    this->dns = nullptr;
+}</code></pre>
+</body>
+</html>

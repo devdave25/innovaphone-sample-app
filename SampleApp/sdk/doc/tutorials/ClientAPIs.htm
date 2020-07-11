@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Tutorial: Client APIs</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript">
+        function toggleSpoiler(id) {
+            var e = document.getElementById(id);
+            if (e.style.display == "none") e.style.display = "";
+            else e.style.display = "none";
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Tutorial: Client APIs</h1>
+
+    <p>
+        In this tutorial you will learn how to use Client APIs in an app. Those APIs are used for communication with the myApps client and other apps.
+    </p>
+    <p>
+        We will build a small app that allows entering a SIP URI and will then display the profile picture and presence of the corresponding user. Clicking the profile picture shall start a phone call.
+    </p>
+
+    <h2>Conventions</h2>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name NewApp1 and the company name innovaphone. For testing we use the user admin.
+        Your filenames might be different according to your settings.
+    </p>
+
+    <h2>Step by step</h2>
+    <h3>Preparations</h3>
+    <p>
+        Starting with the app template we open NewApp1/apps/innovaphone-newapp1.js and remove all pre-defined functionality, so it looks like follows.
+        <pre><code class="language-js">var innovaphone = innovaphone || {};
+innovaphone.NewApp1 = innovaphone.NewApp1 || function (start, args) {
+    this.createNode("body");
+    
+    var that = this;
+    var colorSchemes = {
+        dark: {
+            "--bg": "#191919",
+            "--button": "#303030",
+            "--text-standard": "#f2f5f6",
+        },
+        light: {
+            "--bg": "white",
+            "--button": "#e0e0e0",
+            "--text-standard": "#4a4a49",
+        }
+    };
+    
+    var schemes = new innovaphone.ui1.CssVariables(colorSchemes, start.scheme);
+    start.onschemechanged.attach(function () { schemes.activate(start.scheme) });
+    
+    var texts = new innovaphone.lib1.Languages(innovaphone.NewApp1Texts, start.lang);
+    start.onlangchanged.attach(function () { texts.activate(start.lang) });
+    
+    var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+    app.checkBuild = true;
+    app.onconnected = app_connected;
+    
+    function app_connected(domain, user, dn, appdomain) {
+    
+    }
+}</code></pre>
+    </p>
+    <p>
+        In our example we want to use an additional library com.innovaphone.avatar that is not included in the template. For that we need to include it in our innovaphone-newapp1.htm.
+        <pre><code>&lt;script src="web/com.innovaphone.avatar/com.innovaphone.avatar.js" type="text/javascript"&gt;&lt;/script&gt;</code></pre>
+    </p>
+    <p>
+        Additionally it needs to be included in NewApp1.mak in order to link the library to our app binary.
+        <pre><code>include sdk/web1/com.innovaphone.avatar/com.innovaphone.avatar.mak</code></pre>
+    </p>
+    <p>
+        Because we want to display a profile picture in our app make sure that your test user has set one. You can do that in myApps in the hamburger menu in "Edit Profile".
+        Also make sure your test user has at least one phone app to do phone calls.
+    </p>
+
+    <h3>Display a profile picture</h3>
+    <p>
+        We start by initializing the avatar library. As this needs a few parameters that are provided by the app websocket connection, it's best to do that in our app_connected function.
+        Note that app_connected is called each time the connection comes up - also after a reconnect. So we need to make sure that we only initialize the avatar library once.
+        <pre><code class="language-js">    var avatarApi;
+    
+    function app_connected(domain, user, dn, appdomain) {
+        if (!avatarApi) avatarApi = new innovaphone.Avatar(start, user, domain, appdomain);
+    }</code></pre>
+    </p>
+    <p>
+        Then let's add an input field for entering the SIP URI and a DIV for displaying the profile picture.
+        <pre><code class="language-js">    var input = this.add(new innovaphone.ui1.Input("margin: 5px; background-color: var(--button); color: var(--text-standard); font-size: 16px; border: none;"));
+    var avatar = this.add(new innovaphone.ui1.Div("width: 150px; height: 150px; margin: 10px; background-size: cover;"));</code></pre>
+    </p>
+ 
+    <p>
+        Next we need to load the profile picture when the content of the input field has changed. For that we add a "change" handler that uses the avata library to get the corresponding URL
+        and use it as the background image of our div.
+        <pre><code class="language-js">    var sip;
+
+    input.addEvent("change", function () {
+        sip = input.getValue();
+        avatar.container.style.backgroundImage = "url('" + avatarApi.url(sip, 150, sip) + "')";
+    });</code></pre>
+    </p>
+    <p>
+        Now run your app and try if you can display the profile picture of your test user. :-)
+    </p>
+
+    <h3>Starting a phone call</h3>
+    <p>
+        In the previous chapter we used a library that does all the communication with the Client API framework. Now let's take look at the core API functionality. Some first hints:
+        <ul>
+            <li>Each Client API has an identifier. For the avatar API it is <a href="../../web1/com.innovaphone.avatar/lib1_api_avatar.htm">com.innovaphone.avatar</a>. The phone API has the identifier <a href="../../web1/com.innovaphone.phone/lib1_api_phone.htm">com.innovaphone.phone</a>.</li>
+            <li>Apps can provide and consume APIs. In this chapter our app consumes the API "com.innovaphone.phone" that is provided by all phone apps.</li>
+            <li>The start.consumeApi function creates an API consumer object that can be used to send and receive messages of that API. The documentation can be found <a href="../../web1/lib1/lib1.htm#clientapis">here</a>.</li>
+        </ul>
+    </p>
+    <p>
+        So we first need to create a phone API consumer object in our app.
+        <pre><code class="language-js">    var phoneApi = start.consumeApi("com.innovaphone.phone");</code></pre>
+    </p>
+    <p>
+        When the profile picture is clicked a phone call shall be started to the displayed user. So we add a "click" handler that sends the API message "StartCall" to the default phone API provider.
+        <pre><code class="language-js">    avatar.addEvent("click", function () {
+        if (sip) phoneApi.send({ mt: "StartCall", sip: sip });
+    });</code></pre>
+    </p>
+    <p>
+        That's it. You can also start phone calls to numbers in your apps. In this case the message looks like that: <code>{ mt: "StartCall", num: "123" }</code>
+    </p>
+
+    <h3>Presence monitoring</h3>
+    <p>
+        Finally we want to display the presence of the user next to the profile picture. For that we need to consume the API <a href="../../web1/com.innovaphone.client/lib1_api_client.htm">com.innovaphone.client</a> that is provided by myApps.
+        <pre><code class="language-js">    var clientApi = start.consumeApi("com.innovaphone.client");</code></pre>
+    </p>
+    <p>
+        For starting a subscription the message <code>SubscribePresence</code> is used. The message <code>UnsubscribePresence</code> removes the subscription.
+        We can use that in the "change" handler of our input field.
+        <pre><code class="language-js">    input.addEvent("change", function () {
+        if (sip) clientApi.send({ mt: "UnsubscribePresence", sip: sip }); // added this line
+        sip = input.getValue();
+        avatar.container.style.backgroundImage = "url('" + avatarApi.url(sip, 150, sip) + "')";
+        clientApi.send({ mt: "SubscribePresence", sip: sip }); // added this line
+    });</code></pre>
+    </p>
+    <p>
+        To receive the updates for our subscription we need to register for the incoming API messages. We are interested for the message "PresenceUpdated" for our SIP URI.
+        Our app shall display a color strip next to the profile picture that shows the current activity (available - green, away - yellow, busy - red, dnd - purple).
+        <pre><code class="language-js">    var presenceColors = { "": "#badb8c", "away": "#ffd063", "busy": "#ff918f", "dnd": "#cb8cdb" };
+    clientApi.onmessage.attach(function (sender, obj) {
+        if (obj.msg.mt == "PresenceUpdated" && obj.msg.sip == sip) {
+            avatar.container.style.borderRight = "10px solid " + presenceColors[obj.msg.presence[0].activity];
+        }
+    });</code></pre>
+    </p>
+    <p>
+        Start the new version of you app and see if the displayed presence follows the presence you set on your myApps home screen. :)
+    </p>
+
+    <h2>Conclusion</h2>
+    <p>
+        Here is the code of the full example app.
+        <pre><code class="language-js">var innovaphone = innovaphone || {};
+innovaphone.NewApp1 = innovaphone.NewApp1 || function (start, args) {
+    this.createNode("body");
+    var that = this;
+    var colorSchemes = {
+        dark: {
+            "--bg": "#191919",
+            "--button": "#303030",
+            "--text-standard": "#f2f5f6",
+        },
+        light: {
+            "--bg": "white",
+            "--button": "#e0e0e0",
+            "--text-standard": "#4a4a49",
+        }
+    };
+
+    var schemes = new innovaphone.ui1.CssVariables(colorSchemes, start.scheme);
+    start.onschemechanged.attach(function () { schemes.activate(start.scheme) });
+
+    var texts = new innovaphone.lib1.Languages(innovaphone.NewApp1Texts, start.lang);
+    start.onlangchanged.attach(function () { texts.activate(start.lang) });
+
+    var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+    app.checkBuild = true;
+    app.onconnected = app_connected;
+
+    var avatarApi;
+
+    function app_connected(domain, user, dn, appdomain) {
+        if (!avatarApi) avatarApi = new innovaphone.Avatar(start, user, domain, appdomain);
+    }
+
+    var phoneApi = start.consumeApi("com.innovaphone.phone");
+    var clientApi = start.consumeApi("com.innovaphone.client");
+    var sip;
+
+    var input = this.add(new innovaphone.ui1.Input("margin: 5px; background-color: var(--button); color: var(--text-standard); font-size: 16px; border: none;"));
+    var avatar = this.add(new innovaphone.ui1.Div("width: 150px; height: 150px; margin: 10px; background-size: cover;"));
+
+    input.addEvent("change", function () {
+        if (sip) clientApi.send({ mt: "UnsubscribePresence", sip: sip });
+        sip = input.getValue();
+        avatar.container.style.backgroundImage = "url('" + avatarApi.url(sip, 150, sip) + "')";
+        clientApi.send({ mt: "SubscribePresence", sip: sip });
+    });
+
+    avatar.addEvent("click", function () {
+        if (sip) phoneApi.send({ mt: "StartCall", sip: sip });
+    });
+
+    var presenceColors = { "": "#badb8c", "away": "#ffd063", "busy": "#ff918f", "dnd": "#cb8cdb" };
+    
+    clientApi.onmessage.attach(function (sender, obj) {
+        if (obj.msg.mt == "PresenceUpdated" && obj.msg.sip == sip) {
+            avatar.container.style.borderRight = "10px solid " + presenceColors[obj.msg.presence[0].activity];
+        }
+    });
+}
+innovaphone.NewApp1.prototype = innovaphone.ui1.nodePrototype;</code></pre>
+    </p>
+    <p>
+        We did an introduction to the basic usage of Client APIs.
+        <ul>
+            <li>Client APIs are used for communication with other apps or the myApps client.</li>
+            <li>start.consumeApi can be used to create an API consumer object.</li>
+            <li>The send function of the API consumer object is used to send messages to API providers.</li>
+            <li>The onmessage event of the API consumer object is used to receive messages from API providers.</li>
+        </ul>
+    </p>
+    <p>
+        Read the documentation to discover more functionality of the API framework.
+        <ul>
+            <li>API providers publish models that contain useful information. For example the phone API model contains the current phone calls of the user. Take a look at the API Monitor app to see those models.</li>
+            <li>Your app can also provide APIs that can then be used by other apps.</li>
+        </ul>
+    </p>
+
+    <h2>Useful documentation</h2>
+    <ul>
+        <li><a href="../../web1/lib1/lib1.htm#clientapis">Lib1 - Client APIs</a></li>
+        <li><a href="../../web1/com.innovaphone.avatar/lib1_api_avatar.htm">com.innovaphone.avatar</a></li>
+        <li><a href="../../web1/com.innovaphone.client/lib1_api_client.htm">com.innovaphone.client</a></li>
+        <li><a href="../../web1/com.innovaphone.phone/com.innovaphone.phone.htm">com.innovaphone.phone</a></li>
+        <li><a href="../../web1/com.innovaphone.chat/com.innovaphone.chat.htm">com.innovaphone.chat</a></li>
+        <li><a href="../../web1/com.innovaphone.search/lib1_api_search.htm">com.innovaphone.search</a></li>
+    </ul>
+</body>
+</html>

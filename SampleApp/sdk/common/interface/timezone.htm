@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>timezone</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>timezone</h1>
+    <p>
+        The interface ITimeZoneProvider and ITimeZone are helpful to make timezone relevant time calculation.
+    </p>
+
+    <h2>File information</h2>
+        <table style="margin-left:-12px">
+            <tr><td><b>File</b></td><td>common/interface/timezone.h<br><br></td></tr>
+            <tr><td><b>Classes</b></td><td>
+                                        <a href="#ITimeZoneProvider">ITimeZoneProvider</a><br>
+                                        <a href="#ITimeZone">ITimeZone</a><br/>
+                                        <a href="#ITimeZoneDSTRange">ITimeZoneDSTRange</a><br>
+                                        <br>
+                                   </td></tr>
+            <tr><td><b>Examples</b></td><td>
+                                          <a href="#example">Code Example</a><br>
+                                          <br>
+                                      </td></tr>
+            <tr><td><b>Data types</b></td><td>
+                                          <a href="#timezone_id">Timezone IDs</a><br>
+                                          <a href="#win_mapping">Windows timezone mapping</a><br>
+                                          <a href="#copyright">Copyright</a><br>
+                                          <br>
+                                      </td></tr>
+        </table>    
+    
+    <h1>Classes</h1>
+    <h2 id="ITimeZoneProvider">ITimeZoneProvider</h2>
+    <pre><code class="C++">class ITimeZoneProvider {
+public:
+    static ITimeZone * GetTimeZone(const char * tzid, class IInstanceLog * const log);
+};</code></pre>    
+    <h3>Public functions</h3>
+    <div class="fnhead">GetTimeZone</div>
+    <dd>
+        Returns the ITimeZone instance for the given timezone id. It it will be the first time that timezone instance is requested, ITimeZoneProvider
+        creates the instance and stores it to an internal list for later use. The instance also will be released automatically on application shutdown,
+        so there is no need to release it from within your app (what acutally is not possible).<br>
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>tzid</b></td><td>One of the timezone ids (see <a href="#timezone_ids">below</a>)</td></tr>
+            <tr><td class="param">IInstanceLog * const <b>log</b></td><td>An IInstance log instance used for logging in case of an error.</td></tr>
+        </table>
+    </dd>
+
+    <br/>
+    <h2 id="ITimeZone">ITimeZone</h2>
+    <pre><code class="C++">class ITimeZone {
+protected:
+    virtual ~ITimeZone() {}
+    
+public:
+    virtual const char * TimeZoneName();
+    virtual const char * UTCName();
+    virtual long64 UTCDiff();
+    virtual long64 DSTDiff();
+    virtual long64 ToLocalTime(long64 utcTime);
+    virtual long64 ToUTCTime(long64 localTime);
+    virtual long64 RemoveDST(long64 timeStamp);
+    virtual long64 AddDST(long64 timeStamp);
+    virtual bool IsDST(long64 timeStamp, bool isLocalTime = false);
+    virtual bool IsDST(ITimeZoneDSTRange * dstRange, long64 timeStamp, bool isLocalTime = false);
+    virtual ITimeZoneDSTRange * GetDSTRange(long64 rangeStartDate, long64 rangeEndDate);
+};</code></pre>    
+    <p>
+        Provides functionality for timezone handling. The idea of that interface is to provide some basic functions so that the application can make the necessary
+        calculations.
+    </p>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">TimeZoneName</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the name of the timezone which is the same as the TZ id used to get the timezone.
+    </dd>
+
+    <div class="fnhead">UTCName</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the utc name of the timezone, which actually is UTC + the time difference (e. G. "UTC+01:00").
+    </dd>
+    
+    <div class="fnhead">UTCDiff</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the difference of the timezone to UTC in milliseconds.
+    </dd>
+
+    <div class="fnhead">DSTDiff</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the difference during active daylight saving time of the timezone to UTC in milliseconds. A value of 0 indicates, that the
+        timezone has not daylightsaving time.
+    </dd>
+
+    <div class="fnhead">ToLocalTime</div>
+    <dd>
+        Converts the given time stamp to the timezones local time. The function considers daylightsaving time.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>utcTime</b></td><td>The timestamp in UTC to convert to local time. Make sure that the timestamp given is UTC, or the result will be wrong.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">ToUTCTime</div>
+    <dd>
+        Converts the given local time to UTC using the rules defined by the timezone. The function considers daylightsaving time.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>localTime</b></td><td>The timestamp in the timezones local time to convert to UTC. Make sure that the timestamp given is realy local time for the timezone, or the result will be wrong.</td></tr>
+        </table>
+    </dd>
+
+
+    <div class="fnhead">RemoveDST</div>
+    <dd>
+        Removes the daylightsa ving time from the given timestamp, if the timestamp is during active daylight saving time. If not, the return value will be the same as the value given.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>timeStamp</b></td><td>The timestamp to remove the daylight saving time value.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">AddDST</div>
+    <dd>
+        Add the daylight saving time difference to the given timestamp, if the timestamp points to active daylight saving time. If not, the return value is the same asa the value given.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>timeStamp</b></td><td>The timestamp to add the daylightsaving time difference.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">IsDST (overloaded)</div>
+    <dd>
+        Checks if the given timestamp is during daylightsaving time or not.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>timeStamp</b></td><td>The timeStamp to check.</td></tr>
+            <tr><td class="param">bool <b>isLocalTime</b></td><td><i>(Default false)</i> If true, the given timestamp is in local time, else in UTC.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">IsDST (overloaded)</div>
+    <dd>
+        Checks if the given timestamp is during daylightsaving time or not. Becuase some timezones have a lot of daylightsaving time transitions, you can pass an <a href="#ITimeZoneDSTRange">ITimeZoneDSTRange</a> instance which only provides a range of it. This can optimize the check if there is need to call it frequently.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">ITimeZoneDSTRange * <b>dstRange</b></td><td>An <a href="#ITimeZoneDSTRange">ITimeZoneDSTRange</a> instance to provide the time range for the checks.</td></tr>
+            <tr><td class="param">long64 <b>timeStamp</b></td><td>The timeStamp to check.</td></tr>
+            <tr><td class="param">bool <b>isLocalTime</b></td><td><i>(Default false)</i> If true, the given timestamp is in local time, else in UTC.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">GetDSTRange</div>
+    <dd>
+        If there is need to check a lot of timestamps calling IsDST(), it can be better to make the check only in a specified timerange (e. G. the timezone for Europe/Berlin provides timezone
+        transitions back to 1900). So if the range of the minimum and maximum time to make a check is known, this can help to minimize the checks to be done. This function will create an
+        <a href="#ITimeZoneDSTRange">ITimeZoneDSTRange</a> instance which must be given to the overloaded IsDST() version.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">long64 <b>rangeStartDate</b></td><td>The start timestamp for the desired range.</td></tr>
+            <tr><td class="param">long64 <b>rangeStartDate</b></td><td>The end timestamp for the desired range.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The ITimeZoneDSTRange instance for the desired range. It must be released by the app when now longer used.
+    </dd>
+    
+    <br/>
+    <h2 id="ITimeZoneDSTRange">ITimeZoneDSTRange</h2>
+    <pre><code class="C++">class ITimeZoneDSTRange {
+public:
+    ITimeZoneDSTRange() {};
+    virtual ~ITimeZoneDSTRange() {};
+
+    virtual class ITimeZone * TimeZone() = 0;
+    virtual long64 RangeStart() = 0;
+    virtual long64 RangeEnd() = 0;
+};</code></pre>
+    <p>
+        Some timezones have a lot of daylightsaving time transitions. But when there is need to a lot of ITimeZone::IsDST() checks, it can be helpful to define a range of minimum
+        and maximum transition to make the checks. This can be done by the help of ITimeZoneDSTRange. To get a valid instance, use ITimeZone::GetDSTRange(). However, the instance
+        must be released by the application.
+    </p>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">TimeZone</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the instance of the ITimeZone instance the instance was created with. The daylightsaving time range is only valid for that timezone.
+    </dd>
+
+    <div class="fnhead">RangeStart</div>
+    <dd>
+        <h4>Return value</h4>
+        The end timestamp of the range.
+    </dd>
+
+    <div class="fnhead">RangeStart</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the end timestamp of the range.
+    </dd>
+
+    <br/>
+    <h2 id="example">Code Example</h2>
+    <pre><code class="C++">long64 now = ITime::TimeStampMilliseconds();
+
+char tstr[21];
+ITime::FormatTimeStampISO(tstr, sizeof(tstr), now);
+printf("Current time UTC: %s\n", tstr);
+
+ITimeZone * tzDE = ITimeZoneProvider::GetTimeZone(TZ_EUROPE_BERLIN, myLogInstance);
+ITime::FormatTimeStampISO(tstr, sizeof(tstr), tzDE->ToLocalTime(now));
+printf("Current time in Germany: %s\n", tstr);
+
+// Output:
+// Current time UTC: 2017-08-22T16:15:00
+// Current time in Germany: 2017-08-22T18:15:00
+</code></pre>
+    
+    <br/>
+    <h2 id="timezone_id">Timezone IDs</h2>
+    The ITimeZone interface makes use of the tz database, provided by the underlying Linux OS. For each timezone exists an identifier. The list below
+    is a set of defines to use for that ids. The names of the defines are selfexplaining.<br/>
+    <br/>
+    
+    <dt>List of tz-ids used by the tz database</dt>
+    <ul>
+        <li>TZ_AFRICA_ABIDJAN</li>
+        <li>TZ_AFRICA_ACCRA</li>
+        <li>TZ_AFRICA_ALGIERS</li>
+        <li>TZ_AFRICA_BISSAU</li>
+        <li>TZ_AFRICA_CAIRO</li>
+        <li>TZ_AFRICA_CASABLANCA</li>
+        <li>TZ_AFRICA_CEUTA</li>
+        <li>TZ_AFRICA_EL_AAIUN</li>
+        <li>TZ_AFRICA_JOHANNESBURG</li>
+        <li>TZ_AFRICA_KHARTOUM</li>
+        <li>TZ_AFRICA_LAGOS</li>
+        <li>TZ_AFRICA_MAPUTO</li>
+        <li>TZ_AFRICA_MONROVIA</li>
+        <li>TZ_AFRICA_NAIROBI</li>
+        <li>TZ_AFRICA_NDJAMENA</li>
+        <li>TZ_AFRICA_TRIPOLI</li>
+        <li>TZ_AFRICA_TUNIS</li>
+        <li>TZ_AFRICA_WINDHOEK</li>
+        <li>TZ_AMERICA_ADAK</li>
+        <li>TZ_AMERICA_ANCHORAGE</li>
+        <li>TZ_AMERICA_ARAGUAINA</li>
+        <li>TZ_AMERICA_ARGENTINA_BUENOS_AIRES</li>
+        <li>TZ_AMERICA_ARGENTINA_CATAMARCA</li>
+        <li>TZ_AMERICA_ARGENTINA_CORDOBA</li>
+        <li>TZ_AMERICA_ARGENTINA_JUJUY</li>
+        <li>TZ_AMERICA_ARGENTINA_LA_RIOJA</li>
+        <li>TZ_AMERICA_ARGENTINA_MENDOZA</li>
+        <li>TZ_AMERICA_ARGENTINA_RIO_GALLEGOS</li>
+        <li>TZ_AMERICA_ARGENTINA_SALTA</li>
+        <li>TZ_AMERICA_ARGENTINA_SAN_JUAN</li>
+        <li>TZ_AMERICA_ARGENTINA_SAN_LUIS</li>
+        <li>TZ_AMERICA_ARGENTINA_TUCUMAN</li>
+        <li>TZ_AMERICA_ARGENTINA_USHUAIA</li>
+        <li>TZ_AMERICA_ASUNCION</li>
+        <li>TZ_AMERICA_ATIKOKAN</li>
+        <li>TZ_AMERICA_BAHIA</li>
+        <li>TZ_AMERICA_BAHIA_BANDERAS</li>
+        <li>TZ_AMERICA_BARBADOS</li>
+        <li>TZ_AMERICA_BELEM</li>
+        <li>TZ_AMERICA_BELIZE</li>
+        <li>TZ_AMERICA_BLANC_SABLON</li>
+        <li>TZ_AMERICA_BOA_VISTA</li>
+        <li>TZ_AMERICA_BOGOTA</li>
+        <li>TZ_AMERICA_BOISE</li>
+        <li>TZ_AMERICA_CAMBRIDGE_BAY</li>
+        <li>TZ_AMERICA_CAMPO_GRANDE</li>
+        <li>TZ_AMERICA_CANCUN</li>
+        <li>TZ_AMERICA_CARACAS</li>
+        <li>TZ_AMERICA_CAYENNE</li>
+        <li>TZ_AMERICA_CHICAGO</li>
+        <li>TZ_AMERICA_CHIHUAHUA</li>
+        <li>TZ_AMERICA_COSTA_RICA</li>
+        <li>TZ_AMERICA_CRESTON</li>
+        <li>TZ_AMERICA_CUIABA</li>
+        <li>TZ_AMERICA_CURACAO</li>
+        <li>TZ_AMERICA_DANMARKSHAVN</li>
+        <li>TZ_AMERICA_DAWSON</li>
+        <li>TZ_AMERICA_DAWSON_CREEK</li>
+        <li>TZ_AMERICA_DENVER</li>
+        <li>TZ_AMERICA_DETROIT</li>
+        <li>TZ_AMERICA_EDMONTON</li>
+        <li>TZ_AMERICA_EIRUNEPE</li>
+        <li>TZ_AMERICA_EL_SALVADOR</li>
+        <li>TZ_AMERICA_FORT_NELSON</li>
+        <li>TZ_AMERICA_FORTALEZA</li>
+        <li>TZ_AMERICA_GLACE_BAY</li>
+        <li>TZ_AMERICA_GODTHAB</li>
+        <li>TZ_AMERICA_GOOSE_BAY</li>
+        <li>TZ_AMERICA_GRAND_TURK</li>
+        <li>TZ_AMERICA_GUATEMALA</li>
+        <li>TZ_AMERICA_GUAYAQUIL</li>
+        <li>TZ_AMERICA_GUYANA</li>
+        <li>TZ_AMERICA_HALIFAX</li>
+        <li>TZ_AMERICA_HAVANA</li>
+        <li>TZ_AMERICA_HERMOSILLO</li>
+        <li>TZ_AMERICA_INDIANA_INDIANAPOLIS</li>
+        <li>TZ_AMERICA_INDIANA_KNOX</li>
+        <li>TZ_AMERICA_INDIANA_MARENGO</li>
+        <li>TZ_AMERICA_INDIANA_PETERSBURG</li>
+        <li>TZ_AMERICA_INDIANA_TELL_CITY</li>
+        <li>TZ_AMERICA_INDIANA_VEVAY</li>
+        <li>TZ_AMERICA_INDIANA_VINCENNES</li>
+        <li>TZ_AMERICA_INDIANA_WINAMAC</li>
+        <li>TZ_AMERICA_INUVIK</li>
+        <li>TZ_AMERICA_IQALUIT</li>
+        <li>TZ_AMERICA_JAMAICA</li>
+        <li>TZ_AMERICA_JUNEAU</li>
+        <li>TZ_AMERICA_KENTUCKY_LOUISVILLE</li>
+        <li>TZ_AMERICA_KENTUCKY_MONTICELLO</li>
+        <li>TZ_AMERICA_LA_PAZ</li>
+        <li>TZ_AMERICA_LIMA</li>
+        <li>TZ_AMERICA_LOS_ANGELES</li>
+        <li>TZ_AMERICA_MACEIO</li>
+        <li>TZ_AMERICA_MANAGUA</li>
+        <li>TZ_AMERICA_MANAUS</li>
+        <li>TZ_AMERICA_MARTINIQUE</li>
+        <li>TZ_AMERICA_MATAMOROS</li>
+        <li>TZ_AMERICA_MAZATLAN</li>
+        <li>TZ_AMERICA_MENOMINEE</li>
+        <li>TZ_AMERICA_MERIDA</li>
+        <li>TZ_AMERICA_METLAKATLA</li>
+        <li>TZ_AMERICA_MEXICO_CITY</li>
+        <li>TZ_AMERICA_MIQUELON</li>
+        <li>TZ_AMERICA_MONCTON</li>
+        <li>TZ_AMERICA_MONTERREY</li>
+        <li>TZ_AMERICA_MONTEVIDEO</li>
+        <li>TZ_AMERICA_NASSAU</li>
+        <li>TZ_AMERICA_NEW_YORK</li>
+        <li>TZ_AMERICA_NIPIGON</li>
+        <li>TZ_AMERICA_NOME</li>
+        <li>TZ_AMERICA_NORONHA</li>
+        <li>TZ_AMERICA_NORTH_DAKOTA_BEULAH</li>
+        <li>TZ_AMERICA_NORTH_DAKOTA_CENTER</li>
+        <li>TZ_AMERICA_NORTH_DAKOTA_NEW_SALEM</li>
+        <li>TZ_AMERICA_OJINAGA</li>
+        <li>TZ_AMERICA_PANAMA</li>
+        <li>TZ_AMERICA_PANGNIRTUNG</li>
+        <li>TZ_AMERICA_PARAMARIBO</li>
+        <li>TZ_AMERICA_PHOENIX</li>
+        <li>TZ_AMERICA_PORT_OF_SPAIN</li>
+        <li>TZ_AMERICA_PORT_AU_PRINCE</li>
+        <li>TZ_AMERICA_PORTO_VELHO</li>
+        <li>TZ_AMERICA_PUERTO_RICO</li>
+        <li>TZ_AMERICA_PUNTA_ARENAS</li>
+        <li>TZ_AMERICA_RAINY_RIVER</li>
+        <li>TZ_AMERICA_RANKIN_INLET</li>
+        <li>TZ_AMERICA_RECIFE</li>
+        <li>TZ_AMERICA_REGINA</li>
+        <li>TZ_AMERICA_RESOLUTE</li>
+        <li>TZ_AMERICA_RIO_BRANCO</li>
+        <li>TZ_AMERICA_SANTAREM</li>
+        <li>TZ_AMERICA_SANTIAGO</li>
+        <li>TZ_AMERICA_SANTO_DOMINGO</li>
+        <li>TZ_AMERICA_SAO_PAULO</li>
+        <li>TZ_AMERICA_SCORESBYSUND</li>
+        <li>TZ_AMERICA_SITKA</li>
+        <li>TZ_AMERICA_ST_JOHNS</li>
+        <li>TZ_AMERICA_SWIFT_CURRENT</li>
+        <li>TZ_AMERICA_TEGUCIGALPA</li>
+        <li>TZ_AMERICA_THULE</li>
+        <li>TZ_AMERICA_THUNDER_BAY</li>
+        <li>TZ_AMERICA_TIJUANA</li>
+        <li>TZ_AMERICA_TORONTO</li>
+        <li>TZ_AMERICA_VANCOUVER</li>
+        <li>TZ_AMERICA_WHITEHORSE</li>
+        <li>TZ_AMERICA_WINNIPEG</li>
+        <li>TZ_AMERICA_YAKUTAT</li>
+        <li>TZ_AMERICA_YELLOWKNIFE</li>
+        <li>TZ_ANTARCTICA_CASEY</li>
+        <li>TZ_ANTARCTICA_DAVIS</li>
+        <li>TZ_ANTARCTICA_DUMONTDURVILLE</li>
+        <li>TZ_ANTARCTICA_MACQUARIE</li>
+        <li>TZ_ANTARCTICA_MAWSON</li>
+        <li>TZ_ANTARCTICA_PALMER</li>
+        <li>TZ_ANTARCTICA_ROTHERA</li>
+        <li>TZ_ANTARCTICA_SYOWA</li>
+        <li>TZ_ANTARCTICA_TROLL</li>
+        <li>TZ_ANTARCTICA_VOSTOK</li>
+        <li>TZ_ASIA_ALMATY</li>
+        <li>TZ_ASIA_AMMAN</li>
+        <li>TZ_ASIA_ANADYR</li>
+        <li>TZ_ASIA_AQTAU</li>
+        <li>TZ_ASIA_AQTOBE</li>
+        <li>TZ_ASIA_ASHGABAT</li>
+        <li>TZ_ASIA_ATYRAU</li>
+        <li>TZ_ASIA_BAGHDAD</li>
+        <li>TZ_ASIA_BAKU</li>
+        <li>TZ_ASIA_BANGKOK</li>
+        <li>TZ_ASIA_BARNAUL</li>
+        <li>TZ_ASIA_BEIRUT</li>
+        <li>TZ_ASIA_BISHKEK</li>
+        <li>TZ_ASIA_BRUNEI</li>
+        <li>TZ_ASIA_CHITA</li>
+        <li>TZ_ASIA_CHOIBALSAN</li>
+        <li>TZ_ASIA_COLOMBO</li>
+        <li>TZ_ASIA_DAMASCUS</li>
+        <li>TZ_ASIA_DHAKA</li>
+        <li>TZ_ASIA_DILI</li>
+        <li>TZ_ASIA_DUBAI</li>
+        <li>TZ_ASIA_DUSHANBE</li>
+        <li>TZ_ASIA_FAMAGUSTA</li>
+        <li>TZ_ASIA_GAZA</li>
+        <li>TZ_ASIA_HEBRON</li>
+        <li>TZ_ASIA_HO_CHI_MINH</li>
+        <li>TZ_ASIA_HONG_KONG</li>
+        <li>TZ_ASIA_HOVD</li>
+        <li>TZ_ASIA_IRKUTSK</li>
+        <li>TZ_ASIA_JAKARTA</li>
+        <li>TZ_ASIA_JAYAPURA</li>
+        <li>TZ_ASIA_JERUSALEM</li>
+        <li>TZ_ASIA_KABUL</li>
+        <li>TZ_ASIA_KAMCHATKA</li>
+        <li>TZ_ASIA_KARACHI</li>
+        <li>TZ_ASIA_KATHMANDU</li>
+        <li>TZ_ASIA_KHANDYGA</li>
+        <li>TZ_ASIA_KOLKATA</li>
+        <li>TZ_ASIA_KRASNOYARSK</li>
+        <li>TZ_ASIA_KUALA_LUMPUR</li>
+        <li>TZ_ASIA_KUCHING</li>
+        <li>TZ_ASIA_MACAU</li>
+        <li>TZ_ASIA_MAGADAN</li>
+        <li>TZ_ASIA_MAKASSAR</li>
+        <li>TZ_ASIA_MANILA</li>
+        <li>TZ_ASIA_NICOSIA</li>
+        <li>TZ_ASIA_NOVOKUZNETSK</li>
+        <li>TZ_ASIA_NOVOSIBIRSK</li>
+        <li>TZ_ASIA_OMSK</li>
+        <li>TZ_ASIA_ORAL</li>
+        <li>TZ_ASIA_PONTIANAK</li>
+        <li>TZ_ASIA_PYONGYANG</li>
+        <li>TZ_ASIA_QATAR</li>
+        <li>TZ_ASIA_QYZYLORDA</li>
+        <li>TZ_ASIA_RIYADH</li>
+        <li>TZ_ASIA_SAKHALIN</li>
+        <li>TZ_ASIA_SAMARKAND</li>
+        <li>TZ_ASIA_SEOUL</li>
+        <li>TZ_ASIA_SHANGHAI</li>
+        <li>TZ_ASIA_SINGAPORE</li>
+        <li>TZ_ASIA_SREDNEKOLYMSK</li>
+        <li>TZ_ASIA_TAIPEI</li>
+        <li>TZ_ASIA_TASHKENT</li>
+        <li>TZ_ASIA_TBILISI</li>
+        <li>TZ_ASIA_TEHRAN</li>
+        <li>TZ_ASIA_THIMPHU</li>
+        <li>TZ_ASIA_TOKYO</li>
+        <li>TZ_ASIA_TOMSK</li>
+        <li>TZ_ASIA_ULAANBAATAR</li>
+        <li>TZ_ASIA_URUMQI</li>
+        <li>TZ_ASIA_UST_NERA</li>
+        <li>TZ_ASIA_VLADIVOSTOK</li>
+        <li>TZ_ASIA_YAKUTSK</li>
+        <li>TZ_ASIA_YANGON</li>
+        <li>TZ_ASIA_YEKATERINBURG</li>
+        <li>TZ_ASIA_YEREVAN</li>
+        <li>TZ_ATLANTIC_AZORES</li>
+        <li>TZ_ATLANTIC_BERMUDA</li>
+        <li>TZ_ATLANTIC_CANARY</li>
+        <li>TZ_ATLANTIC_CAPE_VERDE</li>
+        <li>TZ_ATLANTIC_FAROE</li>
+        <li>TZ_ATLANTIC_MADEIRA</li>
+        <li>TZ_ATLANTIC_REYKJAVIK</li>
+        <li>TZ_ATLANTIC_SOUTH_GEORGIA</li>
+        <li>TZ_ATLANTIC_STANLEY</li>
+        <li>TZ_AUSTRALIA_ADELAIDE</li>
+        <li>TZ_AUSTRALIA_BRISBANE</li>
+        <li>TZ_AUSTRALIA_BROKEN_HILL</li>
+        <li>TZ_AUSTRALIA_CURRIE</li>
+        <li>TZ_AUSTRALIA_DARWIN</li>
+        <li>TZ_AUSTRALIA_EUCLA</li>
+        <li>TZ_AUSTRALIA_HOBART</li>
+        <li>TZ_AUSTRALIA_LINDEMAN</li>
+        <li>TZ_AUSTRALIA_LORD_HOWE</li>
+        <li>TZ_AUSTRALIA_MELBOURNE</li>
+        <li>TZ_AUSTRALIA_PERTH</li>
+        <li>TZ_AUSTRALIA_SYDNEY</li>
+        <li>TZ_EUROPE_AMSTERDAM</li>
+        <li>TZ_EUROPE_ANDORRA</li>
+        <li>TZ_EUROPE_ASTRAKHAN</li>
+        <li>TZ_EUROPE_ATHENS</li>
+        <li>TZ_EUROPE_BELGRADE</li>
+        <li>TZ_EUROPE_BERLIN</li>
+        <li>TZ_EUROPE_BRUSSELS</li>
+        <li>TZ_EUROPE_BUCHAREST</li>
+        <li>TZ_EUROPE_BUDAPEST</li>
+        <li>TZ_EUROPE_CHISINAU</li>
+        <li>TZ_EUROPE_COPENHAGEN</li>
+        <li>TZ_EUROPE_DUBLIN</li>
+        <li>TZ_EUROPE_GIBRALTAR</li>
+        <li>TZ_EUROPE_HELSINKI</li>
+        <li>TZ_EUROPE_ISTANBUL</li>
+        <li>TZ_EUROPE_KALININGRAD</li>
+        <li>TZ_EUROPE_KIEV</li>
+        <li>TZ_EUROPE_KIROV</li>
+        <li>TZ_EUROPE_LISBON</li>
+        <li>TZ_EUROPE_LONDON</li>
+        <li>TZ_EUROPE_LUXEMBOURG</li>
+        <li>TZ_EUROPE_MADRID</li>
+        <li>TZ_EUROPE_MALTA</li>
+        <li>TZ_EUROPE_MINSK</li>
+        <li>TZ_EUROPE_MONACO</li>
+        <li>TZ_EUROPE_MOSCOW</li>
+        <li>TZ_EUROPE_OSLO</li>
+        <li>TZ_EUROPE_PARIS</li>
+        <li>TZ_EUROPE_PRAGUE</li>
+        <li>TZ_EUROPE_RIGA</li>
+        <li>TZ_EUROPE_ROME</li>
+        <li>TZ_EUROPE_SAMARA</li>
+        <li>TZ_EUROPE_SARATOV</li>
+        <li>TZ_EUROPE_SIMFEROPOL</li>
+        <li>TZ_EUROPE_SOFIA</li>
+        <li>TZ_EUROPE_STOCKHOLM</li>
+        <li>TZ_EUROPE_TALLINN</li>
+        <li>TZ_EUROPE_TIRANE</li>
+        <li>TZ_EUROPE_ULYANOVSK</li>
+        <li>TZ_EUROPE_UZHGOROD</li>
+        <li>TZ_EUROPE_VIENNA</li>
+        <li>TZ_EUROPE_VILNIUS</li>
+        <li>TZ_EUROPE_VOLGOGRAD</li>
+        <li>TZ_EUROPE_WARSAW</li>
+        <li>TZ_EUROPE_ZAPOROZHYE</li>
+        <li>TZ_EUROPE_ZURICH</li>
+        <li>TZ_INDIAN_CHAGOS</li>
+        <li>TZ_INDIAN_CHRISTMAS</li>
+        <li>TZ_INDIAN_COCOS</li>
+        <li>TZ_INDIAN_KERGUELEN</li>
+        <li>TZ_INDIAN_MAHE</li>
+        <li>TZ_INDIAN_MALDIVES</li>
+        <li>TZ_INDIAN_MAURITIUS</li>
+        <li>TZ_INDIAN_REUNION</li>
+        <li>TZ_PACIFIC_APIA</li>
+        <li>TZ_PACIFIC_AUCKLAND</li>
+        <li>TZ_PACIFIC_BOUGAINVILLE</li>
+        <li>TZ_PACIFIC_CHATHAM</li>
+        <li>TZ_PACIFIC_CHUUK</li>
+        <li>TZ_PACIFIC_EASTER</li>
+        <li>TZ_PACIFIC_EFATE</li>
+        <li>TZ_PACIFIC_ENDERBURY</li>
+        <li>TZ_PACIFIC_FAKAOFO</li>
+        <li>TZ_PACIFIC_FIJI</li>
+        <li>TZ_PACIFIC_FUNAFUTI</li>
+        <li>TZ_PACIFIC_GALAPAGOS</li>
+        <li>TZ_PACIFIC_GAMBIER</li>
+        <li>TZ_PACIFIC_GUADALCANAL</li>
+        <li>TZ_PACIFIC_GUAM</li>
+        <li>TZ_PACIFIC_HONOLULU</li>
+        <li>TZ_PACIFIC_KIRITIMATI</li>
+        <li>TZ_PACIFIC_KOSRAE</li>
+        <li>TZ_PACIFIC_KWAJALEIN</li>
+        <li>TZ_PACIFIC_MAJURO</li>
+        <li>TZ_PACIFIC_MARQUESAS</li>
+        <li>TZ_PACIFIC_NAURU</li>
+        <li>TZ_PACIFIC_NIUE</li>
+        <li>TZ_PACIFIC_NORFOLK</li>
+        <li>TZ_PACIFIC_NOUMEA</li>
+        <li>TZ_PACIFIC_PAGO_PAGO</li>
+        <li>TZ_PACIFIC_PALAU</li>
+        <li>TZ_PACIFIC_PITCAIRN</li>
+        <li>TZ_PACIFIC_POHNPEI</li>
+        <li>TZ_PACIFIC_PORT_MORESBY</li>
+        <li>TZ_PACIFIC_RAROTONGA</li>
+        <li>TZ_PACIFIC_TAHITI</li>
+        <li>TZ_PACIFIC_TARAWA</li>
+        <li>TZ_PACIFIC_TONGATAPU</li>
+        <li>TZ_PACIFIC_WAKE</li>
+        <li>TZ_PACIFIC_WALLIS</li>
+    </ul>
+
+    <h3>Some additional items for the tz database</h3>
+    <ul>
+        <li>TZ_GMT</li>
+        <li>TZ_GMT0</li>
+        <li>TZ_UTC</li>
+        <li>TZ_WET // Western European Time</li>
+        <li>TZ_MET // Central European Time</li>
+        <li>TZ_EET // Eastern European Time</li>
+        <li>TZ_EST // Eastern Standard Time (North America)</li>
+        <li>TZ_MST // Mountain Standard Time</li>
+        <li>TZ_HST // Hawaiian Standard Time</li>
+        <li>TZ_GREENWICH // Mapped to TZ_GMT</li>
+        <li>TZ_UNIVERSAL // Mapped to TZ_UTC</li>
+        <li>TZ_ZULU // Mapped to TZ_UTC</li>
+        <li>TZ_CST6CDT</li>
+        <li>TZ_EST5EDT</li>
+        <li>TZ_MST7MDT</li>
+        <li>TZ_PST8PDT</li>
+    </ul>
+
+    <h2 id="win_mapping">Windows TimeZone Mapping</h2>
+    Microsoft Windows uses an other type of TimeZone naming which ends up in less items. The following list of defines helps to build up a proper
+    mapping. However, such a mapping always will be a compromise (the tz database is more detailed). The name of the defines are corespondig with
+    the name of the Windows timezone, which should be selfexplaining. Because + and - are forbitten for define names, + had been replaced by P and
+    - by M. Colons had been remove. So UTC+01:00 becomes UTC_M0100. The names like used by Windows itself can be found in the comments behind the
+    mapping inside the timezone.h file.
+
+    <ul>
+        <li>TZ_UTC_M1200_INTERNATIONAL_DATE_LINE_WEST</li>
+        <li>TZ_UTC_M1100_COORDINATED_UNIVERSAL_TIME_11</li>
+        <li>TZ_UTC_M1000_ALEUTIAN_ISLANDS</li>
+        <li>TZ_UTC_M1000_HAWAII</li>
+        <li>TZ_UTC_M0930_MARQUESAS_ISLANDS</li>
+        <li>TZ_UTC_M0900_ALASKA</li>
+        <li>TZ_UTC_M0900_COORDINATED_UNIVERSAL_TIME_09</li>
+        <li>TZ_UTC_M0800_BAJA_CALIFORNIA</li>
+        <li>TZ_UTC_M0800_COORDINATED_UNIVERSAL_TIME_08</li>
+        <li>TZ_UTC_M0800_PACIFIC_TIME_US_CANADA</li>
+        <li>TZ_UTC_M0700_ARIZONA</li>
+        <li>TZ_UTC_M0700_CHIHUAHUA_LA_PAZ_MAZATLAN</li>
+        <li>TZ_UTC_M0700_MOUNTAIN_TIME_US_CANADA</li>
+        <li>TZ_UTC_M0600_CENTRAL_AMERICA</li>
+        <li>TZ_UTC_M0600_CENTRAL_TIME_US_CANADA</li>
+        <li>TZ_UTC_M0600_EASTER_ISLAND</li>
+        <li>TZ_UTC_M0600_GUADALAJARA_MEXICO_CITY_MONTERREY	</li>
+        <li>TZ_UTC_M0600_SASKATCHEWAN</li>
+        <li>TZ_UTC_M0500_BOGOTA_LIMA_QUITO_RIO_BRANCO</li>
+        <li>TZ_UTC_M0500_CHETUMAL</li>
+        <li>TZ_UTC_M0500_EASTERN_TIME_US_CANADA</li>
+        <li>TZ_UTC_M0500_HAITI</li>
+        <li>TZ_UTC_M0500_HAVANA</li>
+        <li>TZ_UTC_M0500_INDIANA_EAST</li>
+        <li>TZ_UTC_M0400_ASUNCION</li>
+        <li>TZ_UTC_M0400_ATLANTIC_TIME_CANADA</li>
+        <li>TZ_UTC_M0400_CARACAS</li>
+        <li>TZ_UTC_M0400_CUIABA</li>
+        <li>TZ_UTC_M0400_GEORGETOWN_LA_PAZ_MANAUS_SAN_JUAN</li>
+        <li>TZ_UTC_M0400_SANTIAGO</li>
+        <li>TZ_UTC_M0400_TURKS_AND_CAICOS</li>
+        <li>TZ_UTC_M0330_NEWFOUNDLAND</li>
+        <li>TZ_UTC_M0300_ARAGUAINA</li>
+        <li>TZ_UTC_M0300_BRASILIA</li>
+        <li>TZ_UTC_M0300_CAYENNE_FORTALEZA</li>
+        <li>TZ_UTC_M0300_CITY_OF_BUENOS_AIRES</li>
+        <li>TZ_UTC_M0300_GREENLAND</li>
+        <li>TZ_UTC_M0300_MONTEVIDEO</li>
+        <li>TZ_UTC_M0300_PUNTA_ARENAS</li>
+        <li>TZ_UTC_M0300_SAINT_PIERRE_AND_MIQUELON</li>
+        <li>TZ_UTC_M0300_SALVADOR</li>
+        <li>TZ_UTC_M0200_COORDINATED_UNIVERSAL_TIME_02</li>
+        <li>TZ_UTC_M0100_AZORES</li>
+        <li>TZ_UTC_M0100_CABO_VERDE_IS</li>
+        <li>TZ_UTC_COORDINATED_UNIVERSAL_TIME</li>
+        <li>TZ_UTC_P0000_CASABLANCA</li>
+        <li>TZ_UTC_P0000_DUBLIN_EDINBURGH_LISBON_LONDON</li>
+        <li>TZ_UTC_P0000_MONROVIA_REYKJAVIK</li>
+        <li>TZ_UTC_P0100_AMSTERDAM_BERLIN_BERN_ROME_STOCKHOLM_VIENNA</li>
+        <li>TZ_UTC_P0100_BELGRADE_BRATISLAVA_BUDAPEST_LJUBLJANA_PRAGUE</li>
+        <li>TZ_UTC_P0100_BRUSSELS_COPENHAGEN_MADRID_PARIS</li>
+        <li>TZ_UTC_P0100_SARAJEVO_SKOPJE_WARSAW_ZAGREB</li>
+        <li>TZ_UTC_P0100_WEST_CENTRAL_AFRICA</li>
+        <li>TZ_UTC_P0100_WINDHOEK</li>
+        <li>TZ_UTC_P0200_AMMAN</li>
+        <li>TZ_UTC_P0200_ATHENS_BUCHAREST</li>
+        <li>TZ_UTC_P0200_BEIRUT</li>
+        <li>TZ_UTC_P0200_CAIRO</li>
+        <li>TZ_UTC_P0200_CHISINAU</li>
+        <li>TZ_UTC_P0200_DAMASCUS</li>
+        <li>TZ_UTC_P0200_GAZA_HEBRON</li>
+        <li>TZ_UTC_P0200_HARARE_PRETORIA</li>
+        <li>TZ_UTC_P0200_HELSINKI_KYIV_RIGA_SOFIA_TALLINN_VILNIUS</li>
+        <li>TZ_UTC_P0200_JERUSALEM</li>
+        <li>TZ_UTC_P0200_KALININGRAD</li>
+        <li>TZ_UTC_P0200_TRIPOLI</li>
+        <li>TZ_UTC_P0300_BAGHDAD</li>
+        <li>TZ_UTC_P0300_ISTANBUL</li>
+        <li>TZ_UTC_P0300_KUWAIT_RIYADH</li>
+        <li>TZ_UTC_P0300_MINSK</li>
+        <li>TZ_UTC_P0300_MOSCOW_ST_PETERSBURG_VOLGOGRAD</li>
+        <li>TZ_UTC_P0300_NAIROBI</li>
+        <li>TZ_UTC_P0330_TEHRAN</li>
+        <li>TZ_UTC_P0400_ABU_DHABI_MUSCAT</li>
+        <li>TZ_UTC_P0400_ASTRAKHAN_ULYANOVSK</li>
+        <li>TZ_UTC_P0400_BAKU</li>
+        <li>TZ_UTC_P0400_IZHEVSK_SAMARA</li>
+        <li>TZ_UTC_P0400_PORT_LOUIS</li>
+        <li>TZ_UTC_P0400_SARATOV</li>
+        <li>TZ_UTC_P0400_TBILISI</li>
+        <li>TZ_UTC_P0400_YEREVAN</li>
+        <li>TZ_UTC_P0430_KABUL</li>
+        <li>TZ_UTC_P0500_ASHGABAT_TASHKENT</li>
+        <li>TZ_UTC_P0500_EKATERINBURG</li>
+        <li>TZ_UTC_P0500_ISLAMABAD_KARACHI</li>
+        <li>TZ_UTC_P0530_CHENNAI_KOLKATA_MUMBAI_NEW_DELHI</li>
+        <li>TZ_UTC_P0530_SRI_JAYAWARDENEPURA</li>
+        <li>TZ_UTC_P0545_KATHMANDU</li>
+        <li>TZ_UTC_P0600_ASTANA</li>
+        <li>TZ_UTC_P0600_DHAKA</li>
+        <li>TZ_UTC_P0600_OMSK</li>
+        <li>TZ_UTC_P0630_YANGON_RANGOON</li>
+        <li>TZ_UTC_P0700_BANGKOK_HANOI_JAKARTA</li>
+        <li>TZ_UTC_P0700_BARNAUL_GORNO_ALTAYSK</li>
+        <li>TZ_UTC_P0700_HOVD</li>
+        <li>TZ_UTC_P0700_KRASNOYARSK</li>
+        <li>TZ_UTC_P0700_NOVOSIBIRSK</li>
+        <li>TZ_UTC_P0700_TOMSK</li>
+        <li>TZ_UTC_P0800_BEIJING_CHONGQING_HONG_KONG_URUMQI</li>
+        <li>TZ_UTC_P0800_IRKUTSK</li>
+        <li>TZ_UTC_P0800_KUALA_LUMPUR_SINGAPORE</li>
+        <li>TZ_UTC_P0800_PERTH</li>
+        <li>TZ_UTC_P0800_TAIPEI</li>
+        <li>TZ_UTC_P0800_ULAANBAATAR</li>
+        <li>TZ_UTC_P0830_PYONGYANG</li>
+        <li>TZ_UTC_P0845_EUCLA</li>
+        <li>TZ_UTC_P0900_CHITA</li>
+        <li>TZ_UTC_P0900_OSAKA_SAPPORO_TOKYO</li>
+        <li>TZ_UTC_P0900_SEOUL</li>
+        <li>TZ_UTC_P0900_YAKUTSK</li>
+        <li>TZ_UTC_P0930_ADELAIDE</li>
+        <li>TZ_UTC_P0930_DARWIN</li>
+        <li>TZ_UTC_P1000_BRISBANE</li>
+        <li>TZ_UTC_P1000_CANBERRA_MELBOURNE_SYDNEY</li>
+        <li>TZ_UTC_P1000_GUAM_PORT_MORESBY</li>
+        <li>TZ_UTC_P1000_HOBART</li>
+        <li>TZ_UTC_P1000_VLADIVOSTOK</li>
+        <li>TZ_UTC_P1030_LORD_HOWE_ISLAND</li>
+        <li>TZ_UTC_P1100_BOUGAINVILLE_ISLAND</li>
+        <li>TZ_UTC_P1100_CHOKURDAKH</li>
+        <li>TZ_UTC_P1100_MAGADAN</li>
+        <li>TZ_UTC_P1100_NORFOLK_ISLAND</li>
+        <li>TZ_UTC_P1100_SAKHALIN</li>
+        <li>TZ_UTC_P1100_SOLOMON_IS_NEW_CALEDONIA</li>
+        <li>TZ_UTC_P1200_ANADYR_PETROPAVLOVSK_KAMCHATSKY</li>
+        <li>TZ_UTC_P1200_AUCKLAND_WELLINGTON</li>
+        <li>TZ_UTC_P1200_COORDINATED_UNIVERSAL_TIME_12</li>
+        <li>TZ_UTC_P1200_FIJI</li>
+        <li>TZ_UTC_P1245_CHATHAM_ISLANDS</li>
+        <li>TZ_UTC_P1300_COORDINATED_UNIVERSAL_TIME_13</li>
+        <li>TZ_UTC_P1300_NUKU_ALOFA</li>
+        <li>TZ_UTC_P1300_SAMOA</li>
+        <li>TZ_UTC_P1400_KIRITIMATI_ISLAND</li>
+    </ul>
+
+    <h2 id="">Copyright information</h2>
+        The tzdb to Windows TimeZone mapping is based on the mapping made by the unicode group (
+        <a href="http://unicode.org/repos/cldr/trunk/common/supplemental/windowsZones.xml">http://unicode.org/repos/cldr/trunk/common/supplemental/windowsZones.xml</a>,
+        the terms of use can be found under <a href="http://www.unicode.org/copyright.html">http://www.unicode.org/copyright.html</a>), with some adjustment based
+        on the english wikipedia artikel (<a href="http://cldr.unicode.org/development/development-process/design-proposals/extended-windows-olson-zid-mapping">http://cldr.unicode.org/development/development-process/design-proposals/extended-windows-olson-zid-mapping</a>)
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK -random.h</title>
+    <!-- Take care to adjust the 3 paths if needed, e. g.: "../../web1/doc" if the file is in the common/interface folder -->
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Random</h1>
+    <p>
+        Interface for creating random numbers and strings.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/random.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IRandom">IRandom</a><br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#random_char_t">random_char_t</a><br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#Example_random_number">Creating a random number</a><br>
+                <a href="#Example_random_string">Creating a random string</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <a name="IRandom"><h2>IRandom</h2></a>
+    <pre><code class="C++">class IRandom {
+public:
+    static void Init(dword seed);
+    static dword GetRandom();
+    static void GetChars(char * out, dword len, random_char_t type = random_chars_url);
+};</code></pre>
+
+    <h3>Overview</h3>
+    <p>
+        The IRandom interface can be used to create random numbers or strings. Before it can be used, it should be initialized with a seed that should contain some entropy.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">Init (static function)</div>
+    <dd>
+        Initializes the random number generator. This function should be called once when the app is started.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">dword <b>seed</b></td>
+                <td>
+                    A 32-bit value that should contain some entropy. Make sure that the app does not use the same value over and over again.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">GetRandom (static function)</div>
+    <dd>
+        Returns a random number.
+        
+        <h4>Return value</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">dword</td>
+                <td>
+                    A 32-bit unsigned integer.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">GetChars (static function)</div>
+    <dd>
+        Writes a number of random characters to a buffer. Please note that the function does not do any null-termination.
+        A typical application of this function is to create random passwords.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">char * <b>out</b></td>
+                <td>
+                    The buffer to write the random characters to. It must be big enough for len characters.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">dword <b>len</b></td>
+                <td>
+                    The number of random characters that shall be written.
+                </td>
+            </tr>
+            <tr>
+                <td class="param"><a href="#random_char_t">random_char_t</a> <b>type</b></td>
+                <td>
+                    Optional parameter that specifies set of characters that shall be used.
+                    <dl>
+                        <dt>random_chars_url</dt>
+                        <dd>
+                            <ul>
+                                <li>a-z</li>
+                                <li>A-Z</li>
+                                <li>0-9</li>
+                                <li>!</li>
+                                <li>_</li>
+                            </ul>
+                        </dd>
+
+                        <dt>random_chars_ice</dt>
+                        <dd>
+                            <ul>
+                                <li>a-z</li>
+                                <li>A-Z</li>
+                                <li>0-9</li>
+                                <li>+</li>
+                                <li>/</li>
+                            </ul>
+                        </dd>
+                    </dl>
+                </td>
+            </tr>
+        </table>
+        <h3>Remarks</h3>
+        For each written character there are 64 different possibilities. So the random string contains only len/4 bytes of randomness.
+    </dd>
+
+    <h1>Data types</h1>
+    <h2 id="random_char_t">random_char_t</a></h2>
+    <pre><code style="laguage-cpp">enum random_char_t {
+    random_chars_url,
+    random_chars_ice
+};</code></pre>
+
+    <h3>Overview</h3>
+    The random_char_t enum defines the different charsets for random strings that are supported by the library.
+
+    <h3>Values</h3>
+    <table style="margin-left: 20px">
+        <tr><td><b>random_chars_url</b></td><td>A set of characters that doesn't need escaping in URLs. (a-z  A-Z  0-9  !  _)</td></tr>
+        <tr><td><b>random_chars_ice</b></td><td>The set of characters needed for ICE/STUN passwords. (a-z  A-Z  0-9  +  /)</td></tr>
+    </table>
+
+    <h1> Code Example </h1>
+    <a name="Example_random_number"><h2>Creating a random number</h2></a>
+    <pre class="sample" style="height:50px;"><code style="language-cpp">dword number = IRandom::GetRandom();
+</code></pre>
+
+    <a name="Example_random_string"><h2>Creating a random string</h2></a>
+    <pre class="sample" style="height:100px;"><code style="language-cpp">char out[17];
+IRandom::GetChars(out, 16, random_chars_url);
+out[16] = 0;
+
+debug->printf("random string: %s", out);
+</code></pre>
+</body>
+</html>

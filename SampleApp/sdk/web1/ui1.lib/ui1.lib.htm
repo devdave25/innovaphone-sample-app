@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone.ui1.lib</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>innovaphone.ui1.lib</h1>
+    
+    <h2>Includes</h2>
+    <p>
+        The following files have to be included in the html file.
+    </p>
+    <ul>
+        <li><code>innovaphone.lib1.js</code></li>
+    </ul>
+
+    <h2>UI nodes</h2>
+    <h3>innovaphone.ui1.nodePrototype</h3>
+    <p>
+        This prototype is used as a base for all UI nodes in the library. It defines useful functions for creating and manipulating DOM nodes.
+    </p>
+    <dl>
+        <dt>addText(text)</dt>
+        <dd>Sets the innerText property of the node.</dd>
+        <dt>addHTML(text)</dt>
+        <dd>Sets the innerHTML property of the node.</dd>
+        <dt>add(node, before)</dt>
+        <dd>Adds a child node.</dd>
+        <dd>
+            <dl>
+                <dt>node</dt>
+                <dd>The child node to be added</dd>
+                <dt>before (optional)</dt>
+                <dd>The new child node is added before this element. If no element is given, the new child node is added at the end.</dd>
+            </dl>
+        </dd>
+        <dt>rem(node)</dt>
+        <dd>Removes a child node.</dd>
+        <dt>clear()</dt>
+        <dd>Removes all child nodes.</dd>
+        <dt>addTranslation(languages, id, property, args)</dt>
+        <dd>Adds a dynamic translation from <a href="../lib1/lib1.htm">innovaphone.lib1.Languages</a> to the node. Text is updated automatically when the language is changed. Returns the node itself.</dd>
+        <dd>Note: If the node is discarded it should also be detached from the Languages object using Languages.clear.</dd>
+        <dd>
+            <dl>
+                <dt>languages</dt>
+                <dd>An object of type innovaphone.lib1.Languages.</dd>
+                <dt>id</dt>
+                <dd>The id of the text.</dd>
+                <dt>property (optional)</dt>
+                <dd>The property of the DOM node where the translation should appear (e.g. "innerText", "placeholder", "title"). Defaults to "innerText".</dd>
+                <dt>args (optional)</dt>
+                <dd>An array with the values for the placeholder substitution.</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+var texts = {
+    en: {
+        conn: "Connected as $0",
+        hello: "Hello!"
+    },
+    de: {
+        conn: "Verbunden als $0",
+        hello: "Hallo!"
+    }
+};
+
+var langs = innovaphone.lib1.Languages(texts, "en");
+
+var div1 = new innovaphone.ui1.Node("div").addTranslation(langs, "hello");
+var div2 = new innovaphone.ui1.Node("div").addTranslation(langs, "conn", "innerText", ["John Doe"]);
+
+// detach node that is not in use anymore
+langs.clear(div1);
+</pre>
+        </dd>
+        <dt>createTranslation(languages, id, property, args)</dt>
+        <dd>Works the same way as addTranslation but returns an innovaphone.lib1.TranslatedNode object that can be used for further manipulation.</dd>
+    </dl>
+
+    <h3>innovaphone.ui1.Node</h3>
+    <p>
+        Represents a generic DOM node. Supports all methods defined in innovaphone.ui1.nodePrototype.
+    </p>
+    <dl>
+        <dt>innovaphone.ui1.Node(type, style, content, cl)</dt>
+        <dd>Constructor</dd>
+        <dd>
+            <dl>
+                <dt>type</dt>
+                <dd>The HTML dom node type (e.g. "div", "input", "hr", ...).</dd>
+                <dt>style (optional)</dt>
+                <dd>The style attribute of the node (e.g. "color: blue; font-size: 14px").</dd>
+                <dt>content (optional)</dt>
+                <dd>The innerText of the node.</dd>
+                <dt>cl (optional)</dt>
+                <dd>The CSS class of the node.</dd>
+            </dl>
+        </dd>
+    </dl>
+
+    <h3>innovaphone.ui1.Div</h3>
+    <p>
+        Represents a DIV node. Supports all methods defined in innovaphone.ui1.nodePrototype.
+    </p>
+    <dl>
+        <dt>innovaphone.ui1.Div(style, content, cl)</dt>
+        <dd>Constructor</dd>
+        <dd>
+            <dl>
+                <dt>style (optional)</dt>
+                <dd>The style attribute of the node (e.g. "color: blue; font-size: 14px").</dd>
+                <dt>content (optional)</dt>
+                <dd>The innerText of the node.</dd>
+                <dt>cl (optional)</dt>
+                <dd>The CSS class of the node.</dd>
+            </dl>
+        </dd>
+    </dl>
+
+    <h3>innovaphone.ui1.Input</h3>
+    <p>
+        Represents an input field. Supports all methods defined in innovaphone.ui1.nodePrototype.
+    </p>
+    <dl>
+        <dt>innovaphone.ui1.Input(style, content, cl)</dt>
+        <dd>Constructor</dd>
+        <dd>
+            <dl>
+                <dt>style (optional)</dt>
+                <dd>The style attribute of the node (e.g. "color: blue; font-size: 14px").</dd>
+                <dt>content (optional)</dt>
+                <dd>The text content of the input field.</dd>
+                <dt>placeHolder (optional)</dt>
+                <dd>The placeholder text.</dd>
+                <dt>maxLength (optional)</dt>
+                <dd>Maximum number of characters.</dd>
+                <dt>type (optional)</dt>
+                <dd>The type of data (e.g. "text", "number", "password")</dd>
+                <dt>cl (optional)</dt>
+                <dd>The CSS class of the node.</dd>
+            </dl>
+        </dd>
+    </dl>
+
+    <h3>innovaphone.ui1.Checkbox</h3>
+    <p>
+        Represents an checkbox control. Supports all methods defined in innovaphone.ui1.nodePrototype.
+    </p>
+    <dl>
+        <dt>innovaphone.ui1.Checkbox(style, value, cl, background, foreground, backgroundOff)</dt>
+        <dd>Constructor</dd>
+        <dd>
+            <dl>
+                <dt>style (optional)</dt>
+                <dd>The style attribute of the node (e.g. "width: 20px; height: 20px; background-color: blue").</dd>
+                <dt>value (true or false)</dt>
+                <dd>Initial state of the checkbox control.</dd>
+                <dt>cl (optional)</dt>
+                <dd>The CSS class of the node.</dd>
+                <dt>background (optional)</dt>
+                <dd>The background node color when this is checked (gray as default).</dd>
+                <dt>foreground (optional)</dt>
+                <dd>The checkmark color (white as default).</dd>
+                <dt>backgroundOff (optional)</dt>
+                <dd>The background node color when this is unchecked (if not set, background is set as default).</dd>
+            </dl>
+        </dd>
+        <dt>getValue()</dt>
+        <dd>Get the 'checked' state of the checkbox control (true or false).</dd>
+        <dt>setValue(value)</dt>
+        <dd>Set the 'checked' state of the checkbox control (true or false).</dd>
+        <dt>setDisabled(value)</dt>
+        <dd>Set the 'disabled' state of the checkbox control (true or false).</dd>
+        <dt>setTooltip(text)</dt>
+        <dd>Text to be displayed on mouseover.</dd>
+    </dl>
+
+    <h2>Switching CSS variables</h2>
+    <p>
+        innovaphone.ui1.CssVariables is a library that can be used to switch between different sets of CSS variables.
+        For example this can be used to switch between different color schemes.
+    </p>
+    <dl>
+        <dt>innovaphone.ui1.CssVariables(sets, current, element)</dt>
+        <dd>Constructor</dd>
+        <dd>
+            <dl>
+                <dt>sets</dt>
+                <dd>An object containing all sets and the individual CSS variables with their name and value.</dd>
+                <dt>current</dt>
+                <dd>The id of the current set.</dd>
+                <dt>element (optional)</dt>
+                <dd>The DOM node on which the variables should be set. Defaults to document.body.</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+var schemeDefinitions = {
+    dark: {
+        "--background": "black",
+        "--foreground": "white"
+    },
+    light: {
+        "--background": "white",
+        "--foreground": "black"
+    }
+};
+
+var schemes = new innovaphone.ui1.CssVariables(schemeDefinitions, "dark");
+</pre>
+        </dd>
+        <dt>current</dt>
+        <dd>Property containing the id of the current set.</dd>
+        <dt>activate(id)</dt>
+        <dd>Switches the CSS variables to the values defined in the given set.</dd>
+        <dd>
+            <dl>
+                <dt>id</dt>
+                <dd>The id of the set.</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+schemes.activate("light");
+</pre>
+        </dd>
+        <dt>toggle()</dt>
+        <dd>Toggles the current set.</dd>
+    </dl>
+
+</body>
+</html>

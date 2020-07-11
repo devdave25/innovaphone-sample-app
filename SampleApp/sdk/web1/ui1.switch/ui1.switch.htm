@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+
+
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="../ui1.lib/innovaphone.ui1.lib.js" type="text/javascript"></script>
+    <script src="innovaphone.ui1.switch.js" type="text/javascript"></script>
+    
+    <script type="text/javascript">
+        function Try() {
+            var out = document.getElementById('out');
+            out.innerText = "";
+
+            eval(document.getElementById('code').value);
+        }
+    </script>
+	<style>
+	dt{font-weight: bold;}
+	p{font-weight: bold; font-size: 16px;}
+	</style>
+</head>
+
+<body style="padding: 20px; font-size: 14px;">
+    <h1>Switch</h1>
+    <button onclick="Try()">Try</button>
+    <div style="position:relative; height:420px; padding: 10px;">
+        <textarea id="code" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 400px; border: 1px solid grey; font-family: Lucida Console">
+
+            onSwitchCLick = function (e) { 
+				var state = e.currentTarget.state;
+				alert("Toggle state is: " + state) 
+				}
+				
+            var switchEl = new innovaphone.ui1.Switch("margin: 30px");
+			switchEl.addEvent("click", onSwitchCLick);
+
+            out.appendChild(switchEl.container);
+        </textarea>
+        <div id="out" style="position:absolute; left:610px; top:0px; width:600px; height:400px; border:1px solid grey">
+
+        </div>
+    </div>
+    <h2>innovaphone.ui.Switch(style, height, width, value, cl, foreground, backgroundOff, backgroundOn)</h2>
+    <p>
+        Creates a Switch-Element which toggles two states.
+    </p>
+	<br />
+    <p>
+        Arguments:
+    </p>
+    <dl>
+        <dt>style (optional)</dt>
+        <dd>
+            The style attribute of the node (e.g. "margin: 10px;").
+        </dd>
+        <dt>height (optional)</dt>
+        <dd>
+            The style attribute "height" of the node, to define the height of the element (default: 20px).
+        </dd>
+        <dt>width (optional)</dt>
+        <dd>
+            The style attribute "width" of the node, to define the width of the element (default: 30px).
+        </dd>
+		 <dt>value (optional)</dt>
+        <dd>
+            Initial state of the switch (true or false), it's false by default.
+        </dd>
+        <dt>cl (optional)</dt>
+        <dd>
+           The CSS class of the node (e.g. "switch").
+        </dd>
+        <dt>foreground (optional)</dt>
+        <dd>
+            The slider color (default: "white").
+        </dd>
+		<dt>backgroundOff (optional)</dt>
+        <dd>
+			The background node color for the "off"-state of the switch-element (default: "dimgrey").
+        </dd>
+		<dt>backgroundOn (optional)</dt>
+        <dd>
+			The background node color for the "on"-state of the switch-element (default: "darkgreen").
+        </dd>
+    </dl>		
+		
+    <p>
+        Public functions:
+    </p>
+    <dl>
+	    <dt>getValue()</dt>
+        <dd>Get the state of the switch element (true or false, means "on" or "off").</dd>
+        <dt>setValue(value)</dt>
+        <dd>Set the state of the switch element (true or false).</dd>
+        <dt>setDisabled(value)</dt>
+        <dd>Set the switch to 'disabled' (true or false).</dd>
+        <dt>setTooltip(text)</dt>
+        <dd>Set a text to be displayed on mouseover.</dd>
+
+    </dl>
+</body>
+</html>

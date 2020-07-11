@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Appwebsocket client</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Appwebsocket client</h1>
+    <p>
+        The appwebsocket client is used to establish a websocket connection to an app with the appwebsocket authentication protocol.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/appwebsocket_client.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IAppWebsocketClient">IAppWebsocketClient</a><br>
+                <a href="#UAppWebsocketClient">UAppWebsocketClient</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleAppWebsocketClient">AppWebsocketClient usage</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+    <h3>Logging</h3>
+	To enable logging for IAppWebsocketClient, the flag LOG_WEBSOCKET_CLIENT must be set in the managers diagnostic settings.
+	
+    <h1>Classes</h1>
+    <a name="IAppWebsocketClient"><h2>IAppWebsocketClient</h2></a>
+    <pre><code class="language-cpp">class IAppWebsocketClient {
+public:
+    <a href="#Create" style="text-decoration:none;">static IAppWebsocketClient * Create(class IIoMux * const iomux,
+                                        class UAppWebsocketClient * const user,
+                                        class ISocketProvider * const tcpSocketProvider,
+                                        class ISocketProvider * const tlsSocketProvider,
+                                        class IDns * const dns,
+                                        class IInstanceLog * const log);</a>
+
+    <a href="#Connect1" style="text-decoration:none;">void Connect(const char * websocketUri, const char * password, const char * app, const char * domain, const char * sip, const char * guid, const char * dn);</a>
+    <a href="#Connect2" style="text-decoration:none;">void Connect(const char * websocketUri, const char * app, class IAppWebsocketAuthenticator * authenticator);</a>
+    <a href="#MessageComplete" style="text-decoration:none;">void MessageComplete();</a>
+    <a href="#MessageSend" style="text-decoration:none;">void MessageSend(class json_io & msg, char * buffer);</a>
+    <a href="#MessageSendText" style="text-decoration:none;">void MessageSendText(const char * buffer);</a>
+    <a href="#Close" style="text-decoration:none;">void Close();</a>
+};</code></pre>
+    
+    <h3>Public functions</h3>
+    <a name="Create"></a>
+    <div class="fnhead">IAppWebsocketClient::Create (static)</div>
+    <dl>
+        <dd>
+            This function creates a new instance of IAppWebsocketClient.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">class IIoMux * const <b>iomux </b></td><td>A pointer to the <a href="../os/iomux.htm#IIoMux">IIoMux</a> class.</td></tr>
+            <tr><td class="param">class UAppWebsocketClient * const <b>user </b></td><td>A pointer to the <a href="#UAppWebsocketClient">UAppWebsocketClient</a> class which will receive the callbacks.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tcpSocketProvider </b></td><td>A pointer to the <a href="socket.htm#ISocketProvider">ISocketProvider</a> class for TCP sockets.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tlsSocketProvider </b></td><td>A pointer to the <a href="socket.htm#ISocketProvider">ISocketProvider</a> class for TLS sockets.</td></tr>
+            <tr><td class="param">class IDns * const <b>dns </b></td><td>A pointer to the <a href="dns.htm#IDns">IDns</a> class. Can be a nullptr.</td></tr>
+            <tr><td class="param">IInstanceLog * <b>log </b></td><td>An <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> pointer to the logging interface.</td></tr>
+            </table>
+        </dd>
+    </dl>
+    
+    <a name="Connect1"></a>
+    <div class="fnhead">Connect with string parameters</div>
+    <dl>
+        <dd>
+            This function connects to the given endpoint.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">const char *<b>websocketUri </b></td><td>The websocket URI, e.g. wss://mydomain.com/websocket/uri</td></tr>
+            <tr><td class="param">const char *<b>password </b></td><td></td></tr>
+            <tr><td class="param">const char *<b>app </b></td><td></td></tr>
+            <tr><td class="param">const char *<b>domain </b></td><td></td></tr>
+            <tr><td class="param">const char *<b>sip </b></td><td></td></tr>
+            <tr><td class="param">const char *<b>guid </b></td><td></td></tr>
+            <tr><td class="param">const char *<b>dn </b></td><td></td></tr>            
+            </table>
+        </dd>
+    </dl>
+    
+    <a name="Connect2"></a>
+    <div class="fnhead">Connect with IAppWebsocketAuthenticator</div>
+    <dl>
+        <dd>
+            This function connects to the given endpoint.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">const char *<b>websocketUri </b></td><td>The websocket URI, e.g. wss://mydomain.com/websocket/uri</td></tr>
+            <tr><td class="param">const char *<b>app </b></td><td></td></tr>
+            <tr><td class="param">class IAppWebsocketAuthenticator * const <b>authenticator </b></td><td>A pointer to the <a href="appwebsocket_authenticator.htm#IAppWebsocketAuthenticator">IAppWebsocketAuthenticator</a> class.</td></tr>
+            </table>
+        </dd>
+    </dl>
+    
+    <a name="MessageComplete"></a>
+    <div class="fnhead">MessageComplete</div>
+    <dl>
+        <dd>
+            Call this function to receive the next message.
+        </dd>
+    </dl>
+    
+    <a name="MessageSend"></a>
+    <div class="fnhead">MessageSend</div>
+    <dl>
+        <dd>
+            This function sends a JSON message.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">class json_io &<b>msg </b></td><td>A <a href="../ilib/json.htm#json_io">json_io</a> class which contains the message JSON.</td></tr>
+            <tr><td class="param">char *<b>buffer </b></td><td>A buffer which will be used to encode the message into. Must be big enough to avoid buffer overflows!</td></tr>
+            </table>
+        </dd>
+    </dl>
+    
+    <a name="MessageSendText"></a>
+    <div class="fnhead">MessageSendText</div>
+    <dl>
+        <dd>
+            This function sends a text message.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+            <tr><td class="param">const char *<b>buffer </b></td><td>The buffer which will be sent.</td></tr>
+            </table>
+        </dd>
+    </dl>
+    
+    <a name="Close"></a>
+    <div class="fnhead">Close</div>
+    <dl>
+        <dd>
+            Closes the appwebsocket client connection.
+        </dd>
+    </dl>
+
+    <a name="IAppWebsocketClient"><h2>UAppWebsocketClient</h2></a>
+    
+    <pre><code class="language-cpp">class UAppWebsocketClient {
+public:
+    <a href="#AppWebsocketClientConnectComplete" style="text-decoration:none;">virtual void AppWebsocketClientConnectComplete(class IAppWebsocketClient * appWebsocketClient) = 0;</a>
+    <a href="#AppWebsocketClientMessage" style="text-decoration:none;">virtual void AppWebsocketClientMessage(class IAppWebsocketClient * appWebsocketClient, class json_io & msg, word base, const char * mt, const char * src) = 0;</a>
+    <a href="#AppWebsocketClientSendResult" style="text-decoration:none;">virtual void AppWebsocketClientSendResult(class IAppWebsocketClient * appWebsocketClient) = 0;</a>
+    <a href="#AppWebsocketClientClosed" style="text-decoration:none;">virtual void AppWebsocketClientClosed(class IAppWebsocketClient * appWebsocketClient) = 0;</a>
+};</code></pre>
+
+    <h3>Overview</h3>
+    This is the user for an IAppWebsocketClient. The parent class needs to implement the functions below.
+    
+    <h3>Public functions</h3>
+    <a name="AppWebsocketClientConnectComplete"></a>
+    <div class="fnhead">AppWebsocketClientConnectComplete</div>
+    <dd>
+        Will be called from the IAppWebsocketClient instance after a successfull connect.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketClient * <b>appWebsocketClient</b></td><td>The calling IAppWebsocketClient instance.</td></tr>
+        </table>
+    </dd>
+    
+    <a name="AppWebsocketClientMessage"></a>
+    <div class="fnhead">AppWebsocketClientMessage</div>
+    <dd>
+        Will be called from the IAppWebsocketClient instance when a new message is received.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketClient * <b>appWebsocketClient</b></td><td>The calling IAppWebsocketClient instance.</td></tr>
+            <tr><td class="param">class json_io &<b>msg</b></td><td>The <a href="../ilib/json.htm#json_io">json_io</a> class which contains the message JSON.</td></tr>
+            <tr><td class="param">word <b>base</b></td><td>The JSON base.</td></tr>
+            <tr><td class="param">const char * <b>mt</b></td><td>The message type string.</td></tr>
+            <tr><td class="param">const char * <b>src</b></td><td>The message source string.</td></tr>
+        </table>
+    </dd>
+    
+    <a name="AppWebsocketClientSendResult"></a>
+    <div class="fnhead">AppWebsocketClientSendResult</div>
+    <dd>
+        Will be called from the IAppWebsocketClient instance if a message has been sent.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketClient * <b>appWebsocketClient</b></td><td>The calling IAppWebsocketClient instance.</td></tr>
+        </table>
+    </dd>
+    
+    <a name="AppWebsocketClientClosed"></a>
+    <div class="fnhead">AppWebsocketClientClosed</div>
+    <dd>
+        Will be called from the IAppWebsocketClient instance if the connection has been closed.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAppWebsocketClient * <b>appWebsocketClient</b></td><td>The calling IAppWebsocketClient instance.</td></tr>
+        </table>
+    </dd>
+    
+    <h1> Code Example </h1>
+<a name="ExampleAppWebsocketClient"></a>
+<pre class="sample"><code class="language-cpp">class Test : public UAppWebsocketClient {
+    class IAppWebsocketClient * awsClient;
+    void AppWebsocketClientConnectComplete(class IAppWebsocketClient * appWebsocketClient) override;
+    void AppWebsocketClientMessage(class IAppWebsocketClient * appWebsocketClient, class json_io & msg, word base, const char * mt, const char * src) override;
+    void AppWebsocketClientSendResult(class IAppWebsocketClient * appWebsocketClient) override;
+    void AppWebsocketClientClosed(class IAppWebsocketClient * appWebsocketClient) override;
+    
+public:
+    Test(class IIoMux * const iomux,
+          class ISocketProvider * const tcpSocketProvider,
+          class ISocketProvider * const tlsSocketProvider,
+          class IDns * const dns,
+          class IInstanceLog * const log);
+};
+    
+Test::Test(class IIoMux * const iomux,
+          class ISocketProvider * const tcpSocketProvider,
+          class ISocketProvider * const tlsSocketProvider,
+          class IDns * const dns,
+          class IInstanceLog * const log)
+{
+    this->awsClient = IAppWebsocketClient::Create(iomux, this, tcpSocketProvider, tlsSocketProvider, dns, log);
+    this->awsClient->Connect("wss://mydomain.com/websocket/uri", "myapp", "mydomain.com", "sip", "...", "DN");
+}
+
+void Test::AppWebsocketClientConnectComplete(class IAppWebsocketClient * appWebsocketClient) 
+{
+    char buffer[1024];
+    class json_io json(buffer);
+    word base = json.add_object(JSON_ID_ROOT, nullptr);
+    json.add_string(base, "mt", "SendHello");
+    this->awsClient->MessageSend(json, buffer);
+    this->awsClient->MessageComplete();
+}
+
+void Test::AppWebsocketClientMessage(class IAppWebsocketClient * appWebsocketClient, class json_io & msg, word base, const char * mt, const char * src) 
+{
+    debug->printf("Test::AppWebsocketClientMessage received mt:%s", mt);
+    this->awsClient->Close();
+}
+
+void Test::AppWebsocketClientSendResult(class IAppWebsocketClient * appWebsocketClient) 
+{
+    debug->printf("Test::AppWebsocketClientSendResult message sent");
+}
+
+void Test::AppWebsocketClientClosed(class IAppWebsocketClient * appWebsocketClient) 
+{
+    debug->printf("Test::AppWebsocketClientClosed");
+    delete this->awsClient;
+    this->awsClient = nullptr;
+    // do other cleanup, e.g. call TryClose()
+}
+
+    </code>
+  </pre>
+</body>
+</html>

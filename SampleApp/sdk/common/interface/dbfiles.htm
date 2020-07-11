@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>DbFiles</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>DbFiles implementation</h1>
+    <p>
+        Dbfiles is a library, which provides the service to store files in the database.
+        It uses two database tables, files and files_data. The table files is used to store all
+        the information about the files except the content of the files.
+        The files_data table stores the content of the files as variable length bytea.
+        There are two operation modes, dbfiles can do management of folders or management
+        of folders can be done by the App. This interface makes use of tasks.h.
+        This means all requests start tasks and the UTask callbacks are used to indicate completion.
+    </p>
+    <p>
+        To create an IDbFiles instance, at first an instance of IDbFilesProvider must be created. This is done by calling CreateDbFilesProvider.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/dbfiles.h<br><br></td></tr>
+        <tr>
+            <td><b>Public functions</b></td>
+            <td>
+                <a href="#CreateDbFilesProvider">CreateDbFilesProvider</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IDbFilesProvider">IDbFilesProvider</a><br>
+                <a href="#IDbFiles">IDbFiles</a><br>
+                <a href="#IDbFilesStart">IDbFilesStart</a><br>
+                <a href="#IDbFilesPut">IDbFilesPut</a><br>
+                <a href="#IDbFilesGet">IDbFilesGet</a><br>
+                <a href="#IDbFilesDel">IDbFilesDel</a><br>
+                <a href="#IDbFilesMove">IDbFilesMove</a><br>
+                <a href="#IDbFilesList">IDbFilesList</a><br>
+                <a href="#IDbFilesPathInfo">IDbFilesPathInfo</a><br>
+
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#DBFILES_ROOT">DBFILES_ROOT</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#Example">Example</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h3>Logging</h3>
+    To enable logging, the flag LOG_DBFILES must be set in the managers diagnostic settings.
+
+    <!--- Block with the functions -->
+    <h1>Functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="C++">extern "C" IDbFilesProvider * CreateDbFilesProvider();
+</code></pre>
+    <h3>Overview</h3>
+    This function will create an IDbFilesProvider object which can be used to create IDbFiles instances.
+    <br><br>
+    <a name="CreateDbFilesProvider"></a>
+    <div class="fnhead" style="margin-top:5px">CreateDbFilesProvider<br /></div>
+    <dl>
+        <dd>
+            <h4>Return value</h4>
+            The IDbFilesProvider instance. This instance can be freed as soon as it is no longer used by calling the C++ delete operator.
+        </dd>
+    </dl>
+
+    <h1>Classes</h1>
+    <h2 id="IDbFilesProvider">IDbFilesProvider</h2>
+    <pre><code class="language-cpp">class IDbFilesProvider {
+public:
+    <a href="#CreateDbFiles" style="text-decoration:none;">class IDbFiles * CreateDbFiles(class IIoMux * iomux, class IInstanceLog * const log)</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="CreateDbFiles">CreateDbFiles</div>
+    <dl>
+        <dd>
+            This function creates a new IDbFiles object which can be used to create tasks for writing, reading, ... of files.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The <a href="../os/iomux.htm#IIoMux">IIoMux</a> instance.</td></tr>
+                <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h2 id="IDbFiles">IDbFiles</h2>
+    <pre><code class="language-cpp">class IDbFiles {
+public:
+    <a href="#Start" style="text-decoration:none;">class IDbFilesStart * Start(class UTask * user, class IDatabase * database, const char * folder);</a>
+    <a href="#Put" style="text-decoration:none;">class IDbFilesPut * Put(class UTask * user, const char * name, ulong64 folder, bool is_folder = false);</a>
+    <a href="#Get" style="text-decoration:none;">class IDbFilesGet * Get(class UTask * user, ulong64 id, unsigned offset = 0, bool progress = false);</a>
+    <a href="#Del" style="text-decoration:none;">class IDbFilesDel * Del(class UTask * user, ulong64 id);</a>
+    <a href="#Move" style="text-decoration:none;">class IDbFilesMove * Move(class UTask * user, ulong64 id, const char * name, ulong64 folder);</a>
+    <a href="#List" style="text-decoration:none;">class IDbFilesList * List(class UTask * user, ulong64 folder, ulong64 limit);</a>
+    <a href="#PathInfo" style="text-decoration:none;">class IDbFilesPathInfo * PathInfo(class UTask * user, const char * path);</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="Start">Start</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesStart instance to start the database initialization for dbfiles. Must be called when the database initialization is complete.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">class IDatabase * <b>database </b></td><td>The <a href="database.htm#IDatabase">IDatabase</a> instance of the database connection.</td></tr>
+                <tr>
+                    <td class="param">const char * <b>folder </b></td>
+                    <td>
+                        A foreign key definition if the App handles folder management itself
+                        (e.g. "BIGINT REFERENCES messages(id) ON DELETE CASCADE"). A value of null indicates that dbfiles
+                        should do folder management.<br />
+                        It is important to use the <b>ON DELETE CASCADE</b> functionality of the foreign key, otherwise
+                        the files/folders can't be deleted correctly!
+                    </td>
+                </tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesStart">IDbFilesStart</a>.
+            <h4>Remarks</h4>
+            If dbfiles does the folder management, the root folder alway uses the id 1 (<a href="#DBFILES_ROOT">DBFILES_ROOT</a>).
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Put">Put</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesPut instance to put a new file into the database.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">const char * <b>name </b></td><td>Name of the file. If dbfiles does folder management the name, folder combination must be unique, otherwise there are no constraints for the file name.</td></tr>
+                <tr><td class="param">ulong64 <b>folder </b></td><td>Reference in which folder this file is to be put.</td></tr>
+                <tr><td class="param">bool <b>is_folder </b></td><td>Only for folder management. If true a folder is put, not a file.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesPut">IDbFilesPut</a>.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Get">Get</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesGet instance to get a file from the database.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">ulong64 <b>id </b></td><td>id of the file to get (can be retrieved with IDbFilesList or IDbFilesPathInfo).</td></tr>
+                <tr><td class="param">unsigned int <b>offset </b></td><td>Offset inside the file at which to start reading.</td></tr>
+                <tr><td class="param">bool <b>progress </b></td><td>The flag progress is used to indicate that TaskProgress shall be called in any case when the data is available, even if this is the last block of data. In this case TaskComplete is called after the next Read() call, when the file is closed..</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesGet">IDbFilesGet</a>.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Del">Del</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesDel instance to get a file from the database.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">ulong64 <b>id </b></td><td>id of the file to delete (can be retrieved with IDbFilesList or IDbFilesPathInfo).</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesDel">IDbFilesDel</a>.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Move">Move</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesMove instance to move a file or folder.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">ulong64 <b>id </b></td><td>id of the file or folder to move (can be retrieved with IDbFilesList or IDbFilesPathInfo).</td></tr>
+                <tr><td class="param">const char * <b>name </b></td><td>The new name of the file or folder.</td></tr>
+                <tr><td class="param">ulong64 <b>newFolder </b></td><td>id of the new folder to move to (can be retrieved with IDbFilesList or IDbFilesPathInfo).</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesMove">IDbFilesMove</a>.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="List">List</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesList instance to list files and folders inside a folder.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">ulong64 <b>folder </b></td><td>id of the folder to list (can be retrieved IDbFilesPathInfo).</td></tr>
+                <tr><td class="param">ulong64 <b>limit </b></td><td>Number of entries to get. If a limit is set (limit!=0), all the files of the folder are read into memory.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesList">IDbFilesList</a>.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="PathInfo">PathInfo</div>
+    <dl>
+        <dd>
+            Creates an IDbFilesPathInfo instance to get information about a file or folder.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">class UTask * <b>user </b></td><td><a href="task.htm#UTask">UTask</a> user for the callbacks for task completion.</td></tr>
+                <tr><td class="param">const char * <b>path </b></td><td>File path to be tested. Should not start with '/'.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            An instance of class <a href="#IDbFilesPathInfo">IDbFilesPathInfo</a>.
+        </dd>
+    </dl>
+
+    <h2 id="IDbFilesStart">IDbFilesStart</h2>
+    Starts the database initialization for dbfiles. Must be called when the database initialization is complete. The ITask Start() method is implicitly called!
+    <pre><code class="language-cpp">class IDbFilesStart {
+public:
+};</code></pre>
+
+    <h2 id="IDbFilesGet">IDbFilesGet</h2>
+    Gets a file from the database. The ITask Start() method is implicitly called!<br />
+    After TaskProgress (or TaskFinished) <a href="#IDbFilesGetGet">Get</a> can be called to get the read data.<br />
+    With <a href="#IDbFilesGetRead">Read</a> the next data can be requested, which will be indicated with TaskProgress again. If no more data is available
+    TaskComplete is called.<br />
+    TaskFailed is called on errors.<br /><br />
+    <pre><code class="language-cpp">class IDbFilesGet {
+public:
+    <a href="#IDbFilesGetGet" style="text-decoration:none;">void Get(const byte * & data, unsigned & length);</a>
+    <a href="#IDbFilesGetRead" style="text-decoration:none;">void Read(bool last=false);</a>
+    <a href="#IDbFilesGetStop" style="text-decoration:none;">void Stop();</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IDbFilesGetGet">Get</div>
+    <dl>
+        <dd>
+            Get the read data. The data pointer is set to a pointer allocated by dbfiles and
+            length is set to the length of the data. Do not free data, as data is handled by IDbFilesGet!
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const byte * & <b>data </b></td><td>Will be filled with available data.</td></tr>
+                <tr><td class="param">unsigned & <b>length </b></td><td>Will be set to the length of the available data.</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesGetRead">Read</div>
+    <dl>
+        <dd>
+            Initiate next read.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">bool <b>last </b></td><td>last is used to indicate that this is the last data to be read even if there is more data available.</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesGetStop">Stop</div>
+    <dl>
+        <dd>
+            Stops the current operations which will trigger an asynchronous TaskComplete/TaskFailed.
+        </dd>
+    </dl>
+
+    <h2 id="IDbFilesPut">IDbFilesPut</h2>
+    Puts a new file into the database. The ITask Start() method is implicitly called!<br />
+    After the TaskComplete or TaskProgress callbacks, the function call <a href="#IDbFilesGetGet">Get</a> can be used to read the id of the new file.<br />
+    After TaskProgress the function <a href="#IDbFilesPutWrite">Write</a> can be called to write data to the file. This creates a new row in the files_data table.
+    TaskFailed is called on errors.<br /><br />
+    <pre><code class="language-cpp">class IDbFilesPut {
+public:
+    <a href="#IDbFilesPutGet" style="text-decoration:none;">ulong64 Get();</a>
+    <a href="#IDbFilesPutWrite" style="text-decoration:none;">void Write(const byte * data, unsigned length, bool last);</a>
+    <a href="#IDbFilesPutGetName" style="text-decoration:none;">const char * GetName();</a>
+    <a href="#IDbFilesPutStop" style="text-decoration:none;">void Stop();</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IDbFilesPutGet">Get</div>
+    <dl>
+        <dd>
+            <h4>Return value</h4>
+            The id of the file.
+            <h4>Remarks</h4>
+            Can be first called after TaskProgress/TaskComplete.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesPutWrite">Write</div>
+    <dl>
+        <dd>
+            Can be called after TaskProgress to write data to the file. This creates a new row in the files_data table.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const byte * <b>data </b></td><td>The data to write.</td></tr>
+                <tr><td class="param">unsigned <b>length </b></td><td>The length of the data to write.</td></tr>
+                <tr><td class="param">bool <b>last </b></td><td>last is used to indicate that this is the last data to write, so TaskComplete is called afterwards.</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesPutStop">Stop</div>
+    <dl>
+        <dd>
+            Stops the current operation which will trigger an asynchronous TaskComplete/TaskFailed.
+        </dd>
+    </dl>
+
+    <h2 id="idbfilesdel">IDbFilesDel</h2>
+    Deletes a file from the database. The ITask Start() method is implicitly called!<br />
+    TaskFailed is called on errors.<br /><br />
+    <pre><code class="language-cpp">class IDbFilesDel {
+public:
+};</code></pre>
+
+    <h2 id="IDbFilesMove">IDbFilesMove</h2>
+    Moves a file inside the database. The ITask Start() method is implicitly called!<br />
+    TaskFailed is called on errors.<br /><br />
+    <pre><code class="language-cpp">class IDbFilesMove {
+public:
+};</code></pre>
+
+    <h2 id="IDbFilesList">IDbFilesList</h2>
+    Gets the list of files assigned to a given folder. The ITask Start() method is implicitly called!<br /><br />
+    If a limit is set, TaskComplete indicates that the list is availabe. The entries in the list can be read with multiple calls to <a href="#IDbFilesListGet">Get</a> until true is returned.<br /><br />
+    If no limit is set the entries are read one by one. TaskProgress indicates that an entry is available, which can be read with <a href="#IDbFilesListGet">Get</a>.<br />
+    With <a href="#IDbFilesListNext">Next</a> the next entry can be requested. If there are no more entries available TaskComplete is called.<br /><br />
+    <pre><code class="language-cpp">class IDbFilesList {
+public:
+    <a href="#IDbFilesListGet" style="text-decoration:none;">bool Get(ulong64 & id, const char * & name, unsigned & length, bool & is_folder, ulong64 * created = 0, ulong64 * modified = 0);</a>
+    <a href="#IDbFilesListNext" style="text-decoration:none;">void Next();</a>
+    <a href="#IDbFilesListStop" style="text-decoration:none;">void Stop();</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IDbFilesListGet">Get</div>
+    <dl>
+        <dd>
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">ulong64 & <b>id </b></td><td>The id of the file or folder.</td></tr>
+                <tr><td class="param">const char * & <b>name </b></td><td></td></tr>
+                <tr><td class="param">unsigned & <b>length </b></td><td>The file size.</td></tr>
+                <tr><td class="param">bool & <b>is_folder </b></td><td>true if it's a folder.</td></tr>
+                <tr><td class="param">ulong64 * <b>created </b></td><td>Creation time.</td></tr>
+                <tr><td class="param">ulong64 * <b>modified </b></td><td>Last modification time.</td></tr>
+            </table>
+            <h4>Return value</h4>
+            true indicates that this was the last file in the list.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesListNext">Next</div>
+    <dl>
+        <dd>
+            Starts reading the next item in the list.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesListStop">Stop</div>
+    <dl>
+        <dd>
+            Stops the current operation which will trigger an asynchronous TaskComplete/TaskFailed.
+        </dd>
+    </dl>
+
+    <h2 id="IDbFilesPathInfo">IDbFilesPathInfo</h2>
+    Gets information of a file or folder.
+    <pre><code class="language-cpp">class IDbFilesList {
+public:
+    <a href="#IDbFilesPathInfoGet" style="text-decoration:none;">void Get(ulong64 & id, const char * & name, unsigned & length, bool & is_folder, ulong64 * created = 0, ulong64 * modified = 0);</a>
+    <a href="#IDbFilesPathInfoGetFailed" style="text-decoration:none;">void GetFailed(ulong64 & id, bool & is_folder, const char * & path);</a>
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="IDbFilesPathInfoGet">Get</div>
+    <dl>
+        <dd>
+            Function which can be called from TaskComplete, to get the result.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">ulong64 & <b>id </b></td><td>The id of the file or folder.</td></tr>
+                <tr><td class="param">const char * & <b>name </b></td><td></td></tr>
+                <tr><td class="param">unsigned & <b>length </b></td><td>The file size.</td></tr>
+                <tr><td class="param">bool & <b>is_folder </b></td><td>true if it's a folder.</td></tr>
+                <tr><td class="param">ulong64 * <b>created </b></td><td>Creation time.</td></tr>
+                <tr><td class="param">ulong64 * <b>modified </b></td><td>Last modification time.</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IDbFilesPathInfoGetFailed">GetFailed</div>
+    <dl>
+        <dd>
+            Function which can be called from TaskFailed, to get the result.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">ulong64 & <b>id </b></td><td>The id of the last part of the path, which was found.</td></tr>
+                <tr><td class="param">bool & <b>is_folder </b></td><td>true if it's a folder.</td></tr>
+                <tr><td class="param">const char * & <b>path </b></td><td>The path as it was found.</td></tr>
+            </table>
+        </dd>
+    </dl>
+</body>
+</html>

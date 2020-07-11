@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone App database tutorial</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+    function toggleSpoiler(id) {
+        var e = document.getElementById(id);
+        if(e.style.display == "none") e.style.display = "";
+        else e.style.display = "none";
+    }
+    </script>
+    
+    <h1>Tutorial: database</h1>
+    <p>
+        The scope of this tutorial is to learn, how to add new tables, prepared statements etc. into your App.<br>
+        The tutorial is based on a newly created innovaphone App with the Visual Studio plugin.<br>
+        <br>
+        We will also make use of the javascript innovaphone.ui1.Scrolling object and the UTaskTemplate of the task classes.
+    </p>
+        
+    <h2>Task</h2>
+
+    <p>
+        <ul>
+            <li>Create a history table where every change of the counter is tracked with a timestamp and the sip of the logged in user.</li>
+            <li>Use a transaction, as multiple writing queries are executed which belong to the same logical action.</li>
+            <li>Use prepared statemens for better query performance.</li>
+            <li>The history is to be displayed inside a scrolling area below the counter and queried once after opening the app.</li>
+        </ul>
+    </p>
+    
+    <h2>Step by step</h2>
+    
+    <p>
+        The used file and class names in this example are based on a newly created App with the name <b>NewApp1</b> and the company name <b>innovaphone</b>.<br>
+        Your filenames might be different according to your settings.
+    </p>
+    
+    <h3>Creation of a new table</h3>
+        <p>
+            Header file <b>NewApp1_tasks.h</b>, cpp file <b>NewApp1_tasks.cpp</b> inside the NewApp1 folder.<br>
+        </p>
+        <ul>
+            <li>Tables and columns are always initialized on each start of the App instance, so you can add tables and columns later without issues.</li>
+            <li>Add a new class member class TaskPostgreSQLInitTable initHistory; into the class TaskDatabaseInit. This will be used to create a new table.</li>
+            <li>Initialize this class member after the constructor definition in the cpp file. Use the name <b>history</b> for the table.</li>
+            <li>Add the neccessary columns with a foreign key and index for this key to the users table inside the constructor of the class TaskDatabaseInit.</li>
+            <li>Call the Start function of the initHistory task inside the TaskComplete function of the class TaskDatabaseInit to start the task which creates the table and columns.</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('dbinit');">Code spoiler</button>
+        <div id="dbinit" style="display:none">
+        <h4>class TaskDatabaseInit in NewApp1_tasks.h after these changes</h4>
+        <pre><code class="language-cpp">
+class TaskDatabaseInit : public ITask, public UTask {
+    class TaskPostgreSQLInitTable initUsers;
+    class TaskPostgreSQLInitTable initCounter;
+    class TaskPostgreSQLInitTable initHistory;  // tutorial change
+
+    void TaskComplete(class ITask * const task) override;
+    void TaskFailed(class ITask * const task) override;
+
+public:
+    TaskDatabaseInit(IDatabase * database);
+    virtual ~TaskDatabaseInit();
+
+    void Start(class UTask * user) override;
+};
+        </code></pre>
+        
+        <h4>class TaskDatabaseInit in NewApp1_tasks.cpp after these changes (just changed functions)</h4>
+        <pre><code class="language-cpp">
+TaskDatabaseInit::TaskDatabaseInit(IDatabase * database)
+    : initUsers(database, "users"),
+      initCounter(database, "counter"),
+      initHistory(database, "history")      // tutorial change
+{
+    // users
+    initUsers.AddColumn("id", "BIGSERIAL PRIMARY KEY NOT NULL");
+    initUsers.AddColumn("guid", "UUID UNIQUE");
+    initUsers.AddColumn("sip", "VARCHAR(256) UNIQUE NOT NULL");
+    initUsers.AddColumn("dn", "VARCHAR(256)");
+    initUsers.AddColumn("count", "BIGINT");
+    // counter
+    initCounter.AddColumn("id", "BIGSERIAL PRIMARY KEY NOT NULL");
+    initCounter.AddColumn("name", "VARCHAR(32) UNIQUE NOT NULL");
+    initCounter.AddColumn("value", "BIGINT");
+    // history
+    initHistory.AddColumn("id", "BIGSERIAL PRIMARY KEY NOT NULL");  // tutorial change
+    initHistory.AddColumn("user_id", "BIGINT REFERENCES users(id) ON DELETE CASCADE NOT NULL");    // foreign key definition
+    initHistory.AddColumn("value", "BIGINT");
+    initHistory.AddColumn("timestamp", "BIGINT DEFAULT EXTRACT(EPOCH FROM now()) * 1000");        // we save UTC in milliseconds    
+    initHistory.AddIndex("history_user_id_index", "user_id", false);                            // foreign keys need an own index to be fast
+}
+
+void TaskDatabaseInit::TaskComplete(class ITask * const task)
+{
+    if (task == &initUsers) initCounter.Start(this);
+    else if (task == &initCounter) initHistory.Start(this);     // tutorial change
+    else if (task == &initHistory) Complete();                  // tutorial change
+    else ASSERT(false, "TaskDatabaseInit::TaskComplete");
+}
+        </code></pre>
+    </div>
+    
+    <h3>Creation of prepared statements</h3>
+        <p>
+            Header file <b>NewApp1.h</b>, cpp file <b>NewApp1.cpp</b> inside the NewApp1 folder.
+        </p>
+        <ul>
+            <li>Prepared statements live as long as the database connection lives. So we create two statements to read and write the history inside the class, which setups the database connection: <b>class NewApp1</b>.</li>
+            <li>Add two somehow from outside accessible members of class IPreparedStatement * to your NewApp1 class, <b>stmtHistoryInsert</b> and <b>stmtHistoryRead</b></li>
+            <li>Add an overload of the callback <b>function DatabasePrepareStatementResult</b> to the same class. This function will be called when statements are prepared.</li>
+            <li>Prepare the two statements inside the cpp file void NewApp1::DatabaseInitComplete instead of calling <b>new CountInit</b> (note that you'll receive one callback for each database->PrepareStatement call!).</li>
+            <li>stmtHistoryInsert will use an "INSERT INTO ..." query and stmtHistoryRead a "SELECT ... FROM history" query</li>
+            <li>Add the implementation of void NewApp1::DatabasePrepareStatementResult and assign the two members to the callback statement value. Call currentTask = new CountInit(this); afterwards.</li>
+            <li>Delete the statements in the DatabaseShutdown callback and set the pointers to zero.</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('prepare');">Code spoiler</button>
+        <div id="prepare" style="display:none">
+        <h4>class NewApp1 in NewApp1.h after these changes</h4>
+        <pre><code class="language-cpp">
+class NewApp1 : public AppInstance, public AppUpdates, public UDatabase, public UWebserverPlugin, public JsonApiContext, public ConfigContext, public UBadgeCountSignaling
+{
+    void DatabaseConnectComplete(IDatabase * const database) override;
+    void DatabasePrepareStatementResult(IDatabase * const database, class IPreparedStatement * statement) override;     // tutorial change
+    void DatabaseShutdown(IDatabase * const database, db_error_t reason) override;
+    void DatabaseError(IDatabase * const database, db_error_t error) override;
+
+    void WebserverPluginClose(IWebserverPlugin * plugin, wsp_close_reason_t reason, bool lastUser) override;
+    void WebserverPluginWebsocketListenResult(IWebserverPlugin * plugin, const char * path, const char * registeredPathForRequest, const char * host) override;
+    void WebserverPluginHttpListenResult(IWebserverPlugin * plugin, ws_request_type_t requestType, char * resourceName, const char * registeredPathForRequest, size_t dataSize) override;
+
+    void ServerCertificateUpdate(const byte * cert, size_t certLen) override;
+    void Stop() override;
+
+    void CreateBadgeCountPresenceMonitor(class BadgeCountSignaling * signaling, int call, const char * user, const char * topic) override;
+
+    void TryStop();
+
+    bool stopping;
+    class ITask * currentTask;
+    std::list<class NewApp1Session *> sessionList;
+
+public:
+    NewApp1(IIoMux * const iomux, NewApp1Service * service, AppInstanceArgs * args);
+    ~NewApp1();
+
+    void DatabaseInitComplete();
+    void CountInitComplete();
+    void ConfigInitComplete();
+    void NewApp1SessionClosed(class NewApp1Session * session);
+
+    const char * appPwd() { return args.appPassword; };
+
+    class IIoMux * iomux;
+    class NewApp1Service * service;
+    class IWebserverPlugin * webserverPlugin;
+    class IDatabase * database;
+    long64 count;
+
+    class AppUpdatesFilters countFilters;
+    class AppUpdatesFilters badgeCountFilters;
+
+    ulong64 currentId;
+    class IPreparedStatement * stmtHistoryInsert;       // tutorial change
+    class IPreparedStatement * stmtHistoryRead;         // tutorial change
+};
+        </code></pre>
+        
+        <h4>class NewApp1 in NewApp1.cpp after these changes (just changed functions)</h4>
+        <pre><code class="language-cpp">
+NewApp1::NewApp1(IIoMux * const iomux, class NewApp1Service * service, AppInstanceArgs * args) : AppInstance(service, args), AppUpdates(iomux), ConfigContext(nullptr, this)
+{
+    this->stopping = false;
+    this->iomux = iomux;
+    this->service = service;
+    this->webserverPlugin = service->webserverPluginProvider->CreateWebserverPlugin(iomux, service->localSocketProvider, this, args->webserver, args->webserverPath, this);
+    this->database = service->databaseProvider->CreateDatabase(iomux, this, this);
+    this->database->Connect(args->dbHost, args->dbName, args->dbUser, args->dbPassword);
+    this->logFlags |= LOG_APP;
+    this->logFlags |= LOG_APP_WEBSOCKET;
+    this->logFlags |= LOG_DATABASE;
+    this->currentTask = nullptr;
+    this->currentId = 0;
+    this->count = 0;
+    this->stmtHistoryInsert = nullptr;      // tutorial change
+    this->stmtHistoryRead = nullptr;        // tutorial change
+
+    RegisterJsonApi(this);
+
+    Log("App instance started");
+}
+
+void NewApp1::DatabaseInitComplete()
+{
+    delete currentTask;
+    database->PrepareStatement(this, "INSERT INTO history (user_id,value) VALUES ((SELECT id FROM users WHERE sip=%s),%llu)");      // tutorial change
+    database->PrepareStatement(this, "SELECT u.sip, h.timestamp, h.value FROM history h " \
+        "JOIN users u ON (u.id=h.user_id) " \
+        "ORDER BY h.id DESC " \
+        "LIMIT 10"
+    );
+}
+
+// tutorial change
+void NewApp1::DatabasePrepareStatementResult(IDatabase * const database, class IPreparedStatement * statement)
+{
+    if(!this->stmtHistoryInsert) this->stmtHistoryInsert = statement;
+    else if (!this->stmtHistoryRead) {
+        this->stmtHistoryRead = statement;
+        currentTask = new CountInit(this);
+    }
+}
+
+void NewApp1::DatabaseShutdown(IDatabase * const database, db_error_t reason)
+{
+    // tutorial change
+    delete this->stmtHistoryInsert;
+    delete this->stmtHistoryRead;
+    this->stmtHistoryInsert = nullptr;
+    this->stmtHistoryRead = nullptr;
+    this->database = nullptr;
+    TryStop();
+}
+        </code></pre>
+        </div>
+        
+    <h3>Use of the prepared statements inside the already existing class TaskReadWriteCount</h3>
+        <p>
+            Header file <b>NewApp1_tasks.h</b>, cpp file <b>NewApp1_tasks.cpp</b> inside the NewApp1 folder.
+        </p>
+        <ul>
+            <li>Add overloads for DatabaseBeginTransactionResult and DatabaseEndTransactionResult to the TaskReadWriteCount class.</li>
+            <li>Add a member class IPreparedStatement * stmtHistoryInsert.</li>
+            <li>Add a bool member fetchValue, as we need to modify the state machine.</li>
+            <li>Add class IPreparedStatement * stmtHistoryInsert as parameter to the constructor and set it inside the constructor, as we need the stmtHistoryInsert pointer of the NewApp1 class.</li>
+            <li>Begin a new transaction in the TaskReadWriteCount::Start function.</li>
+            <li>Set fetchValue=true (default false) in the Start function when the existing database->ExecSQL is called to prevent multiple WriteCount calls in the DatabaseExecSQLResult function.</li>
+            <li>Use the prepared statement inside TaskReadWriteCount::WriteCount() with the sip and count members and call EndTransaction afterwards instead of Complete().</li>
+            <li>Do not call Complete in TaskReadWriteCount::DatabaseInsertSQLResult anymore, as EndTransaction is always called instead.</li>
+            <li>Implement DatabaseBeginTransactionResult (empty function) and DatabaseEndTransactionResult. Call Complete() inside DatabaseEndTransactionResult.</li>
+            <li>There is no need to call EndTransaction in the DatabaseError function, as the database implementation itself rollsback any transaction on errors.</li>
+            <li>There are several calls of the TaskReadWriteCount constructor (MonitorCount, IncrementCount, ResetCount and CountInit). Pass the stmtHistoryInsert pointer of the NewApp1 instance here (e.g. session->instance->stmtHistoryInsert</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('readwrite');">Code spoiler</button>
+        <div id="readwrite" style="display:none">
+        <h4>class TaskReadWriteCount in NewApp1_tasks.h after these changes</h4>
+        <pre><code class="language-cpp">
+class TaskReadWriteCount : public ITask, public UDatabase {
+    void DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset) override;
+    void WriteCount();
+    void DatabaseInsertSQLResult(IDatabase * const database, ulong64 id) override;
+    void DatabaseError(IDatabase * const database, db_error_t error) override;
+    void DatabaseBeginTransactionResult(IDatabase * const database) override;   // tutorial change
+    void DatabaseEndTransactionResult(IDatabase * const database) override;     // tutorial change
+
+    class IDatabase * database;
+    class IPreparedStatement * stmtHistoryInsert;                               // tutorial change
+    const char * sip;
+    const char * dn;
+    ulong64 id;
+    long64 count;
+    bool update;
+    bool fetchValue;                                                            // tutorial change
+    
+public:
+    TaskReadWriteCount(IDatabase * database, class IPreparedStatement * stmtHistoryInsert, const char * sip, const char * dn, long64 count, bool update);
+    ~TaskReadWriteCount();
+
+    void Start(class UTask * user) override;
+    ulong64 GetId() { return id; };
+    long64 GetCount() { return count; };
+};
+        </code></pre>        
+        
+        <h4>class TaskReadWriteCount in NewApp1_tasks.cpp after these changes</h4>
+        <pre><code class="language-cpp">
+TaskReadWriteCount::TaskReadWriteCount(IDatabase * database, class IPreparedStatement * stmtHistoryInsert, const char * sip, const char * dn, long64 count, bool update)
+{
+    this->database = database;
+    this->stmtHistoryInsert = stmtHistoryInsert;    // tutorial change
+    this->sip = _strdup(sip);
+    this->dn = _strdup(dn);
+    this->count = count;
+    this->update = update;
+    this->fetchValue = false;                       // tutorial change
+
+    id = 0;
+}
+
+TaskReadWriteCount::~TaskReadWriteCount()
+{
+    if (sip) free((void *)sip);
+    if (dn) free((void *)dn);
+}
+
+void TaskReadWriteCount::Start(class UTask * user)
+{
+    this->user = user;
+    database->BeginTransaction(this);   // tutorial change
+    if (update) {
+        database->InsertSQL(this, "INSERT INTO counter (name, value) VALUES ('user', %llu) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", count);
+    }
+    else if (count < 0) {
+        database->ExecSQL(this, DB_EXEC_FETCH_ALL, "SELECT value FROM counter WHERE name='user'");
+        fetchValue = true;  // tutorial change
+    }
+    else {
+        WriteCount();
+    }
+}
+
+void TaskReadWriteCount::DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset)
+{
+    // tutorial change
+    if (fetchValue) {
+        count = !dataset->Eot() ? dataset->GetULong64Value(dataset->GetColumnID("value")) : 0;
+
+        WriteCount();
+        fetchValue = false;     // tutorial change
+    }
+    delete dataset;
+}
+
+void TaskReadWriteCount::WriteCount()
+{
+    if (sip && dn) {
+        database->InsertSQL(this, "INSERT INTO users (sip, dn, count) VALUES (%s, %s, %llu) ON CONFLICT (sip) DO UPDATE SET dn=EXCLUDED.dn, count=EXCLUDED.count", sip, dn, count);
+        // tutorial change
+        stmtHistoryInsert->SetParam(0, this->sip);      // set the first parameter to the sip
+        stmtHistoryInsert->SetParam(1, this->count);    // the second one to count    
+        database->ExecSQL(this, DB_EXEC_FETCH_ALL, stmtHistoryInsert);  // exec the stmt
+    }
+    database->EndTransaction(this);                     // tutorial change
+}
+
+void TaskReadWriteCount::DatabaseInsertSQLResult(IDatabase * const database, ulong64 id)
+{
+    if (update) {
+        update = false;
+        WriteCount();
+    }
+    else {
+        this->id = id;
+        // tutorial change, do not call Complete() here anymore, as an DatabaseEndTransactionResult will be received instead
+    }
+}
+
+void TaskReadWriteCount::DatabaseError(IDatabase * const database, db_error_t error)
+{
+    Failed();
+}
+
+// tutorial change
+void TaskReadWriteCount::DatabaseBeginTransactionResult(IDatabase * const database)
+{
+
+}
+
+// tutorial change
+void TaskReadWriteCount::DatabaseEndTransactionResult(IDatabase * const database)
+{
+    Complete();
+}
+        </code></pre>        
+    </div>
+    
+    <h3>Create a new class TaskGetHistory to retrieve the history rows</h3>
+        <p>
+            Header file <b>NewApp1_tasks.h</b>, cpp file <b>NewApp1_tasks.cpp</b> inside the NewApp1 folder.
+        </p>
+        <ul>
+            <li>Add overloads for DatabaseExecSQLResult and DatabaseError to the TaskGetHistory class.</li>
+            <li>Add a member class IPreparedStatement * stmtHistoryRead.</li>
+            <li>Add class IPreparedStatement * stmtHistoryRead as parameter to the constructor and set it inside the constructor, as we need the stmtHistoryRead pointer of the NewApp1 class.</li>
+            <li>Implement the Start function and exec the prepared statemnt without parameters.</li>
+            <li>Iterate through the dataset in DatabaseExecSQLResult and call user->TaskProgress for each row.</li>
+            <li>Implement the GetItem function. This will fill the handed json with the dataset data.</li>
+            <li>Call user->TaskComplete afterwards.</li>
+            <li>Call user->TaskFailed inside DatabaseError.</li>
+            
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('gethistory');">Code spoiler</button>
+        <div id="gethistory" style="display:none">
+        <h4>class TaskGetHistory in NewApp1_tasks.h</h4>
+        <pre><code class="language-cpp">
+class TaskGetHistory : public ITask, public UDatabase {
+    void DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset) override;
+    void DatabaseError(IDatabase * const database, db_error_t error) override;
+
+    class IDatabase * database;
+    class IDataSet * dataset;
+    class IPreparedStatement * stmtHistoryRead;
+    
+public:
+    TaskGetHistory(IDatabase * database, class IPreparedStatement * stmtHistoryRead);
+    ~TaskGetHistory();
+
+    void Start(class UTask * user) override;
+    void GetItem(class json_io * json, word base, char *& tmp);
+};
+        </code></pre>       
+        
+        <h4>class TaskGetHistory in NewApp1_tasks.cpp</h4>
+        <pre><code class="language-cpp">
+/*-----------------------------------------------------------------------------------------------*/
+/* TaskGetHistory created for this tutorial                                                      */
+/*-----------------------------------------------------------------------------------------------*/
+TaskGetHistory::TaskGetHistory(IDatabase * database, class IPreparedStatement * stmtHistoryRead)
+{
+    this->database = database;
+    this->dataset = nullptr;
+    this->stmtHistoryRead = stmtHistoryRead;
+}
+
+TaskGetHistory::~TaskGetHistory()
+{
+
+}
+
+void TaskGetHistory::DatabaseExecSQLResult(IDatabase * const database, class IDataSet * dataset)
+{
+    this->dataset = dataset;
+    while (!dataset->Eot()) {
+        user->TaskProgress(this);
+        dataset->Next();
+    }
+    delete dataset;
+    this->dataset = nullptr;
+    user->TaskComplete(this);
+}
+
+void TaskGetHistory::DatabaseError(IDatabase * const database, db_error_t error)
+{
+    user->TaskFailed(this);
+}
+
+void TaskGetHistory::Start(class UTask * user)
+{
+    this->user = user;
+    this->database->ExecSQL(this, DB_EXEC_FETCH_ALL, this->stmtHistoryRead);
+}
+
+void TaskGetHistory::GetItem(class json_io * json, word base, char *& tmp)
+{
+    json->add_string(base, "sip", dataset->GetStringValue(0));
+    json->add_ulong64(base, "ts", dataset->GetULong64Value(1), tmp);
+    json->add_ulong64(base, "count", dataset->GetULong64Value(2), tmp);
+}
+        </code></pre>       
+    </div>
+    
+    <h3>Implement the message type GetHistory in the NewApp1Session class</h3>
+        <p>
+            Header file <b>NewApp1.h</b>, cpp file <b>NewApp1.cpp</b> inside the NewApp1 folder.
+        </p>
+        <ul>
+            <li>Add a class UTaskTemplate member taskGetHistory with the class TaskGetHistory to your NewApp1Session class.</li>
+            <li>Add the task callback function TaskGetHistoryProgress and TaskGetHistoryComplete to the same class.</li>
+            <li>Initialize the taskGetHistory in the constructor definition in the cpp file with these callback functions.</li>
+            <li>Add a strcmp for GetHistory inside the NewApp1Session::AppWebsocketMessage callback and set currentTask to new class TaskGetHistory.</li>
+            <li>Start this task with a reference to the taskGetHistory member.</li>
+            <li>Implement the two callback functions TaskGetHistoryProgress (send out a json message with GetHistoryResult and the data of one row) and TaskGetHistoryFinished</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('gethistorysession');">Code spoiler</button>
+        <div id="gethistorysession" style="display:none">
+        <h4>class NewApp1Session in NewApp1.h after these changes</h4>
+        <pre><code class="language-cpp">
+class NewApp1Session : public AppUpdatesSession {
+    UTaskTemplate<NewApp1Session, class TaskGetHistory> taskGetHistory;
+
+    void AppWebsocketAccept(class UWebsocket * uwebsocket) { instance->webserverPlugin->WebsocketAccept(uwebsocket); };
+    char * AppWebsocketPassword() override { return (char *)instance->appPwd(); };
+    void AppWebsocketMessage(class json_io & msg, word base, const char * mt, const char * src) override;
+    void AppWebsocketAppInfo(const char * app, class json_io & msg, word base) override;
+    bool AppWebsocketConnectComplete(class json_io & msg, word info) override;
+    void AppWebsocketClosed() override;
+
+    void TaskGetHistoryProgress(class TaskGetHistory * task, dword progress = 0);
+    void TaskGetHistoryFinished(class TaskGetHistory * task);
+
+    void ResponseSent() override;
+
+    void TryClose();
+
+    bool closed;
+    bool closing;
+    bool admin;
+    bool adminApp;
+    class BadgeCountSignaling * badgecount;
+
+public:
+    NewApp1Session(class NewApp1 * instance);
+    ~NewApp1Session();
+
+    bool CheckSession();
+
+    class NewApp1 * instance;
+    char * currentSrc;
+    class ITask * currentTask;
+    void Close();
+};
+        </code></pre>
+        
+        <h4>class NewApp1Session in NewApp1.cpp after these changes (just changed functions)</h4>
+        <pre><code class="language-cpp">
+NewApp1Session::NewApp1Session(class NewApp1 * instance) : AppUpdatesSession(instance, instance->webserverPlugin, instance, instance),
+    taskGetHistory(this, &NewApp1Session::TaskGetHistoryFinished, &NewApp1Session::TaskGetHistoryFinished, &NewApp1Session::TaskGetHistoryProgress)     // tutorial change
+{
+    this->instance = instance;
+
+    this->badgecount = nullptr;
+
+    this->currentTask = nullptr;
+    this->currentSrc = nullptr;
+    this->closed = false;
+    this->closing = false;
+
+    this->admin = false;
+    this->adminApp = false;
+}
+
+void NewApp1Session::AppWebsocketMessage(class json_io & msg, word base, const char * mt, const char * src)
+{
+    if (currentSrc) free(currentSrc);
+    currentSrc = src ? _strdup(src) : nullptr;
+    if (!strcmp(mt, "MonitorCount")) {
+        currentTask = new MonitorCount(this, instance->database, sip, dn);
+    }
+    else if (!strcmp(mt, "IncrementCount")) {
+        currentTask = new IncrementCount(this, instance->database, sip, dn);
+    }
+    else if (!strcmp(mt, "ResetCount")) {
+        if (adminApp) currentTask = new ResetCount(this, instance->database, sip, dn);
+        else AppWebsocketClose();
+    }
+    else if (!strcmp(mt, "GetHistory")) {   // tutorial change
+        currentTask = new TaskGetHistory(instance->database, instance->stmtHistoryRead);
+        currentTask->Start(&taskGetHistory);
+    }
+    else if (!strcmp(mt, "PbxInfo")) {
+        badgecount = new BadgeCountSignaling(instance, this);
+        AppWebsocketMessageComplete();
+    }
+    else {
+        AppWebsocketMessageComplete();
+    }
+}
+
+// tutorial change
+void NewApp1Session::TaskGetHistoryProgress(class TaskGetHistory * task, dword progress)
+{
+    if (!closing) {
+        char buffer[1024];
+        char buf[128];
+        char * tmp = buf;
+        class json_io json(buffer);
+        word base = json.add_object(JSON_ID_ROOT, nullptr);
+        json.add_string(base, "mt", "GetHistoryResult");
+        json.add_string(base, "src", this->currentSrc);
+        task->GetItem(&json, base, tmp);
+        this->AppWebsocketMessageSend(json, buffer);
+    }
+}
+
+// tutorial change
+void NewApp1Session::TaskGetHistoryFinished(class TaskGetHistory * task)
+{
+    delete task;
+    this->currentTask = nullptr;
+    AppWebsocketMessageComplete();
+    if (closing) {
+        TryClose();
+    }
+}
+        </code></pre>
+        </div>
+        
+    <h3>Add the innovaphone.ui1.Scrolling class to our project</h3>
+        <p>
+            NewApp1.mak in the root folder, innovaphone-newapp1.htm in NewApp1/apps
+        </p>
+        <ul>
+            <li>Add the web1/ui1.scrolling/ui1.scrolling.mak to the NewApp1.mak in the root folder of your App.</li>
+            <li>Add the javascript source file web/ui1.scrolling/innovaphone.ui1.scrolling.js to the innovaphone-newapp1.htm.</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('scrolling');">Code spoiler</button>
+        <div id="scrolling" style="display:none">
+        <h4>NewApp1.mak after the change</h4>
+        <pre><code class="bash">
+OUT = NewApp1
+
+include sdk/sdk-defs.mak
+
+include sdk/web1/appwebsocket/appwebsocket.mak
+include sdk/web1/fonts/fonts.mak
+include sdk/web1/lib1/lib1.mak
+include sdk/web1/ui1.lib/ui1.lib.mak
+include sdk/web1/ui1.scrolling/ui1.scrolling.mak    # tutorial change
+
+include NewApp1/NewApp1.mak
+
+APP_OBJS += $(OUTDIR)/obj/NewApp1-main.o
+$(OUTDIR)/obj/NewApp1-main.o: NewApp1-main.cpp force
+
+include sdk/sdk.mak
+        </code></pre>
+        
+        <h4>innovaphone-newapp1.htm after the change</h4>
+        <pre><code class="html">
+&lt;!DOCTYPE html&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot; /&gt;
+    &lt;title&gt;Topic&lt;/title&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;web/lib1/innovaphone.lib1.css&quot; type=&quot;text/css&quot; /&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;innovaphone-newapp1.css&quot; type=&quot;text/css&quot; /&gt;
+    &lt;script src=&quot;web/lib1/innovaphone.lib1.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;web/ui1.lib/innovaphone.ui1.lib.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;web/ui1.scrolling/innovaphone.ui1.scrolling.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;web/appwebsocket/innovaphone.appwebsocket.Connection.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;innovaphone-newapp1.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;innovaphone-newapp1texts.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+
+&lt;body onload=&quot;innovaphone.lib1.Start(function (start) { new innovaphone.NewApp1(start, { }); })&quot;&gt;&lt;/body&gt;
+&lt;/html&gt;
+        </code></pre>
+        </div>
+        
+    <h3>Retrieve the history with GetHistory in javascript and add it to the ui1.Scrolling class</h3>
+        <p>
+            innovaphone-newapp1.js inside NewApp1/apps
+        </p>
+        <ul>
+            <li>Add a reference at the top with /// to ../../sdk/web1/ui1.scrolling/innovaphone.ui1.scrolling.js for intellisense</li>
+            <li>Add a new absolute positioned with fixed height innovaphone.ui1.Scrolling object after the counter div.</li>
+            <li>Send mt: "GetHistory" after the mt: "MonitorCount" send to receive the history.</li>
+            <li>Get the GetHistoryResult in the update function and a one div per result to the scrolling object.</li>
+        </ul>
+        
+        <button name="spoiler" style="height:30px; font-size:14px" onclick="toggleSpoiler('js');">Code spoiler</button>
+        <div id="js" style="display:none">
+        <h4>innovaphone-newapp1.js after the change</h4>
+        <pre><code class="javascript">
+/// &lt;reference path=&quot;../../sdk/web1/lib1/innovaphone.lib1.js&quot; /&gt;
+/// &lt;reference path=&quot;../../sdk/web1/appwebsocket/innovaphone.appwebsocket.Connection.js&quot; /&gt;
+/// &lt;reference path=&quot;../../sdk/web1/ui1.lib/innovaphone.ui1.lib.js&quot; /&gt;
+/// &lt;reference path=&quot;../../sdk/web1/ui1.scrolling/innovaphone.ui1.scrolling.js&quot; /&gt;
+
+var innovaphone = innovaphone || {};
+innovaphone.NewApp1 = innovaphone.NewApp1 || function (start, args) {
+    this.createNode("body");
+    var that = this;
+
+    var colorSchemes = {
+        dark: {
+            "--bg": "#191919",
+            "--button": "#303030",
+            "--text-standard": "#f2f5f6",
+        },
+        light: {
+            "--bg": "white",
+            "--button": "#e0e0e0",
+            "--text-standard": "#4a4a49",
+        }
+    };
+    var schemes = new innovaphone.ui1.CssVariables(colorSchemes, start.scheme);
+    start.onschemechanged.attach(function () { schemes.activate(start.scheme) });
+
+    var texts = new innovaphone.lib1.Languages(innovaphone.NewApp1Texts, start.lang);
+
+    var counter = this.add(new innovaphone.ui1.Div("position:absolute; left:0px; width:100%; top:calc(50% - 50px); font-size:100px; text-align:center", "-"));
+    // tutorial change
+    var history = this.add(new innovaphone.ui1.Scrolling("position:absolute; left:0px; width:100%; top:calc(50% + 70px); height:100px"));
+    var app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+    app.checkBuild = true;
+    app.onconnected = app_connected;
+
+    function app_connected(domain, user, dn, appdomain) {
+        var src = new app.Src(update);
+        src.send({ mt: "MonitorCount" });
+        // tutorial change
+        src.send({ mt: "GetHistory" });
+
+        that.add(new innovaphone.ui1.Div(null, null, "button")).addTranslation(texts, "count").addEvent("click", function () {
+            app.sendSrc({ mt: "IncrementCount" }, function (msg) {
+                counter.addHTML("" + msg.count);
+            });
+        });
+
+        function update(msg) {
+            if (msg.mt == "MonitorCountResult" || msg.mt == "UpdateCount") {
+                counter.addHTML("" + msg.count);
+            }
+            else if (msg.mt == "GetHistoryResult") {    // tutorial change
+                var d = new Date(msg.ts);
+                history.add(new innovaphone.ui1.Div("", d.toLocaleDateString(start.lang) + " " + d.toLocaleTimeString(start.lang) + " " + msg.sip + ": " + msg.count.toLocaleString(start.lang)));
+            }
+        }
+    }
+}
+
+innovaphone.NewApp1.prototype = innovaphone.ui1.nodePrototype;
+        </code></pre>
+        </div>
+        
+        <h3>Try it out</h3>
+        <p>
+            If you know compile and run your NewApp1 App, you can open it from myApps. <br>
+            You can play around with the counter, close the App and open it again. <br>
+            Then you should see the last history entries (the history entries are not live updated, just received once on start of the App).
+        </p>
+        
+    <h2>Usefull documentation for this task</h2>
+    <p><a href="../../common/interface/database.htm">Database</a></p>
+    <p><a href="../../common/interface/task.htm">Tasks</a></p>
+    <p><a href="../../web1/ui1.scrolling/ui1.scrolling.htm">innovaphone.ui1.Scrolling</a></p>
+
+</body>
+</html>

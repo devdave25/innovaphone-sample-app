@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Socket implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	
+    <h1>Websocket Client</h1>
+	<p>
+		The IWebsocketClient interface is for working with websocket connections. While websocket is an update to an existing HTTP connection, there is no need to pass an existing
+		HTTP connection to IWebsocketClient. Everything will handled from the interface itself. To establish a connection, the address of the websocket server need to be passed
+		with the leading ws:// prefix. If the connection need to be encrypted, wss:// should be used instead. The server can be passed as TCP (v4 or v6) address or as name, the
+		IWebsocketClient tries to resolve. Note that the IWebsocketClient only handles the client side of the connection. For implement a server-side websocket connection, see
+		<a href="webserver_plugin.htm#IWebsocket">IWebserverPlugin - IWebsocket</a>.
+	</p>
+	<p>
+		To create an IWebsocketClient instance, the static Create() function need to be called. Two existing <a href="socket.htm#ISocketProvider">ISocketProvider</a> as well as
+		an IDns instance must be passed 	to Create(). Those interfaces must not be deleted before releasing the IWebsocketClient instance!
+	</p>
+	
+	<h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/websocket_client.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#IWebsocketClient">IWebsocketClient</a><br>
+                                       <a href="#UWebsocketClient">UWebsocketClient</a><br>
+                                       <br>
+                                   </td></tr>
+        <tr><td><b>Data types</b></td><td>
+                                          <a href="#IWebsocketClient_closereason_t">IWebsocketClient::closereason_t</a><br>
+                                          <a href="#websocket_max_payload_size">WEBSOCKET_MAX_PAYLOAD_SIZE</a><br>
+                                          <br>
+                                      </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                          <a href="#ExampleIWebsocketClient">IWebsocketClient</a><br>
+                                          <br>
+                                      </td></tr>
+    </table>
+
+ 
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="IWebsocketClient"><h2>IWebsocketClient</h2></a>
+    <pre><code class="language-cpp">class IWebsocketClient {
+public:
+    static IWebsocketClient * Create(class IIoMux * const iomux,
+                                     class UWebsocketClient * const user,
+                                     class ISocketProvider * const tcpSocketProvider,
+                                     class ISocketProvider * const tlsSocketProvider,
+                                     class IDns * const dns,
+                                     class IInstanceLog * const log);
+	
+    virtual ~IWebsocketClient() {}
+    virtual void Connect(const char * uri);
+    virtual void Close();
+    virtual void Send(const void * buf, size_t len, bool text = true);
+    virtual void Recv(void * buf = nullptr, size_t len = 0);
+};</code></pre>
+
+    <h3>Overview</h3>
+	This is the interface to entablish a websocket connection. The interface is quite simple and straight forward to use.
+
+	<h3>Logging</h3>
+	To enable logging for IWebsocketClient, the flag LOG_WEBSOCKET_CLIENT must be set in the managers diagnostic settings.
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">Create (static function)</div>
+    <dd>
+		This static function creates the IWebsocketInstance. The returned instance must be release if no longer needed by using the C++ delete operator.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The <a href="../os/iomux.htm#IIoMux">IIoMux</a> instance the IWebsocketClient instance will be registered to.</td></tr>
+            <tr><td class="param">class UWebsocketClient * const <b>user</b></td><td>The UWebsocketClient instance that will receive the callbacks of IWebsocketClient.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tcpSocketProvider</b></td><td>A <a href="socket.htm#ISocketProvider">ISocketProvider</a> instance that can create a TCP ISocket.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tlsSocketProvider</b></td><td>A <a href="socket.htm#ISocketProvider">ISocketProvider</a> instance that can create a TLS ISocket.</td></tr>
+            <tr><td class="param">class IDns * const <b>dns</b></td><td>The <a href="../dns.htm#IDns">IDns</a> instance used to resolve the server name if needed.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        The IWebsocketClient instance created. It must be freed by the C++ operator delete, if no longer be used.
+		
+        <h4>Remarks</h4>
+        Note that the two ISocketProvider instances as well as the IDns instance must not be freed before the IWebsocketClient instance had been deleted.
+    </dd>
+
+    <div class="fnhead">Connect</div>
+    <dd>
+        Tries to connect to the given address. The address must be given in the default websocket url format. That means "ws://&lt;address&gt;" for a normal connection, "wss://&lt;address&gt;" for an ecrypted one.
+		The IWebsocketClient can handle IPv4 and IPv6 addresses, as well as a server name which will be resolved using the IDns instance.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>uri</b></td><td>The address to connect to.</td></tr>
+        </table>
+		
+		<h4>Callbacks</h4>
+		On success, UWebsocketClient::WebsocketConnectComplete() will be called.
+		If an error occurres, UWebsocketClient::WebsocketCloseComplete() will be called. Details of that error can be found inside the log, if logging for the websocket client is activated. Reason can be one of the following values:
+        <table style="margin-left: 20px">
+            <tr><td><b>WSCR_CONNECTION_FAILED</b></td><td>An error occured while trying to connect to the websocket server. Details of that error can be found inside the log, if logging for the websocket client is enabled.</td></tr>
+            <tr><td><b>WSCR_URI_INVALID</b></td><td>The address, passed to IWebsocketClient::Connect(), has a wrong format.</td></tr>
+        </table>
+    </dd>
+	
+	
+    <div class="fnhead">Close</div>
+    <dd>
+        Closes the websocket connection. If there is any data still cached and need to be sent, the data will be send before closing the
+		connection.
+
+		<h4>Callbacks</h4>
+		After the connection had been closed, UWebsocketClient::WebsocketCloseComplete() will be called.
+    </dd>
+
+    <div class="fnhead">Send</div>
+    <dd>
+        Sends the given data to the wensocket server, IWebsocketClient is connected to. If the data could not be send right now, it will be cached
+		and send later. The UWebsocketClient instance will be informed if the data had ben finally send.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const void * <b>buf</b></td><td>The buffer with the data to send. It must not be nullptr.</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The number of bytes to send. The in buf given buffer must have at least a size of len bytes.</td></tr>
+            <tr><td class="param">bool <b>text</b></td><td><i>(Default true)</i> If set to false, the data will be send as binary data, else as text data.</td></tr>
+        </table>
+
+		<h4>Callbacks</h4>
+		After the data had been send, UWebsocketClient::WebsocketSendResult() will be called.
+    </dd>
+
+    <div class="fnhead">Recv</div>
+    <dd>
+        Tells the IWebsocketClient instance to receive data. The data will be written to the given buffer. The websocket client will read data to the
+		given buffer, until the number of bytes passed had been received. Although the IWebsocketClient won't support partitial read, at least a nullptr
+		(and a len of 0) can be passed to Recv(). This leads to a callback to ask for a buffer with the size needed. Doing this allows to make some kind
+		of partitial read and comes in handy, if the size of data to receive is unkown. See <a href="UWebsocketClient">UWebsocketClient::WebsocketRecvBuffer</a>
+		for more information.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">void * <b>buf</b></td><td><i>(Default nullptr)</i> The buffer to read the data to.</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td><i>(Default 0)</i> The number of bytes to receive. The in buf given buffer must have at least a size of len bytes. This parameter will be ignored if buf = nullptr.</td></tr>
+        </table>
+
+    	<h4>Callbacks</h4>
+		On success, UWebsocketClient::WebsocketRecvResult() will be called after data had been received.
+		If an error occurres, UWebsocketClient::WebsocketCloseComplete() will be called. Details of that error can be found inside the log, if logging for the websocket client is activated. Reason can be one of the following values:
+		<table style="margin-left: 20px">
+        	<tr><td><b>WSCR_BUFFER_OVERFLOW</b></td><td>A websocket  frame had been received, that exceeded the internal limit of frame size. See <a href="websocket_max_payload_size">WEBSOCKET_MAX_PAYLOAD_SIZE</a> for details.</td></tr>
+        	<tr><td><b>WSCR_PROTOCOL_ERROR</b></td><td>Something went wrong during the weboscket communication. Details of that error can be found inside the log, if logging for the websocket client is enabled.</td></tr>
+    	</table>
+		
+		<h4>Remarks</h4>
+		When calling Recv with a buffer and a len, IWebsocketClient will wait until the requested amount of bytes had been received. So if the size of data to receive is unkown, it will be better to call Recv() wil nullptr as buffer
+		and use the UWebsocketClient::WebsocketRecvBuffer() mechanism to receive the data.
+    </dd>
+	
+	<a name="UWebsocketClient"><h2>UWebsocketClient</h2></a>
+	<pre><code class="language-cpp">class UWebsocketClient {
+public:
+    virtual ~UWebsocketClient() {}
+    virtual void WebsocketConnectComplete(IWebsocketClient * const websocket);
+    virtual void WebsocketCloseComplete(IWebsocketClient * const websocket, closereason_t reason) ;
+    virtual void WebsocketSendResult(IWebsocketClient * const websocket);
+    virtual void WebsocketRecvResult(IWebsocketClient * const websocket, void * buf, size_t len, bool text, bool isFragment);
+    virtual void * WebsocketRecvBuffer(size_t len) { return nullptr; }
+};</code></pre>
+
+    <h3>Overview</h3>
+	The UWebsocketClient class is used to receive callbacks from an IWebsocketClient instance. An application must subclass UWebsocketClient, implement the functions that must be implemented and pass that class as user to IWebsocketClient::Create().
+	The instance of that subclass must not be freed before the IWebsocketClient instance assigned to. One UWebsocketClient instance can be assigned to multiple IWebsocketClient instances, because the calling IWebsocketClient will be passed as parameter
+	to the callback functions.
+	
+    <h3>Public functions</h3>
+    <div class="fnhead">WebsocketConnectComplete</div>
+    <dd>
+		Will be called, after calling IWebsocketClient::Connect() and after the connection had been established. After receiving that callback, the IWebsocketClient instance can be used to send and receive data.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IWebsocketClient * const <b>websocket</b></td><td>The calling IWebsocketClient instance.</td></tr>
+        </table>
+    </dd>
+	
+    <div class="fnhead">WebsocketCloseComplete</div>
+    <dd>
+		Will be called after the websocket connection had been closed. That can be because of a call to IWebsocketClient::Close(), because the other side closed the connection or because of an error. The reason for the close will be passed as parameter.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IWebsocketClient * const <b>websocket</b></td><td>The calling IWebsocketClient instance.</td></tr>
+            <tr><td class="param">closereason_t <b>reason</b></td><td>The reason why the websocket connection had been closed. See <a href="#IWebsocketClient_closereason_t">IWebsocketClient::closereason_t</a> for more details.</td></tr>
+        </table>
+    </dd>
+	
+    <div class="fnhead">WebsocketSendResult</div>
+    <dd>
+		When calling IWebsocketClient::Send(), after sending the data UWebsocketClient::WebsocketSendResult() will be called. It is guaranteed, that the callback would not be called before returning from  IWebsocketClient::Send().
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IWebsocketClient * const <b>websocket</b></td><td>The calling IWebsocketClient instance.</td></tr>
+        </table>
+    </dd>
+	
+    <div class="fnhead">WebsocketRecvResult</div>
+    <dd>
+		After calling IWebsocketClient::Recv(), UWebsocketClient::WebsocketRecvResult() will be called when data had been received.  Because websocket messages can be fragmented, that information will be passed to the callback function
+		by the isFragmented flag. So to make sure that the whole message had been received, the application should call IWebsocketClient::Recv() until UWebsocketClient::WebsocketRecvResult() will be called with isFragmented set to false.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IWebsocketClient * const <b>websocket</b></td><td>The calling IWebsocketClient instance.</td></tr>
+            <tr><td class="param">void * <b>buf</b></td><td>The buffer holding the data received. Will be the same as passed to IWebsocketClient::Recv() or returned by UWebsocketClient::WebsocketRecvResult().</td></tr>
+            <tr><td class="param">size_t  <b>len</b></td><td>The length of the data inside the buffer.</td></tr>
+            <tr><td class="param">bool <b>isFragemented</b></td><td>If true, the data is fragmented. That means, that there are still other parts of the data to receive. So isFragmented set to false can also intepreted as "all data received".</td></tr>
+        </table>
+    </dd>
+	
+	
+	<h1>Data types</h1>
+	<a name="IWebsocketClient_closereason_t"><h2>UWebsocketClient::closereason_t</h2></a>
+	<h3>Overview</h3>
+	When the web socket connection had been closed, UWebsocketClient::WebsocketCloseComplete() will be called with the reason for closing the connection. Note that the datatype is embedded in the UWebsocketClient class.
+	<h4>Values</h4>
+    <table style="margin-left: 20px">
+        <tr><td><b>WSCR_NORMAL_CLOSE</b></td><td>The conenction had been closed because of a call to IWebsocketClient::Close().</td></tr>
+        <tr><td><b>WSCR_CONNECTION_FAILED</b></td><td>An error occured while trying to connect to the websocket server. Details of that error can be found inside the log, if logging for the websocket client is enabled.</td></tr>
+        <tr><td><b>WSCR_URI_INVALID</b></td><td>The address, passed to IWebsocketClient::Connect(), has a wrong format.</td></tr>
+        <tr><td><b>WSCR_BUFFER_OVERFLOW</b></td><td>A websocket  frame had been received, that exceeded the internal limit of frame size. See <a href="websocket_max_payload_size">WEBSOCKET_MAX_PAYLOAD_SIZE</a> for details.</td></tr>
+        <tr><td><b>WSCR_PROTOCOL_ERROR</b></td><td>Something went wrong during the weboscket communication. Details of that error can be found inside the log, if logging for the websocket client is enabled.</td></tr>
+        <tr><td><b>WSCR_SOCKET_LOST</b></td><td>The socket got lost unexpected. Details of that error can be found inside the log, if logging for the websocket client is enabled.</td></tr>
+        <tr><td><b>WSCR_SERVER_CLOSED</b></td><td>The socket connection had been close from the server side.</td></tr>
+    </table>
+
+	<a name="websocket_max_payload_size"><h2>WEBSOCKET_MAX_PAYLOAD_SIZE (define)</h2></a>
+	<h3>Overview</h3>
+	While the IWebsocketClient supports the full websocket protocol, the size of one websocket frame is limited. This limit is defined by WEBSOCKET_MAX_PAYLOAD_SIZE. If a frame comes in with a data size greated than WEBSOCKET_MAX_PAYLOAD_SIZE,
+	UWebsocketClose::WebsocketCloseComplete() will be called with reason set to WSCR_BUFFER_OVERFLOW.
+	<h4>Values</h4>
+    <table style="margin-left: 20px">
+        <tr><td><b>WEBSOCKET_MAX_PAYLOAD_SIZE</b></td><td>Value in bytes, defined to 16384</td></tr>
+    </table>
+
+
+    <h1> Code Example </h1>
+	<h2>IWebsocketClient</h2>
+    <pre class="sample"><code class="language-cpp">app::app(class IIoMux * iomux,
+         ISocketProvider * tcpSocketProvider,
+         ISocketProvider * tlsSocketProvider,
+         IDns * dns)
+    : iomux(iomux)
+{
+    this->websocketClient = IWebsocketClient::Create(iomux, this, tcpSocketProvider, tlsSocketProvider, dns);
+    this->websocketClient->Connect("wss://myserver.com/websocket");
+}
+
+void app::WebsocketConnectComplete(IWebsocketClient * const websocket)
+{
+    printf("Websocket connected\n");
+	this->websocketClient->Recv();
+}
+
+void app::WebsocketCloseComplete(IWebsocketClient * const websocket, closereason_t reason)
+{
+    printf("Websocket connection closed\n");
+    delete this->websocketClient;
+    this->websocketClient = NULL;
+    iomux->Terminate();
+}
+
+void app::WebsocketSendResult(IWebsocketClient * const websocket)
+{
+    this->websocketClient->Close();
+}
+
+void * app::WebsocketRecvBuffer(size_t len)
+{
+    return malloc(len);
+}
+
+void app::WebsocketRecvResult(IWebsocketClient * const websocket, void * buf, size_t len, bool text)
+{
+    printf("Websocket client received data (text = %s)\n", (test ? "true" : "false"));
+    debug->HexDump(buf, len);
+    this->websocketClient->Send(buf, len);
+	free(buf);
+}
+</pre></code>
+</body>
+</html>

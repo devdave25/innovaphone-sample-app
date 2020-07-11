@@ -1,0 +1,901 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone App Platform</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Call Detail Record CDR PBX</h1>
+    <p>
+        If enabled the PBX generates Call Detail Records (CDR) for each call and each object, which means
+        if a call is made from one user to another a CDR for an outgoing call is generated at the first
+        user object and a CDR for an incoming call is generated at the other user object.
+        The CDRs are generated at the end of the call and sent via the CDR0 and CDR1 interfaces.
+        For a discussion of the delivery mechanisms, see the respective chapters in the
+    </p>
+    <h2>Contents</h2>
+    <ul>
+        <li class="toclevel-1">
+            <a href="#Content"><span class="tocnumber">1</span> <span class="toctext">Content</span></a>
+            <ul>
+                <li class="toclevel-2">
+                    <a href="#Top-Level_Tag_.3Ccdr.3E"><span class="tocnumber">1.1</span> <span class="toctext">Top-Level Tag &lt;cdr&gt;</span></a>
+                    <ul>
+                        <li class="toclevel-3">
+                            <a href="#The_Tag_.3Cevent.3E"><span class="tocnumber">1.1.1</span> <span class="toctext">The Tag &lt;event&gt;</span></a>
+                            <ul>
+                                <li class="toclevel-4"><a href="#The_Tag_.3Cto.3E"><span class="tocnumber">1.1.1.1</span> <span class="toctext">The Tag &lt;to&gt;</span></a></li>
+                                <li class="toclevel-4"><a href="#The_Tag_.3Cep.3E"><span class="tocnumber">1.1.1.2</span> <span class="toctext">The Tag &lt;ep&gt;</span></a></li>
+                                <li class="toclevel-4"><a href="#The_Tags_.3Ccf.3E_.3Cct.3E"><span class="tocnumber">1.1.1.3</span> <span class="toctext">The Tags &lt;cf&gt; &lt;ct&gt;</span></a></li>
+                                <li class="toclevel-4"><a href="#The_Tag_.3Cmakecall.3E_.28available_from_v10sr10.29"><span class="tocnumber">1.1.1.4</span> <span class="toctext">The Tag &lt;makecall&gt; (available from v10sr10)</span></a></li>
+                            </ul>
+                        </li>
+                        <li class="toclevel-3">
+                            <a href="#Tag_.3Cuser.3E"><span class="tocnumber">1.1.2</span> <span class="toctext">Tag &lt;user&gt;</span></a>
+                            <ul>
+                                <li class="toclevel-4"><a href="#Object_Types"><span class="tocnumber">1.1.2.1</span> <span class="toctext">Object Types</span></a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="toclevel-2"><a href="#Available_messages_.28values_of_msg.29"><span class="tocnumber">1.2</span> <span class="toctext">Available messages (values of msg)</span></a></li>
+            </ul>
+        </li>
+        <li class="toclevel-1"><a href="#Billing"><span class="tocnumber">2</span> <span class="toctext">Billing</span></a></li>
+        <li class="toclevel-1">
+            <a href="#Sample_Records"><span class="tocnumber">3</span> <span class="toctext">Sample Records</span></a>
+            <ul>
+                <li class="toclevel-2">
+                    <a href="#Basic_Call"><span class="tocnumber">3.1</span> <span class="toctext">Basic Call</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29"><span class="tocnumber">3.1.1</span> <span class="toctext">A(100) calls B(101)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Call_Forward"><span class="tocnumber">3.2</span> <span class="toctext">Call Forward</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29_cfu_to_C.28102.29"><span class="tocnumber">3.2.1</span> <span class="toctext">A(100) calls B(101) cfu to C(102)</span></a></li>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29_cfnr_to_C.28102.29"><span class="tocnumber">3.2.2</span> <span class="toctext">A(100) calls B(101) cfnr to C(102)</span></a></li>
+                    </ul>
+                </li>
+                <li class="toclevel-2">
+                    <a href="#Call_Transfer"><span class="tocnumber">3.3</span> <span class="toctext">Call Transfer</span></a>
+                    <ul>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29_blind_transfer_without_consultation_to_C.28102.29"><span class="tocnumber">3.3.1</span> <span class="toctext">A(100) calls B(101) blind transfer without consultation to C(102)</span></a></li>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29_blind_transfer_with_consultation_to_C.28102.29"><span class="tocnumber">3.3.2</span> <span class="toctext">A(100) calls B(101) blind transfer with consultation to C(102)</span></a></li>
+                        <li class="toclevel-3"><a href="#A.28100.29_calls_B.28101.29_transfer_with_consultation_to_C.28102.29"><span class="tocnumber">3.3.3</span> <span class="toctext">A(100) calls B(101) transfer with consultation to C(102)</span></a></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li class="toclevel-1"><a href="#CDR_Buffering"><span class="tocnumber">4</span> <span class="toctext">CDR Buffering</span></a></li>
+        <li class="toclevel-1"><a href="#CDR_Debugging"><span class="tocnumber">5</span> <span class="toctext">CDR Debugging</span></a></li>
+    </ul>
+
+    <a name="Content"></a><h1> <span class="mw-headline"> Content </span></h1>
+    <a name="Top-Level_Tag_.3Ccdr.3E"></a><h2> <span class="mw-headline"> Top-Level Tag <b>&lt;cdr&gt;</b> </span></h2>
+    <p>
+        Each CDR uses the top-level tag &lt;cdr&gt;. The following attributes are used with this tag:
+    </p>
+    <table>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>guid</b>
+            </td>
+            <td>
+                The GUID identifying the object this call belongs to.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>sys</b>
+            </td>
+            <td>
+                The system name (Gatekeeper Identifier) of the PBX
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>pbx</b>
+            </td>
+            <td>
+                The PBX this CDR was generated on
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>node</b>
+            </td>
+            <td>
+                The Node of the object for which this CDR was generated
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>cn</b>
+            </td>
+            <td>
+                The cn (Long Name) of the object
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>e164</b>
+            </td>
+            <td>
+                The normalized Number of the object. This number includes the node prefixes if the
+                object is not defined in the root node.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>h323</b>
+            </td>
+            <td>
+                The H.323 Id (Name) of the object
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>device</b>
+            </td>
+            <td>
+                The device (if applicable) which was used for this call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>dir</b>
+            </td>
+            <td>
+                Indicates the direction of the call.
+                <ul>
+                    <li>
+                        <b>from</b>: A call originating from this object.
+                    </li>
+                    <li>
+                        <b>to</b>: A call sent to this object.
+                    </li>
+                    <li>
+                        <b>cf</b>: A call diverted by this object.
+                    </li>
+                    <li>
+                        <b>ct</b>: A call transfered by this object.
+                    </li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>utc</b>
+            </td>
+            <td>
+                The time when this call was started as UTC time. This is an integer with the standard ctime semantic.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>local</b>
+            </td>
+            <td>
+                The local time the call was started.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>id</b>
+            </td>
+            <td>
+                A unique GUID identifying this CDR
+            </td>
+        </tr>
+    </table>
+    <a name="The_Tag_.3Cevent.3E"></a><h3> <span class="mw-headline"> The Tag &lt;event&gt; </span></h3>
+    <p>
+        For each state a call goes thru a tag <b>&lt;event&gt;</b> is added to the CDR.
+        The following attributes are used with this tag:
+    </p>
+    <table>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>msg</b>
+            </td>
+            <td>
+                A string identifying the message which caused the state change of the call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>time</b>
+            </td>
+            <td>
+                The uptime of the gateway in seconds
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>type</b>
+            </td>
+            <td>
+                The Type of the other party of the call if available. A value of 'ext' indicates an external party.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>e164</b>
+            </td>
+            <td>
+                The number of the other party of the call if available. This number is a number as it can be dialed from this endpoint to call the other endpoint. This means it will include prefixes only if the other party is in a different node and it will include escapes if necessary.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>root</b>
+            </td>
+            <td>
+                The number of the other party relative to the numbering root, if available.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>h323</b>
+            </td>
+            <td>
+                The H.323 Id (Name) of the other party of the call if available
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>conf</b>
+            </td>
+            <td>
+                A GUID identifying the call (conferenceID). This GUID can be used to associated CDRs from
+                outgoing calls to the CDRs of incoming calls even across different PBXs. The first event
+                within a CDR always contains this attribute. The conferenceID may change during a call
+                (e.g. because of a call transfer). In this case another <b>conf</b> attribute is present
+                containing the new conferenceID.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>cause</b>
+            </td>
+            <td>
+                The cause code</a> used when the call was cleared. The value is defined in Q.931.
+                Common values are 16 - Normal Clearing, 17 - User Busy, 18 - No response.
+            </td>
+        </tr>
+    </table>
+
+    <a name="The_Tag_.3Cto.3E"></a><h4> <span class="mw-headline"> The Tag &lt;to&gt; </span></h4>
+    <p>
+        Used as tag inside &lt;event&gt;. This is used to indicate that by the operation indicated by
+        the message (transfer, call forward) the party to which this user is connected to will change.
+    </p>
+
+    <a name="The_Tag_.3Cep.3E"></a><h4> <span class="mw-headline"> The Tag &lt;ep&gt; </span></h4>
+    <p>
+        Indicates the endpoint to which the call is actually connected on this endpoint.
+        This is mainly used on trunk objects, in the &lt;cdr&gt; tag itself only the number is indicated
+        which was already dialed when the call is sent out to the trunk.
+        With overlap sending more digits may be sent. In <b>alert-from</b>, <b>conn-from</b>,
+        <b>rel-to</b> and <b>rel-from</b> the final number sent is indicated.
+    </p>
+
+    <a name="The_Tags_.3Ccf.3E_.3Cct.3E"></a><h4> <span class="mw-headline"> The Tags &lt;cf&gt; &lt;ct&gt; </span></h4>
+    <p>
+        Indicate preceding call forward (cf) or transfer (ct) endpoints.
+        The attributes <b>e164</b>, <b>h323</b> and <b>dn</b> can be present.
+    </p>
+
+    <a name="The_Tag_.3Cmakecall.3E_.28available_from_v10sr10.29"></a><h4> <span class="mw-headline"> The Tag &lt;makecall&gt; (available from v10sr10) </span></h4>
+    <p>
+        Indicates that an application initiated this call e.g. using the SOAP API.
+        The attribute <b>appl</b> contains the name of the application.
+    </p>
+
+    <a name="Tag_.3Cuser.3E"></a><h3> <span class="mw-headline"> Tag &lt;user&gt; </span></h3>
+    <p>
+        The tag &lt;cdr&gt; may contain a tag &lt;user&gt; for additional information about the object:
+    </p>
+    <dl>
+        <dt> pseudo&nbsp;</dt>
+        <dd>
+            If the Object is not a User, there is an attribute "pseudo", which contains the type.
+            This type matches to the type in the LDAP config of the object, except for CDRs on the
+            master connection there is the special value "master".  Note that also an object
+            declared as <code>pseudo="executive"</code> may be classified as as <i>user-type</i> object
+        </dd>
+        <dt> &lt;grp&gt;&nbsp;</dt>
+        <dd>
+            For each group a tag &lt;grp&gt; is contained in &lt;user&gt;
+        </dd>
+    </dl>
+
+    <a name="Object_Types"></a><h4> <span class="mw-headline">Object Types</span></h4>
+    <p>
+        Following Object Types could appear in the CDR records:
+    </p>
+    <table>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>executive</b>
+            </td>
+            <td>
+                Executive
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>trunk</b>
+            </td>
+            <td>
+                Trunk Line
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>waiting</b>
+            </td>
+            <td>
+                Waiting Queue
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>gw</b>
+            </td>
+            <td>
+                Gateway
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>vm</b>
+            </td>
+            <td>
+                Voicemail
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>broadcast</b>
+            </td>
+            <td>
+                Call Broadcast
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>bc_conf</b>
+            </td>
+            <td>
+                Bc Conference
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>mobility</b>
+            </td>
+            <td>
+                Mobility
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>map</b>
+            </td>
+            <td>
+                Number Map
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>loc</b>
+            </td>
+            <td>
+                PBX
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>conference</b>
+            </td>
+            <td>
+                Conference
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>dtmf-ctrl</b>
+            </td>
+            <td>
+                DTMF Features
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>dirsearch</b>
+            </td>
+            <td>
+                Directory Search
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>multicast</b>
+            </td>
+            <td>
+                MCast Announce
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>qdial</b>
+            </td>
+            <td>
+                Quick dial
+            </td>
+        </tr>
+    </table>
+
+    <a name="Available_messages_.28values_of_msg.29"></a><h2> <span class="mw-headline"> Available messages (values of msg) </span></h2>
+    <table>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>setup-from</b>
+            </td>
+            <td>
+                A call originating from the object was initiated
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>setup-to</b>
+            </td>
+            <td>
+                A call to the object was initiated
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>alert-from</b>
+            </td>
+            <td>
+                The endpoint for this object is alerting
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>alert-to</b>
+            </td>
+            <td>
+                The other party is alerting
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>conn-from</b>
+            </td>
+            <td>
+                The endpoint for this object has connected the call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>conn-to</b>
+            </td>
+            <td>
+                The other party has connected the call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>rel-from</b>
+            </td>
+            <td>
+                The endpoint for this object has released the call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>rel-to</b>
+            </td>
+            <td>
+                The other party has released the call
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>transfer-from</b>
+            </td>
+            <td>
+                The endpoint for this call has transfered the call.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>transfer-to</b>
+            </td>
+            <td>
+                The other party has transfered the call.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>transferred</b>
+            </td>
+            <td>
+                Another call on the same object (user) has been transferred with this call.
+                A <b>transfer-from</b> will be shown on this other call.  The call itself will disappear
+                from the phone as a result of the transfer.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>transfer-remote</b>
+            </td>
+            <td>
+                The call was transferred outside the PBX.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>cf-from</b>
+            </td>
+            <td>
+                The endpoint for this object has forwarded the call.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>cf-to</b>
+            </td>
+            <td>
+                The other party has forwarded the call.
+            </td>
+        </tr>
+        <tr>
+            <td valign="top" nowrap="true">
+                <b>connected</b>
+            </td>
+            <td>
+                Added after a transfer, if the other call leg was already connected.
+            </td>
+        </tr>
+    </table>
+
+    <a name="Billing"></a><h1> <span class="mw-headline"> Billing </span></h1>
+    <p>
+        To generate billing information for a given user (object), the outgoing calls the user is responsible
+        for must be filtered, the destination to which the user is to be billed must be found and the
+        connected time for these calls must be calculated. All this information can be obtained from the
+        CDRs generated for the given user.
+    </p>
+    <ul>
+        <li>
+            to find the calls the user is responsible for, filter for CDRs with dir "from", "cf" or "ct".
+        </li>
+        <li>
+            the first event with type "conn-to", "transfer-to" or "cf-to" indicates the destination
+            to which the user is to billed for this call
+        </li>
+        <li>
+            the connected time is to be calculated from the first event with type "conn-to" to the
+            first event with type "disc-to", "disc-from", "rel-to" or "rel-from"
+        </li>
+        <li>
+            the type "ext" event is set in the "conn-to", "conn-from", "setup-to" or "setup-from"
+            messages if no number (connected or calling) was received or if the number had a ISDN
+            numbering plan identification different to "<i>Private</i>".
+            This means for an outgoing external call on Trunk CDR "ext" is set on the "conn-from"
+            event and on the User CDR "ext" is set on the "conn-to" event. For an incoming call on
+            the Trunk CDR "ext" is set on the "setup-from" event and on the User CDR "ext" is set on
+            the "setup-to" event.
+        </li>
+    </ul>
+
+    <a name="Sample_Records"></a><h1> <span class="mw-headline"> Sample Records </span></h1>
+    <a name="Basic_Call"></a><h2> <span class="mw-headline"> Basic Call </span></h2>
+    <a name="A.28100.29_calls_B.28101.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272551262" local="1272558462"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="e89277f0e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-to" time="1" e164="101" h323="b"/&gt;
+    &lt;event msg="conn-to" time="2" e164="101" h323="b"/&gt;
+    &lt;event msg="rel-to" time="4" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="to" utc="1272551263" local="1272558463"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="e89277f0e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="1" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="3" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="Call_Forward"></a><h2> <span class="mw-headline"> Call Forward </span></h2>
+    <a name="A.28100.29_calls_B.28101.29_cfu_to_C.28102.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) cfu to C(102) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272551788" local="1272558988"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="dd95b681e909d31192e80090331032dd"/&gt;
+    &lt;event msg="cf-to" time="1" e164="101"&gt;
+        &lt;to e164="102"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="alert-to" time="1" e164="102" h323="c"/&gt;
+    &lt;event msg="conn-to" time="3" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="5" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" cn="B" e164="101" h323="b" dir="cf" utc="1272551789" local="1272558989"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="1" e164="100" h323="a" conf="dd95b681e909d31192e80090331032dd"/&gt;
+    &lt;event msg="cf-from" time="1" e164="101"&gt;
+        &lt;to e164="102"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="alert-to" time="1" e164="102" h323="c"/&gt;
+    &lt;event msg="conn-to" time="3" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="5" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <p>
+        Object C CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="8f47c0cfe909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="c" cn="C" e164="102" h323="c" dir="to" utc="1272551789" local="1272558989"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="dd95b681e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="2" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="4" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="A.28100.29_calls_B.28101.29_cfnr_to_C.28102.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) cfnr to C(102) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272552609" local="1272559809"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="f5092783e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-to" time="1" e164="101" h323="b"/&gt;
+    &lt;event msg="cf-to" time="5" e164="101" h323="b"&gt;
+        &lt;to e164="102"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="conn-to" time="8" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="9" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="to" utc="1272552610" local="1272559810"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="f5092783e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-to" time="4" cause="0"/&gt;
+&lt;/cdr&gt;
+
+&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" cn="B" e164="101" h323="b" dir="cf" utc="1272552614" local="1272559814"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="5" e164="100" h323="a" conf="f5092783e909d31192e80090331032dd"/&gt;
+    &lt;event msg="cf-from" time="5" e164="101" h323="b"&gt;
+        &lt;to e164="102"/&gt;
+    &lt;/event&gt;&lt;event msg="conn-to" time="8" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="9" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object C CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="8f47c0cfe909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="c" cn="C" e164="102" h323="c" dir="to" utc="1272552614" local="1272559814"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="f5092783e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="3" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="4" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="Call_Transfer"></a><h2> <span class="mw-headline"> Call Transfer </span></h2>
+    <a name="A.28100.29_calls_B.28101.29_blind_transfer_without_consultation_to_C.28102.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) blind transfer without consultation to C(102) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272607911" local="1272615111"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="9b24bc13e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-to" time="1" e164="101" h323="b"/&gt;
+    &lt;event msg="conn-to" time="3" e164="101" h323="b"/&gt;
+    &lt;event msg="transfer-to" time="7" e164="101" h323="b"&gt;
+        &lt;to e164="102"/&gt;
+    &lt;/event&gt;&lt;event msg="conn-to" time="9" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="10" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="to" utc="1272607912" local="1272615112"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="9b24bc13e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="2" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-to" time="6" cause="26"/&gt;
+&lt;/cdr&gt;
+ 
+&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" cn="B" e164="101" h323="b" dir="ct" utc="1272607918" local="1272615118"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="7" e164="100" h323="a" conf="9b24bc13e909d31192e80090331032dd"/&gt;
+    &lt;event msg="transfer-from" time="7" e164="101" h323="b"&gt;
+        &lt;to e164="102" h323="c"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="conn-to" time="9" e164="101" h323="b"/&gt;
+    &lt;event msg="rel-to" time="10" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object C CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="8f47c0cfe909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="c" cn="C" e164="102" h323="c" dir="to" utc="1272607918" local="1272615118"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="9b24bc13e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="2" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="3" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="A.28100.29_calls_B.28101.29_blind_transfer_with_consultation_to_C.28102.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) blind transfer with consultation to C(102) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272609642" local="1272616842"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="18dbf93fe909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-to" time="2" e164="101" h323="b"/&gt;
+    &lt;event msg="conn-to" time="4" e164="101" h323="b"/&gt;
+    &lt;event msg="transfer-to" time="9" e164="101" h323="b"&gt;
+        &lt;to e164="102" h323="c"/&gt;
+    &lt;/event&gt;&lt;event msg="conn-to" time="11" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="14" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="to" utc="1272609644" local="1272616844"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="18dbf93fe909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="2" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-to" time="7" cause="26"/&gt;
+&lt;/cdr&gt;
+ 
+&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="from" utc="1272609647" local="1272616847"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="75762ef4e909d311aff8009033102603"/&gt;
+    &lt;event msg="alert-to" time="2" e164="102" h323="c"/&gt;
+    &lt;event msg="transfer-from" time="4" e164="102" h323="c" conf="18dbf93fe909d31192e80090331032dd"&gt;
+        &lt;to e164="100" h323="a"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="conn-to" time="11" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="14" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object C CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="8f47c0cfe909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="c" cn="C" e164="102" h323="c" dir="to" utc="1272609649" local="1272616849"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="101" h323="b" conf="75762ef4e909d311aff8009033102603"/&gt;
+    &lt;event msg="alert-from" time="0" e164="101" h323="b"/&gt;
+    &lt;event msg="transfer-to" time="2" e164="101" h323="b" conf="18dbf93fe909d31192e80090331032dd"&gt;
+        &lt;to e164="100" h323="a"/&gt;
+    &lt;/event&gt;&lt;event msg="conn-from" time="4" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="7" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="A.28100.29_calls_B.28101.29_transfer_with_consultation_to_C.28102.29"></a><h3> <span class="mw-headline"> A(100) calls B(101) transfer with consultation to C(102) </span></h3>
+    <p>
+        Object A CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="e78cb2b8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="a" cn="A" e164="100" h323="a" dir="from" utc="1272613531" local="1272620731"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="1827b3c7e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-to" time="1" e164="101" h323="b"/&gt;
+    &lt;event msg="conn-to" time="3" e164="101" h323="b"/&gt;
+    &lt;event msg="transfer-to" time="10" e164="101" h323="b"&gt;
+        &lt;to e164="102" h323="c"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="connected" time="10" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="12" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object B CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="to" utc="1272613532" local="1272620732"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="100" h323="a" conf="1827b3c7e909d31192e80090331032dd"/&gt;
+    &lt;event msg="alert-from" time="0" e164="100" h323="a"/&gt;
+    &lt;event msg="conn-from" time="2" e164="100" h323="a"/&gt;
+    &lt;event msg="transfer-from" time="9" e164="100" h323="a"&gt;
+        &lt;to e164="102" h323="c"/&gt;
+    &lt;/event&gt;&lt;event msg="connected" time="10" e164="102" h323="c"/&gt;
+    &lt;event msg="rel-to" time="12" cause="0"/&gt;
+&lt;/cdr&gt;
+ 
+&lt;cdr guid="9362bef8e909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="b" cn="B" e164="101" h323="b" dir="from" utc="1272613535" local="1272620735"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-from" time="0" conf="8fc0cfc0e909d311b722009033102603"/&gt;
+    &lt;event msg="alert-to" time="2" e164="102" h323="c"/&gt;
+    &lt;event msg="conn-to" time="4" e164="102" h323="c"/&gt;
+    &lt;event msg="transfer-from" time="6" e164="102" h323="c" conf="1827b3c7e909d31192e80090331032dd"&gt;
+        &lt;to e164="100" h323="a"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="connected" time="4" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="6" cause="0"/&gt;
+&lt;/cdr&gt;
+</code></pre>
+
+    <p>
+        Object C CDR
+    </p>
+    <pre><code class="xml">&lt;cdr guid="8f47c0cfe909d31188ce0090330602e8" sys="PBX" pbx="." node="root" device="c" cn="C" e164="102" h323="c" dir="to" utc="1272613537" local="1272620737"&gt;
+    &lt;user/&gt;
+    &lt;event msg="setup-to" time="0" e164="101" h323="b" conf="8fc0cfc0e909d311b722009033102603"/&gt;
+    &lt;event msg="alert-from" time="0" e164="101" h323="b"/&gt;
+    &lt;event msg="conn-from" time="2" e164="101" h323="b"/&gt;
+    &lt;event msg="transfer-to" time="4" e164="101" h323="b" conf="1827b3c7e909d31192e80090331032dd"&gt;
+        &lt;to e164="100" h323="a"/&gt;
+    &lt;/event&gt;
+    &lt;event msg="connected" time="4" e164="100" h323="a"/&gt;
+    &lt;event msg="rel-from" time="6" cause="0"/&gt;
+&lt;/cdr&gt;</code></pre>
+
+    <a name="CDR_Buffering"></a><h1> <span class="mw-headline"> CDR Buffering </span></h1>
+    <p>
+        CDRs are sent through the <a href="/index.php?title=Reference9:Gateway/CDR" title="Reference9:Gateway/CDR"> CDR0/1 interfaces</a> which have an internal buffering capacity of 300kB (see <a href="/index.php?title=Reference:Call_Detail_Record_CDR#Can_CDRs_get_lost.3F" title="Reference:Call Detail Record CDR"> Can CDRs get lost?</a>).  PBX CDRs can get quite large (the sample "<i><a href="#A.28100.29_calls_B.28101.29_transfer_with_consultation_to_C.28102.29" title=""> A(100) calls B(101) transfer with consultation to C(102)</a></i>" above is about 0.8kB) though.
+    </p>
+
+    <a name="CDR_Debugging"></a><h1> <span class="mw-headline"> CDR Debugging </span></h1>
+    <p>
+        The CDRs created by the PBX can be displayed for test-purposes in a Web-Browser.
+        In this case the CDR0/1 - Interface must not be configured, the CDR-Generation must be enabled.
+        This test-mode can be enabled by:
+    </p>
+<pre>http://x.x.x.x/!config change CDR0 /test-cdr
+http://x.x.x.x/!config activate
+</pre>
+    <p>
+        After making the desired call, the CDR0-buffer can be displayed using the URL:
+    </p>
+<pre>http://x.x.x.x/CDR0/mod_cmd.xml?cmd=test-cdr
+</pre>
+    <p>
+        Please note that this test-mode must not be used in production environments, only in test systems.
+    </p>
+</body>
+
+</html>	

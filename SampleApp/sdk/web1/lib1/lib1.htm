@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone.lib1</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>innovaphone.lib1</h1>
+    <h2>Includes</h2>
+    <p>
+        The library has no dependencies on other Javascript files.
+    </p>
+
+
+    <h2>Static helper functions</h2>
+    <p>
+        Functionality that is often needed in apps.
+    </p>
+    <dl>
+        <dt>innovaphone.lib1.openLink(url)</dt>
+        <dd>
+            Used for opening mailto-Links.
+        </dd>
+    </dl>
+
+    <h2>Events</h2>
+    <p>
+        innovaphone.lib1.Event defines an interface for events. Listeners can attach an detach to an event. Attached listeners are called when the event fires.
+    </p>
+    <dl>
+        <dt>innovaphone.lib1.Event(sender)</dt>
+        <dd>
+            Constructor for the event. The specified sender object will be passed to the attached listener functions.
+        </dd>
+        <dt>attach(listener)</dt>
+        <dd>
+            Attaches a listener function with the following parameters.
+            <dl>
+                <dt>sender</dt>
+                <dd>The sender object specified by the constructor of the event.</dd>
+                <dt>value (optional)</dt>
+                <dd>Additional information about the event, typically an object.</dd>
+            </dl>
+        </dd>
+        <dt>detach(listener)</dt>
+        <dd>
+            Detaches a listener function.
+        </dd>
+        <dt>notify(value)</dt>
+        <dd>Fires the event and notifies the attached listeners</dd>
+    </dl>
+    <h3>Example</h3>
+<pre>
+    // define event
+    var oncall = new Event(this);
+    
+    // attach a listener
+    oncall.attach(function(sender, value) {
+        console.log(value.name + " calling");
+    });
+
+    // notify listeners
+    oncall.notify({ name: "John Doe" });
+</pre>
+
+    <a name="start"></a><h2>The start object</h2>
+    <p>
+        The start object is passed to an app. It provides access to the parameters of the app itself and encapsulates the communication with the client.
+    </p>
+    <h3>Properties</h3>
+    <dl>
+        <dt>url</dt>
+        <dd>The websocket base URL to be used by the app.</dd>
+        <dt>name</dt>
+        <dd>The name of the app.</dd>
+        <dt>title</dt>
+        <dd>The display name of the app.</dd>
+        <dt>args</dt>
+        <dd>An object containing the URI parameters that have been passed to the app.</dd>
+        <dt>margs</dt>
+        <dd>
+            An object containing the URI parameters that have been passed to the app as arrays
+            so that no argument is lost, if the same argument is passed multiple times.
+        </dd>
+        <dt>lang</dt>
+        <dd>The two-letter code of the current language (e.g. "en").</dd>
+        <dt>scheme</dt>
+        <dd>The current color scheme ("light" or "dark").</dd>
+    </dl>
+    <h3>Events</h3>
+    <dl>
+        <dt>onargschanged</dt>
+        <dd>Fires when the content of the "args" property has changed.</dd>
+        <dt>onlangchanged</dt>
+        <dd>Fires when the content of the "lang" property has changed.</dd>
+        <dt>onschemechanged</dt>
+        <dd>Fires when the content of the "scheme" property has changed.</dd>
+        <dt>onmenustatechanged</dt>
+        <dd>Fires if the optional hamburger menu of the app (initialized using start.setMenuState) has been opened or closed by the user. Possible values are "open" or "closed".</dd>
+    </dl>
+    <h3>Callback functions</h3>
+    <dl>
+        <dt>onopenchannel(channel, opener, args)</dt>
+        <dd>Apps can set this callback function in order to accept incoming communication channels from other apps.</dd>
+    </dl>
+    <h3>Methods</h3>
+    <dl>
+        <dt>show()</dt>
+        <dd>Tells the client to bring the app to the front.</dd>
+        <dt>show(applink)</dt>
+        <dd>Opens the specified app link that might be the same app or a different app.</dd>
+        <dt>bringToFront()</dt>
+        <dd>Tells the client that the window of the app (detached app window or main window of the client) should be brought to the front and get the focus. Depending on the operating system this function might not have an effect.</dd>
+        <dt>close()</dt>
+        <dd>Tells the client to close the app.</dd>
+        <dt>home()</dt>
+        <dd>Tells the client to show the home screen without closing the app.</dd>
+        <dt>setArgs(args, title)</dt>
+        <dd>Sets the app arguments that are needed to re-open the current page. Will be used by the client to create booksmarks and for the browser history. Additionally an optional title for the current page can be given.</dd>
+        <dt>startActivity()</dt>
+        <dd>Brings the app to the front for displaying an activity, like an incoming call. After the activity is finished, the app must call finishActivity().</dd>
+        <dt>finishActivity()</dt>
+        <dd>Tells the client that the app has finished the activity that was started using startActivity(). The client will go back to the last app that was displayed before the activity.</dd>
+        <dt>provideApi(api)</dt>
+        <dd>Tells the client that the app is providing a specific API (e.g. "com.innovaphone.phone"). The function should be called only after the app is connected and ready to receive API messages. Returns an object that encapsulates the handling of that API.</dd>
+        <dt>consumeApi(api)</dt>
+        <dd>Subscribes for a specific API (e.g. "com.innovaphone.phone"). Returns an object that encapsulates the handling of that API.</dd>
+        <dt>openChannel(dst, args)</dt>
+        <dd>Opens a communication channel to another app (dst) and returns an object that encapsulates the handling of that channel.</dd>
+        <dt>acceptChannel(channel)</dt>
+        <dd>Can be used inside the <code>onopenchannel</code> callback to accept an incoming channel. Returns an object that encapsulates the handling of that channel.</dd>
+        <dt>rejectChannel(channel)</dt>
+        <dd>Can be used inside the <code>onopenchannel</code> callback to reject an incoming channel.</dd>
+        <dt>requestPrepareReload(callback)</dt>
+        <dd>Registers a callback that is called before the app is closed and reloaded in a new iframe by the client. For example this happens when the app is attached or detached from the main window of myApps for windows. When the app has finished its preparations for reloading it should call start.prepareReloadComplete().</dd>
+        <dt>prepareReloadComplete()</dt>
+        <dd>Tells the client that the app has finished its preparations for reloading the app in a new iframe and that the current iframe can be closed now.</dd>
+        <dt>setMenuState(state)</dt>
+        <dd>Tells the client if the optional hamburger menu of the app is open or closed. Possible states are "open" and "closed". The function needs to be called once to tell the client that the app provides a menu.</dd>
+        <dt>setBadge(value)</dt>
+        <dd>Sets a badge at the app icon in the start bar and on home. Usually value is a number, but you can use any UTF8-Character to indicate states of the running app. Note that this function is only useful to indicate states while the app is running. If badge counts should appear also while it's not running the badge count should be set from the backend.</dd>
+    </dl>
+    <h3>Example</h3>
+    <p>
+        The following example demonstrates how apps can use the initial parameters in the start object and handle parameter changes during runtime.
+    </p>
+<pre>
+var innovaphone = innovaphone || {};
+innovaphone.Example = innovaphone.Example || function (start) {
+    var colors = {
+        dark: {
+            "--background": "black",
+            "--foreground": "white"
+        },
+        light: {
+            "--background": "white",
+            "--foreground": "black"
+        }
+    };
+
+    var translations = {
+        en: {
+            hello: "Hello!"
+        },
+        de: {
+            hello: "Hallo!"
+        }
+    };
+
+    var schemes = new innovaphone.ui1.CssVariables(colors, start.scheme),
+        langs = new innovaphone.lib1.Languages(translations, start.lang),
+        app = new innovaphone.appwebsocket.Connection(start.url, start.name);
+
+    start.setMenuState("closed");
+    showPage(start.args.page);
+
+    start.onschemechanged.attach(function () {
+        schemes.activate(start.scheme);
+    });
+
+    start.onlangchanged.attach(function () {
+        langs.activate(start.lang);
+    });
+
+    start.onargschanged.attach(function () {
+        showPage(start.args.page);
+    });
+
+    start.onmenustatechanged.attach(function(sender, value) {
+        if (value == "open") {
+            // show menu
+        }
+        else {
+            // hide menu
+        }
+    });
+
+    function showPage(id) {
+        // ...
+    }
+};
+</pre>
+
+    <a name="clientapis"></a>
+    <h2>Client APIs</h2>
+    <p>
+        Apps can communicate with other apps using APIs. Each API is identified using a string constant (e.g. "com.innovaphone.phone").
+        Apps can both provide APIs and consume APIs that are provided by another app.
+    </p>
+    <h3>API messages</h3>
+    <p>
+        A consumer can send requests to a provider. The provider can send back responses to the originating consumer.
+        The framework treats the messages as opaque data and does not interpret them. The actual format is specified by the API.
+    </p>
+    <h3>API model</h3>
+    <p>
+        An API provider can publish a model object containing its current state. The model can be observed by the consumers of the API.
+        For example a phone API provider could publish the registration state and the active calls. Phone API consumers.
+    </p>
+    <h3>Providing an API</h3>
+    <p>
+        Apps that want to provide an API, must register at the client using the start.provideApi method. The method returns an object that encapulates the interface to be used by the API provider.
+    </p>
+    <h4>The API provider interface</h4>
+    <dl>
+        <dt>onmessage</dt>
+        <dd>
+            Event that fires on incoming requests. The value of the event is an object with the following properties:
+            <dl>
+                <dt>msg</dt>
+                <dd>The actual message, typically an object.</dd>
+                <dt>consumer</dt>
+                <dd>The name of the consumer that sent the request.</dd>
+                <dt>src</dt>
+                <dd>A value that should be echoed back to the consumer in every response to that request.</dd>
+            </dl>
+        </dd>
+        <dt>onconsumerclosed</dt>
+        <dd>
+            Event that fires if an API consumer for the API is closed. The provider can abort pending API requests from that consumer.
+            <dl>
+                <dt>consumer</dt>
+                <dd>The name of the consumer that sent the request.</dd>
+            </dl>
+        </dd>
+        <dt>send(msg, consumer, src)</dt>
+        <dd>
+            Sends a response to a request that was received using the onmessage event.
+            <dl>
+                <dt>msg</dt>
+                <dd>The response message, typically an object.</dd>
+                <dt>consumer</dt>
+                <dd>The name of the consumer that sent the request.</dd>
+                <dt>src</dt>
+                <dd>The src value from the corresponding request.</dd>
+            </dl>
+        </dd>
+        <dt>update(model)</dt>
+        <dd>Publishes an arbitrary model object, that can be observed by the consumers of the API.</dd>
+        <dt>isDefaultApiProvider()</dt>
+        <dd>Returns true, if the app is the default provider of the API.</dd>
+    </dl>
+    <h4>Example</h4>
+<pre>
+// register API
+var phoneApi = start.provideApi("com.innovaphone.phone");
+
+// process incoming messages
+phoneApi.onmessage.attach(function(sender, obj) {
+    if (obj.msg.mt == "StartCall") {
+        startCall(obj.msg.num);
+        phoneApi.send({ mt: "StartCallResult" }, obj.consumer, obj.src);
+    }
+});
+
+// publish model
+phoneApi.update({ calls: [] });
+</pre>
+
+    <h3>Consuming an API</h3>
+    <p>
+        Apps can consume an API by calling the start.consumeApi method. The method returns an object that encapsulates the interface to be used by the API consumer.
+    </p>
+    <h4>The API consumer interface</h4>
+    <dl>
+        <dt>providers</dt>
+        <dd>An array that contains the names of all providers of the API.</dd>
+        <dt>model</dt>
+        <dd>
+            An object, that contains all providers of the API with some additional information and their published model.
+            <dl>
+                <dt>title</dt>
+                <dd>The displayname of API provider.</dd>
+                <dt>url</dt>
+                <dd>The URL of the API provider.</dd>
+                <dt>info</dt>
+                <dd>An object that contains static info provided by the app service of the provider. The format is defined by the API.</dd>
+                <dt>model</dt>
+                <dd>An object that contains dynamic info published by the app provider. The format is defined by the API.</dd>
+                <dt>defaultApiProvider</dt>
+                <dd>The name of the current defaultApiProvider (can be null).</dd>
+                <dt>restart</dt>
+                <dd>A counter that reflects how many times the API provider was restarted. This information can be used to detect restarts in order to renew subscriptions to that provider.
+                Note that the initial value is undefined and changes to 0 when the provider was started the first time. So a change to 0 does not indicate a restart.</dd>
+            </dl>
+        </dd>
+        <dt>send(msg, provider, src, title)</dt>
+        <dd>
+            Sends a request to an API provider.
+            <dl>
+                <dt>msg</dt>
+                <dd>The request message, typically an object.</dd>
+                <dt>provider (optional)</dt>
+                <dd>The name of the provider that should receive the request. If no provider is specified, the client lets the user select the provider. If "*" is specified, the request is broadcasted to all available providers of the API.</dd>
+                <dt>src (optional)</dt>
+                <dd>An optional value that will be echoed in the responses.</dd>
+                <dt>title (optional)</dt>
+                <dd>An optional title that is displayed by the client, if the user is asked which app should be used.</dd>
+            </dl>
+        </dd>
+        <dt>onmessage</dt>
+        <dd>
+            Event that fires on incoming responses. The value of the event is an object with the following properties:
+            <dl>
+                <dt>msg</dt>
+                <dd>The actual message, typically an object.</dd>
+                <dt>provider</dt>
+                <dd>The name of the provider that sent the request.</dd>
+                <dt>src</dt>
+                <dd>The value from the corresponding request.</dd>
+            </dl>
+        </dd>
+        <dt>onupdate</dt>
+        <dd>An event that fires on API model changes. The consumer is supposed to re-evaluate the model, if needed.</dd>
+    </dl>
+    <h4>Example</h4>
+<pre>
+    var phoneApi = start.consumeApi("com.innovaphone.phone");
+    phoneApi.send({ mt: "StartCall", num: "200" });
+</pre>
+    
+    <h3>List of app APIs</h3>
+    <p>
+        The API messages and models are transparent to the client, so every app developer can define new APIs.
+        As of now innovaphone defined the following APIs to communicate with their apps.
+    </p>
+    <ul>
+        <li><a href="../com.innovaphone.avatar/lib1_api_avatar.htm">com.innovaphone.avatar</a></li>
+        <li><a href="../com.innovaphone.calllist/lib1_api_calllist.htm">com.innovaphone.calllist</a></li>
+        <li><a href="../com.innovaphone.chat/com.innovaphone.chat.htm">com.innovaphone.chat</a></li>
+        <li><a href="../com.innovaphone.client/lib1_api_client.htm">com.innovaphone.client</a></li>
+        <li><a href="../com.innovaphone.devices/com.innovaphone.devices.htm">com.innovaphone.devices</a></li>
+        <li><a href="../com.innovaphone.devicesui/com.innovaphone.devicesui.htm">com.innovaphone.devicesui</a></li>
+        <li><a href="../com.innovaphone.discussion/com.innovaphone.discussion.htm">com.innovaphone.discussion</a></li>
+        <li><a href="../com.innovaphone.files/com.innovaphone.files.htm">com.innovaphone.files</a></li>
+        <li><a href="../com.innovaphone.launcher/com.innovaphone.launcher.htm">com.innovaphone.launcher</a></li>
+        <li><a href="../com.innovaphone.manager/lib1_api_manager.htm">com.innovaphone.manager</a></li>
+        <li><a href="../com.innovaphone.phone/lib1_api_phone.htm">com.innovaphone.phone</a></li>
+        <li><a href="../com.innovaphone.search/lib1_api_search.htm">com.innovaphone.search</a></li>
+    </ul>
+
+    <h2>Communication channels between apps</h2>
+    <p>
+        Apps or other iframes like status info displays can open a direct communication channel to another app. The programming interface of a channel is similar to a websocket connection.
+        The channel implementation uses window messages.
+    </p>
+    <h3>Opening a channel</h3>
+    <p>
+        The <code>start.openChannel</code> method can be used to open a channel to another app. Additionally arguments with additional information for the app can be passed.
+        The method returns a channel object.
+    </p>
+    <h4>Example</h4>
+<pre>
+    var ch = start.openChannel("someapp", {arg1: 3});
+</pre>
+
+    <h3>Accepting channels</h3>
+    <p>
+        If an app wants to accept incoming channels, it needs to set the <code>start.onopenchannel</code> callback.
+        Inside the callback the incoming channel can be accepted using <code>start.acceptChannel</code> or rejected using <code>start.rejectChannel</code>.
+    </p>
+    <h4>Example</h4>
+<pre>
+    start.onopenchannel = function(channel, opener, args) {
+        if (opener == expectedOpener) {
+            var ch = start.acceptChannel(channel);
+        }
+        else {
+            start.rejectChannel(channel);
+        }
+    };
+</pre>
+
+    <h3>The channel object</h3>
+    <p>
+        The channel object provides an interface to handle the lifetime of the communication channel and for sending and receiving messages.
+    </p>
+    <h4>Callbacks</h4>
+    <dl>
+        <dt>onconnected()</dt>
+        <dd>Called if the connection was established.</dd>
+        <dt>onclosed()</dt>
+        <dd>Called if the connection failed or has been closed by the remote endpoint.</dd>
+        <dt>onmessage(msg)</dt>
+        <dd>Called on an incoming message. The message is a javascript object.</dd>
+    </dl>
+    <h4>Methods</h4>
+    <dl>
+        <dt>send(msg)</dt>
+        <dd>Sends the <code>msg</code> object. The remote endpoint will get it using the <code>onmessage</code> callback.</dd>
+        <dt>close()</dt>
+        <dd>Closes the channel. The remote endpoint will get the <code>onclosed</code> callback.
+    </dl>
+    <h4>Example</h4>
+<pre>
+    // source endpoint
+    var ch = start.openChannel("someapp", {arg1: 4});
+    ch.onconnected = function() {
+        ch.send({mt: "Echo"});
+    };
+    ch.onclosed = function() {};
+    ch.onmessage = function(msg) {
+        if (msg.mt == "EchoResult") ch.close();
+    };
+
+    // destination endpoint
+    start.onopenchannel = function(channel, opener, args) {
+        var ch = start.acceptChannel(channel);
+        ch.onconnected = function() {};
+        ch.onclosed = function() {};
+        ch.onmessage = function(msg) {
+            if (msg.mt == "Echo") {
+                ch.send({mt: "EchoResult"});
+            }
+        };
+    };
+</pre>
+
+    <h2>Multi-language support</h2>
+    <p>
+        innovaphone.lib1.Languages defines a library for translating texts. Standalone it can be used to create static texts.
+    </p>
+    <p>
+        In conjunction with <a href="../ui1.lib/ui1.lib.htm">innovaphone.ui1.lib</a> (see innovaphone.ui1.nodePrototype.addTranslation) dynamic texts can be put into UI nodes that are updated automatically, when the language changes.
+    </p>
+    <dl>
+        <dt>innovaphone.lib1.Languages(texts, lang)</dt>
+        <dd>
+            Constructor for the event. The specified sender object will be passed to the attached listener functions.
+        </dd>
+        <dd>
+            <dl>
+                <dt>texts</dt>
+                <dd>An object containing the translations for all supported languages.</dd>
+                <dd>The texts can contain numbered placeholders ($0, $1, $2, ...) that can be substituted during translation.</dd>
+                <dt>lang</dt>
+                <dd>The two-letter code of the current language (e.g. "en").</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+var texts = {
+    en: {
+        conn: "Connected as $0",
+        hello: "Hello!"
+    },
+    de: {
+        conn: "Verbunden als $0",
+        hello: "Hallo!"
+    }
+};
+
+var langs = innovaphone.lib1.Languages(texts, "en");
+</pre>
+        </dd>
+        <dt>current</dt>
+        <dd>Property containing the two-letter code of the current language.</dd>
+        <dt>activate(lang)</dt>
+        <dd>
+            Switches the current language.
+        </dd>
+        <dd>
+            <dl>
+                <dt>lang</dt>
+                <dd>The two-letter code of the language (e.g. "en").</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+langs.activate("de");
+</pre>
+        </dd>
+
+        <dt>text(id, args)</dt>
+        <dd>Returns the translation of a text and substitues placeholders.</dd>
+        <dd>
+            <dl>
+                <dt>id</dt>
+                <dd>The ID of the text.</dd>
+                <dt>args (optional)</dt>
+                <dd>An array containing the values for substituting the placeholders in the tranlated text.</dd>
+            </dl>
+        </dd>
+        <dd>
+            Example:
+<pre>
+var text1 = langs.text("hello");
+var text2 = langs.text("conn", ["John Doe"]);
+</pre>
+        </dd>
+
+        <dt>clear(node)</dt>
+        <dd>Detaches UI nodes, so that they won't receive further updates when the language is changing.</dd>
+        <dd>This method is needed only when the library is used by <a href="../ui1.lib/ui1.lib.htm">innovaphone.ui1.lib</a>.</dd>
+        <dd>
+            <dl>
+                <dt>node (optional)</dt>
+                <dd>If specified, the library only detaches the UI nodes that are in the subtree of the given node. Otherwise all UI nodes are detached.</dd>
+            </dl>
+        </dd>
+    </dl>
+</body>
+</html>

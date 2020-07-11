@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>HTTP Client</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>http_client</h1>
+    <p>
+        IHTTPClient is simple HTTP client.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/lib/httplib.h<br><br></td></tr>
+        <tr>
+            <td><b>Public functions</b></td>
+            <td>
+                <a href="#HTTPShutdownReasonToStr">HTTPShutdownReasonToStr</a><br />
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IHTTPClient">IHTTPClient</a><br>
+                <a href="#UHTTPClient">UHTTPClient</a><br />
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#HTTP_AUTH_NONE">HTTP_AUTH_NONE</a><br>
+                <a href="#HTTP_AUTH_NTLM">HTTP_AUTH_NTLM</a><br>
+                <a href="#HTTP_AUTH_DIGEST">HTTP_AUTH_DIGEST</a><br>
+                <a href="#HTTP_AUTH_BASIC">HTTP_AUTH_BASIC</a><br>
+                <a href="#HTTP_AUTH_ALL">HTTP_AUTH_ALL</a><br>
+                <a href="#HTTP_CLIENT_CHUNKED_TRANSFER">HTTP_CLIENT_CHUNKED_TRANSFER</a><br>
+                <a href="#http_request_type_t">http_request_type_t</a><br>
+                <a href="#http_shutdown_reason_t">http_shutdown_reason_t</a><br>
+                <a href="#http_result_t">http_result_t</a><br>
+                <a href="#http_error_t">http_error_t</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#example">Code Example</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Functions</h1>
+    <h2>Helper functions</h2>
+    <pre><code class="language-cpp">inline const char * HTTPShutdownReasonToStr(http_shutdown_reason_t reason)</code></pre>
+    <p>
+        Helper function to convert a http_shutdown_reason_t to a string. Helpful for debugging and logging purposes.
+    </p>
+
+    <div class="fnhead" style="margin-top:5px" id="HTTPShutdownReasonToStr">HTTPShutdownReasonToStr</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">http_shutdown_reason_t <b>reason</b></td><td>The shutdown reason to get the string for.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The name of the shutdown reason. Will be the same as the name of the num itself.
+    </dd>
+
+    <h1>Classes</h1>
+    <h2 id="IHTTPClient">IHTTPClient</h2>
+<pre><code class="C++">class IHTTPClient {
+public:
+    virtual ~IHTTPClient() {}
+    static IHTTPClient * Create(class IIoMux * const iomux,
+                                class ISocketProvider * const tcpSocketProvider,
+                                class ISocketProvider * const tlsSocketProvider,
+                                class UHTTPClient * const user,
+                                class IInstanceLog * const log);
+    virtual void Connect(const char * address,
+                         const char * user = NULL,
+                         const char * pwd = NULL,
+                         int authMethods = HTTP_AUTH_ALL) = 0;
+    virtual void Recv(byte * buffer, size_t size, bool recvPartitial = false);
+    virtual void Send(const byte * data = NULL, size_t size = 0, bool last = false);
+    virtual void Shutdown();
+    virtual void Reconnect();
+    virtual void PassErrorToUser(http_error_t err);
+    virtual void SendContentForAuthentication(bool doSend);
+    virtual void SetRequestType(http_request_type_t reqType, const char * resourceName, size_t contentLength = 0, const char * contentType = "text/xml; charset=utf-8");
+    virtual void SetCustomHeaderField(const char * field, const char * value);
+    virtual http_result_t GetHTTPResult();
+    virtual size_t GetContentLength(bool &amp; chunked);
+    virtual size_t GetHeaderFieldValueCount(const char * headerField);
+    virtual const char * GetHeaderFieldValue(const char * headerField, size_t index = 0);
+
+    virtual bool Connected();
+};</code></pre>
+    <p>
+        This is the main class of the HTTP client functionality. Please note that IHTTPClient is not a fully-fledged HTTP client. For now only GET, PUT and POST requests can be used.
+        However, the generally used authentication variants are supported by the Client (basic, digest and NTLM). Connections can be established by a TCP or a TLS socket. This depends
+        on the address given to connect (HTTP for normal TCP connections, HTTPS for a TLS connection).
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">Create (static function)</div>
+    <dd>
+        Creates an IHTTPClient instance.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IIoMux * const <b>iomux</b></td><td>The iomux instance needed for socket communication.</td></tr>
+            <tr><td class="param">ISocketProvider * const <b>tcpSocketProvider</b></td><td>A socket provider to create a TCP socket.</td></tr>
+            <tr><td class="param">ISocketProvider * const <b>tlsSocketProvider</b></td><td>A socket provider to create a TLS socket.</td></tr>
+            <tr><td class="param">UHTTPClient * const <b>user</b></td><td>An UHTTPClient instance to receive the callbakcs from IHTTPClient.</td></tr>
+            <tr><td class="param">IInstanceLog * const <b>log</b></td><td>The log instance for logging.</td></tr>
+        </table>
+
+        <h4>Return Value</h4>
+        The IHTTPClient instance created. Must be deleted if no longer used.
+    </dd>
+
+    <div class="fnhead">Connect</div>
+    <dd>
+        Connects to the given address (wich can be an IPv4 or IPv6 address, as well asn an URI). If the address is a URI and that URI starts with HTTPS,
+        an TLS connection will be established instead of the default TCP connection.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>address</b></td><td>The address to connect to. Can be an IPv4 / IPv6 address or an valid URI.</td></tr>
+            <tr><td class="param">const char * <b>user</b></td><td><i>(Default: nullptr)</i> The user for authentication if requested by the server.</td></tr>
+            <tr><td class="param">const char * <b>pwd</b></td><td><i>(Default: nullptr)</i> The password for authentication if requested by the server.</td></tr>
+            <tr><td class="param">int <b>authMethods</b></td><td><i>(Default: HTTP_AUTH_ALL)</i> The autentications to accept as bit field Can be a combination of HTTP_AUTH_BASIC, HTTP_AUTH_DIGEST and HTTP_AUTH_NTLM. Or HTTP_AUTH_ALL to accept all of them.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        On success, UTHHPClient::HTTPClientConnectComplete() will be called. If an error occurres, the connection will be closed, which leads to a call to UHTTPClient::HTTPClientShutdown().
+
+        <h4>Remarks</h4>
+        If using an URI to connect, an username and password for authentication can also be given wiht the URI itself ("http://user::pwd@mysite.com").
+    </dd>
+
+    <div class="fnhead">Recv</div>
+    <dd>
+        Let the HTTP Client receive data. Must be called after sending a GET request and receiving the callback, that the request is completed (which means, the response header
+        had ben read and interpreted). Recv() also should only be called after checking, if the request result actually delivers data.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">byte * <b>buffer</b></td><td>The buffer to write the received data to.</td></tr>
+            <tr><td class="param">size_t <b>size</b></td><td>The size of the buffer.</td></tr>
+            <tr>
+                <td class="param">bool <b>recvPartitial</b></td>
+                <td>
+                    <i>(Default: false)</i> If true, the function will call the callback as soon as a couple of bytes had been received. If false,
+                    the HTTP client waits until received the number of bytes given in size.
+                </td>
+            </tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        UHTTPClient::HTTPClientRecvResult() will be called after the data had been read or UHTTPClient::HTTPClientRecvCanceled(), if the Recv() call had been canceled for whatever reason.
+
+        <h4>Remarks</h4>
+        Be careful with calling Recv() and readPartitial set to false. Because if the data received will be less than size, Recv() will never lead to a callback.
+    </dd>
+
+    <div class="fnhead">Send</div>
+    <dd>
+        Sends the request by building a correct header and sending that it. So Send() must be called even if there is no need to send additional data, too. If there is additional data,
+        it can be given to Send() and will be send after the header. If the data to send is chunked encoded, Send() can be called multiple times until all of the data had been send.
+        To end a chunck encoded transfer, set the last flag to true.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const byte * <b>data</b></td><td><i>(Default: nullptr)</i> The buffer holding additional data to send or nullptr to send nothing else.</td></tr>
+            <tr><td class="param">size_t <b>size</b></td><td><i>(Default: 0)</i> The number of bytes to send.</td></tr>
+            <tr><td class="param">bool <b>last</b></td><td><i>(Default: false)</i> If true, that send call indicates the end of a chunk encoded transfer.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        UHTTPClient::HTTPClientSendResult() will be called after the data had been send. After the request had been completed, UTHHPClient::HTTPClientRequestComplete() will be called.
+
+        <h4>Remarks</h4>
+        To respect the flow control nescessary for the asynchronous kind of communication used by the IHTTPClient, continous send calles should be made after receiving a
+        UHTTPClient::HTTPClientSendResult() callback.
+    </dd>
+
+    <div class="fnhead">Shutdown</div>
+    <dd>
+        Closes the HTTP conenction. If there is data left inside the IHTTPClient that still must be send, it will be send first before closing the connection.
+
+        <h4>Callbacks</h4>
+        After the connection had been closed, UHTTPClient::HTTPClientShutdown() will be called.
+    </dd>
+
+    <div class="fnhead">Reconnect</div>
+    <dd>
+        After the connection had been closed (because of a call to IHTTPConnection::Shutdown() or because of a close initiated by the server), it can be restablished by calling
+        Reconnect() using the same optiones (request type, server address, ...) as given for the first request.
+
+        <h4>Callbacks</h4>
+        On success, UTHHPClient::HTTPClientConnectComplete() will be called. If an error occurres, the connection will be closed, which leads to a call to UHTTPClient::HTTPClientShutdown().
+    </dd>
+
+    <div class="fnhead">PassErrorToUser</div>
+    <dd>
+        Generally an error leads to a shutdown of the IHTTPClient. But sometimes it it useful to not closed the error and pass it the the app instead. This can be activated with
+        PassErrorToUser(). In case of an error that should be passed to the user, the error case will be redirected to a normal UHTTPClient::HTTPClientRequestComplete() callback.
+        The UHTTPClient must than check the HTTP result by calling IHTTPClient::GetHTTPResult().
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">http_error_t <b>err</b></td><td>The HTTP Error to pass to the user. Can be a bit field.</td></tr>
+        </table>
+
+        <h4>Callbacks</h4>
+        In case of one of the given errors occurres, UHTTPClient::HTTPClientReqeustComplete() will be called anyway.
+
+        <h4>Remarks</h4>
+        Even if PassErrorToUser() can theoreticaly called multiple times, the better way will be to call it once giving a bit filed of flags, cobined using or.
+        Valid flags ar HTTP_CL_ERR_NOT_FOUND, HTTP_CL_ERR_BAD_REQUEST, HTTP_CL_ERR_INTERNAL_SERVER and HTTP_CL_ERR_REDIRECT. See the data type section below for details.
+    </dd>
+
+    <div class="fnhead">SendContentForAuthentication</div>
+    <dd>
+        When connecting to a server that needs authentication, the IHTTPClient at first sends a request without the conent (if a POST request need to be send). This
+        helps to prevend sending data that won't be needed. But it can be, that the server won't accept such a request. An example for that is the Microsoft Exchange
+        365 server, which will respond with an bad request. For that case, SendContentFoprAuthentication() can be used, so that the data for the POST request will
+        be send even if the HTTP client needs to authenticate first.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">bool <b>doSend</b></td><td>True, to send the request content for autnehtication, too.</td></tr>
+        </table>
+
+        <h4>Remarks</h4>
+        The default is, that no content will be send for authentication.
+    </dd>
+
+    <div class="fnhead">SetRequestType</div>
+    <dd>
+        Befor sending the request, the application first needs to set the type of the request as well as the resourceName it wants to access. If the request is not a GET
+        request, data can be or need to send. In that case, the datatype (aka mime-type) must be defined as well as the content length. If the content length is unkown,
+        HTTP_CLIENT_CHUNKED_TRANSFER can be used to enabled chuncked transfer of the data.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">http_request_type_t <b>reqType</b></td><td>The request type - must be HTTP_GET, HTTP_POST or HTTP_PUT.</td></tr>
+            <tr><td class="param">const char * <b>resourceName</b></td><td>The resource name for the request.</td></tr>
+            <tr><td class="param">size_t <b>contentLength</b></td><td><i>(Default: 0)</i> The content length of additional data to send (HTTP_POST &amp; HTTP_PUT only).</td></tr>
+            <tr><td class="param">const char * <b>contentType</b></td><td><i>(Default: "text/xml; charset=utf-8")</i> The mime-type of the additional data to send (HTTP_POST &amp; HTTP_PUT only).</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetCustomHeaderField</div>
+    <dd>
+        Adds the given header field with the given value to the HTTP header to send. Because of this, SetCustomHeaderField() must be called before calling Send().
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>field</b></td><td>The name of the field to set.</td></tr>
+            <tr><td class="param">const char * <b>value</b></td><td>The value to set for that field.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">GetHTTPResult</div>
+    <dd>
+        <h4>Return Value</h4>
+        The result of the last completed request. See the data types section of this document for details on http_result_t.
+    </dd>
+
+    <div class="fnhead">GetContentLength</div>
+    <dd>
+        Returns the size of the content sent with the requests response. It can be that the content is chunk encoded. In that case, the given bool
+        variable will set to true.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">bool &amp; <b>chunked</b></td><td>If the received data is chunk encoded, true will be stored to the chuncked variable.</td></tr>
+        </table>
+
+        <h4>Return Value</h4>
+        The size of the content sent with the response or 0, if no data is available or if the received data is chunk encoded.
+
+        <h4>Remarks</h4>
+        The return value must be intepreted as follows:
+        <ul>
+            <li>If the returned value is &gt; 0, the app must read that amount of data using Recv().</li>
+            <li>If the retunred value is 0 and the flag chunked is set, the app must read data until the end of the stream had been reached.</li>
+            <li>If the returned value is 0 and the flag chunked is not set, there is not data sent with the response.</li>
+        </ul>
+    </dd>
+
+    <div class="fnhead">GetHeaderFieldValueCount</div>
+    <dd>
+        A headerfield can be set more then once in the HTTP header. To get the number of occurrences, GetHeaderFieldValueCount() must be called.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>headerField</b></td><td>The name of the requested header field.</td></tr>
+        </table>
+
+        <h4>Return Value</h4>
+        The number of occurrences of that field or 0, if that field won't exist.
+    </dd>
+
+    <div class="fnhead">GetHeaderFieldValue</div>
+    <dd>
+        Can be used to access the values of the HTTP header fields send with the last response.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>headerField</b></td><td>The name of the requested header field.</td></tr>
+            <tr><td class="param">size_t <b>index</b></td><td><i>(Default: 0)</i> The index of the header field, must be between 0 and GetHeaderFieldValueCount(headerField) - 1.</td></tr>
+        </table>
+
+        <h4>Return Value</h4>
+        The value of the header field.
+
+        <h4>Remarks</h4>
+        Don't save the pointer itself for later use, because after sending an new request, the returned pointer becomes invalid. If the value of that header field needs to
+        be used later, it must be copied.
+    </dd>
+
+    <div class="fnhead">Connected</div>
+    <dd>
+        <h4>Return Value</h4>
+        True, if the HTTP client is connected, else false.
+    </dd>
+
+
+    <h2 id="UHTTPClient">UHTTPClient</h2>
+<pre><code class="C++">class UHTTPClient {
+public:
+    ~UHTTPClient() {}
+    virtual void HTTPClientConnectComplete(IHTTPClient * const httpClient);
+    virtual void HTTPClientShutdown(IHTTPClient * const httpClient, http_shutdown_reason_t reason);
+    virtual void HTTPClientSendResult(IHTTPClient * const httpClient);
+    virtual void HTTPClientRecvResult(IHTTPClient * const httpClient, byte * buffer, size_t len, bool transferComplete);
+    virtual void HTTPClientRecvCanceled(IHTTPClient * const httpClient, byte * buffer);
+    virtual void HTTPClientRequestComplete(IHTTPClient * const httpClient);
+};</code></pre>
+    <p>
+        This class is for receiving callbacks from the IHTTPClient. You must pass as subclass of UHTTPClient to an IHTTPClient as user.
+    </p>
+
+    <div class="fnhead">HTTPClientConnectComplete</div>
+    <dd>
+        Will be called after the connection to the server had been successfully established. Here is the right place to setup up the request type
+        (by calling ITTHClient::SetRequestType()) and send the request.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HTTPClientShutdown</div>
+    <dd>
+        Will be called after the IHTTPClient connection had been shutdown because of Shutdown() had been called or because of the connection had been closed by the server.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+            <tr><td class="param">http_shutdown_reason_t <b>reason</b></td><td>The reason for the shutdown. See the data types section below for details.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HTTPClientSendResult</div>
+    <dd>
+        Will be called after the Send() had been completed, which means that the header and an eventuell given additional data to send had been send. If there is more data to send,
+        this will be the right place for sending the next part to respect the asynchronous flow control.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HTTPClientRequestComplete</div>
+    <dd>
+        Will be called if the HTTP request has been successfully completed. A completed request means, that everything for the request had been send and the result header had been
+        received and interpreted. So this callback function will be the right place to check for data thay maybe available with the response and call IHTTPClient::Recv() to receive it.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HTTPClientRecvResult</div>
+    <dd>
+        Will be called after the application called IHTTPClient::Recv() and data had been received. The flag transferComplete indicates, if the data of the response
+        had been received completley or not (which counts for both, streamed and chunk encoded transfer). If false, additional Recv() calls must follow until the flag
+        is set to true.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+            <tr><td class="param">byte * <b>buffer</b></td><td>The buffer holding the received data.</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The number of bytes received.</td></tr>
+            <tr><td class="param">bool <b>transferComplete</b></td><td>true, if the transfer is completed (all data received), else false.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HTTPClientRecvCanceled</div>
+    <dd>
+        Will be called before UHTTPClient::HTTPClientShutdown(), if a receive data buffer had been passed through IHTTPClient::Recv() and not returned back via
+        UHTTPClient::HTTPClientRecvResult(). If the buffer was allocated individually this gives the opportunity to free it.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">IHTTPClient * const <b>httpClient</b></td><td>The calling IHTTPClient instance.</td></tr>
+            <tr><td class="param">byte * <b>buffer</b></td><td>The buffer given to Recv() to free it (if needed).</td></tr>
+        </table>
+    </dd>
+
+    <h1>Data types</h1>
+    <h2>Defines</h2>
+    <pre><code class="C++">#define HTTP_AUTH_NONE      0
+#define HTTP_AUTH_NTLM      1
+#define HTTP_AUTH_DIGEST    2
+#define HTTP_AUTH_BASIC     4
+#define HTTP_AUTH_ALL       HTTP_AUTH_NTLM | HTTP_AUTH_DIGEST | HTTP_AUTH_BASIC
+#define HTTP_CLIENT_CHUNKED_TRANSFER    0xffffffff</code></pre>
+    <table style="margin-left: 20px">
+        <tr><td id="HTTP_AUTH_NONE"><b>HTTP_AUTH_NONE</b></td><td>(Use with IHTTPClient::Connect()) Don't support authentication.</td></tr>
+        <tr><td id="HTTP_AUTH_NTLM"><b>HTTP_AUTH_NTLM</b></td><td>(Use with IHTTPClient::Connect()) Accept NTLM authentication.</td></tr>
+        <tr><td id="HTTP_AUTH_DIGEST"><b>HTTP_AUTH_DIGEST</b></td><td>(Use with IHTTPClient::Connect()) Accept digest authentication.</td></tr>
+        <tr><td id="HTTP_AUTH_BASIC"><b>HTTP_AUTH_BASIC</b></td><td>(Use with IHTTPClient::Connect()) Accept basic authentication.</td></tr>
+        <tr><td id="HTTP_AUTH_ALL"><b>HTTP_AUTH_ALL</b></td><td>(Use with IHTTPClient::Connect()) Accept all supported authentications. This is the default.</td></tr>
+        <tr><td id="HTTP_CLIENT_CHUNKED_TRANSFER"><b>HTTP_CLIENT_CHUNKED_TRANSFER</b></td><td>The end of line, used inside the HTTP header. The Header ends with on empty line, which is a line that only holds CLRF.</td></tr>
+    </table>
+
+    <h2 id="http_request_type_t">http_request_type_t</h2>
+    <pre><code class="C++">typedef enum {
+    HTTP_GET,
+    HTTP_POST,
+    HTTP_PUT
+} http_request_type_t;</code></pre>
+    <p>
+        This enum defines the request types supported by the IHTTPClient. One of them must be given to IHTTP::SetRequestType(). The supported request types by the IHTTPClient are GET, POST and PUT.
+    </p>
+
+    <h2 id="http_shutdown_reason_t">http_shutdown_reason_t</h2>
+    <pre><code class="C++">typedef enum {
+    HTTP_SHUTDOWN_NORMAL,
+    HTTP_SHUTDOWN_BY_PEER,
+    HTTP_SOCKET_LOST,
+    HTTP_ADDRESS_INVALID,
+    HTTP_SOCKET_ERROR,
+    HTTP_CONNECT_FAILED,
+    HTTP_BYTE_STREAM_BROKEN,
+    HTTP_UNHANDLED_HTTP_RESULT,
+    HTTP_FAILURE,
+    HTTP_AUTHENTICATION_FAILED,
+    HTTP_NOT_FOUND,
+    HTTP_BAD_REQUEST,
+    HTTP_INTERNAL_SERVER_ERROR
+} http_shutdown_reason_t;</code></pre>
+    <p>
+        This enum defines the reasons for a shutdown. The following reason can lead to a IHTTPClient shutdown:
+    </p>
+    <table style="margin-left: 20px">
+        <tr><td><b>HTTP_SHUTDOWN_NORMAL</b></td><td>A normal shutdown initiated by the application itself by calling IHTTPClient::Shutdown().</td></tr>
+        <tr><td><b>HTTP_SHUTDOWN_BY_PEER</b></td><td>The server has initiated the shutdown.</td></tr>
+        <tr><td><b>HTTP_SOCKET_LOST</b></td><td>The socket had been lost.</td></tr>
+        <tr><td><b>HTTP_ADDRESS_INVALID</b></td><td>The address given to IHTTPClient::Connect() was invalid.</td></tr>
+        <tr><td><b>HTTP_SOCKET_ERROR</b></td><td>An unexpected socket error occured.</td></tr>
+        <tr><td><b>HTTP_CONNECT_FAILED</b></td><td>Creating the connection failed.</td></tr>
+        <tr><td><b>HTTP_BYTE_STREAM_BROKEN</b></td><td>There was an error inside the byte stream while authenticating or receiving data.</td></tr>
+        <tr><td><b>HTTP_UNHANDLED_HTTP_RESULT</b></td><td>An not expected HTTP result had been returned by the server.</td></tr>
+        <tr><td><b>HTTP_FAILURE</b></td><td>En error had been found in the response http header, sent by the server.</td></tr>
+        <tr><td><b>HTTP_AUTHENTICATION_FAILED</b></td><td>The authentication failed (e. G. because of wrong username / password or an unsupported authentication method).</td></tr>
+        <tr><td><b>HTTP_NOT_FOUND</b></td><td>The requested resource for the request could not be found on the server.</td></tr>
+        <tr><td><b>HTTP_BAD_REQUEST</b></td><td>The request was bad or malformed (e. g. a custom header field was wrong).</td></tr>
+        <tr><td><b>HTTP_INTERNAL_SERVER_ERROR</b></td><td>An internal error occured on the server side.</td></tr>
+    </table>
+
+    <h2 id="http_result_t">http_result_t</h2>
+    <pre><code class="C++">typedef enum {
+    HTTP_RESULT_OK,
+    HTTP_RESULT_NOT_FOUND,
+    HTTP_RESULT_BAD_REQUEST,
+    HTTP_RESULT_INTERNAL_SERVER_ERROR
+} http_result_t;</code></pre>
+    <p>
+        This enum defines the results of a HTTP request. That results can be get by calling IHTTPClient::GetHTTPResult(). The following results are supported
+        by that function:
+    </p>
+    <table style="margin-left: 20px">
+        <tr><td><b>HTTP_RESULT_OK</b></td><td>(HTTP 200) The request was correct and an appropriate response had been send.</td></tr>
+        <tr><td><b>HTTP_RESULT_NOT_FOUND</b></td><td>(HTTP 404) The requested resource could not be found on the server.</td></tr>
+        <tr><td><b>HTTP_RESULT_BAD_REQUEST</b></td><td>(HTTP 400) The request was malformed (e. g. a custom header field was used incorrectly).</td></tr>
+        <tr><td><b>HTTP_RESULT_INTERNAL_SERVER_ERROR</b></td><td>(HTTP 500) An internal error occurred on the server.</td></tr>
+    </table>
+
+    <h2 id="http_error_t">http_error_t</h2>
+    <pre><code class="C++">typedef enum {
+    HTTP_CL_ERR_NOT_FOUND           = 0x0001,
+    HTTP_CL_ERR_BAD_REQUEST         = 0x0002,
+    HTTP_CL_ERR_INTERNAL_SERVER     = 0x0004
+} http_error_t;</code></pre>
+    <p>
+        This enum defines the errors that should be passed to the UHTTPClient user. Instead of shutting down the IHTTPClient, the request will be accepted
+        and UHTTPClient::HTTPClientRequestComplete() will be called. The user must check the error code (by calling IHTTPClient::GetHTTPResult()) and
+        handle it properly. The flags of http_error_t can be combined to a bitfield by a binary or operator. The following flags are supported:
+    </p>
+    <table style="margin-left: 20px">
+        <tr><td><b>HTTP_CL_ERR_NOT_FOUND</b></td><td>(HTTP 404)  requested resource could not be found on the server.</td></tr>
+        <tr><td><b>HTTP_CL_ERR_BAD_REQUEST</b></td><td>(HTTP 400) The request was malformed (e. g. a custom header field was used incorrectly).</td></tr>
+        <tr><td><b>HTTP_CL_ERR_INTERNAL_SERVER</b></td><td>(HTTP 500) An internal error occurred on the server.</td></tr>
+    </table>
+
+
+    <h1 id="example">Code Example</h1>
+    <pre><code class="C++">app::app(IIoMux * iomux)
+    : iomux(iomux)
+{
+    this->httpClient = IHTTPClient::Create(iomux, aTcpSocketProvider, aTlsSocketProvider, this);
+    this->httpClient->Connect("google.de");
+}
+void app::HTTPClientConnectComplete(IHTTPClient * const httpClient)
+{
+    this->httpClient->SetRequestType(HTTP_GET, "/index.html");
+    this->httpClient->Send();
+}
+void app::HTTPClientSendResult(IHTTPClient * const httpClient)
+{
+    // for GET we can simply ignore the send result and wait for HTTPClientRequestComplete
+}
+void app::HTTPClientRequestComplete(IHTTPClient * const httpClient)
+{
+    this->httpClient->Recv((byte *)malloc(1024), 1024);
+}
+void app::HTTPClientRecvResult(IHTTPClient * const httpClient, byte * buffer, size_t len, bool transferComplete)
+{
+    printf("%.*s", len, (char *)buffer);
+    if (transferComplete) {
+        free(buffer);
+        this->httpClient->Shutdown();
+    }
+    else
+        this->httpClient->Recv(buffer, 1024);
+}
+void app::HTTPClientShutdown(IHTTPClient * const httpClient, http_shutdown_reason_t reason)
+{
+    delete this->httpClient;
+}
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - messages discussion api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.discussion</h1>
+
+    <p>
+        The com.innovaphone.discussion published in the model an URL, which can be used to include
+        a messages iframe. This way a messages discussion can be added to any item in an app. The
+        link to an item in the App is done with tags assigned to the discussion window.
+	</p>
+
+	<a name="consumeApi"><h2>consumeApi</h2></a>
+    
+    <p>
+        The client consumeApi function is used to access the Api:
+    </p>
+
+	<pre><code class="json">var dis = start.consumeApi("com.innovaphone.discussion")</code></pre><br/>
+
+    <a name="openDiscussion"><h2>openDiscussion</h2></a>
+
+    <p>
+        The URL to open the iframe is fond in info of the provider model
+    </p>
+    <pre><code class="json">var model = dis.model[dis.providers[0]];
+    if (model) {
+        if (model.url && model.info && model.info.url) {
+            var url = model.url.slice(0, model.url.lastIndexOf("/") + 1) + model.info.url + "?name=" + dis.providers[0] + "&topic=" + &lt;appname&gt; + "&scheme=dark&tag=" + &lt;appitem&gt;
+        }
+    }</code></pre><br/>
+
+    <p>
+        The following information is includeded in the URL
+    </p>
+
+    <dl>
+        <dt>model.url</dt>
+        <dd>The URL of the provider. This should be used for the URL expect for the file part</dd>
+        <dt>model.info.url</dt>
+        <dd>
+            The relative URL of the discussion. Use this as filename combined with the URL of the
+            provider
+        </dd>
+    </dl>
+
+    <p>
+        The following URL arguments shall be used for the discussion
+    </p>
+
+    <dl>
+        <dt>name</dt>
+        <dd>The name of the provider. Typically discussion.providers[0] can be used</dd>
+        <dt>topic</dt>
+        <dd>
+            The topic to which the messages are posted. The user needs to have access to the topic.
+            This is the case if as topic the sip uri of the App which uses this, is used
+        </dd>
+        <dt>scheme</dt>
+        <dd>
+            Color scheme, darlk or light
+        </dd>
+        <dt>tag</dt>
+        <dd>
+            tag(s) used to link the discussion to an item within the App. This argument can be used
+            multiple times to use multiple tags which are included all in the message posts.
+        </dd>
+    </dl>
+</body>
+</html>

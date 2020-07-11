@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.avatar (App API)</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.manager (AP Manager API)</h1>
+    <p>
+        This API is used to add APs (App Platforms) to a PBX and when the PBX is added, it allows to find
+        the App Instances provided by the AP and to configure the PBX to use these
+        App Instances. It consists of the following functional blocks.
+    </p>
+    <dl>
+        <dt><a href="#ap-domain-management">AP Domain Management</a></dt>
+        <dd>
+            A mechanism to add a new AP to a PBX. For this a random password is set for
+            the domain of the PBX inside the Manager, so that a AP object using this password
+            can be installed on the PBX. For this an AppWebsocket connection with a default (dummy)
+            password is established. A new domain can be created. An email verification
+            mechanism is used, so that a valid email address can be used to reset the
+            password for the domain.
+        </dd>
+        <dt><a href="#ap-instance-management">AP Instance Management</a></dt>
+        <dd>
+            The AP object in the PBX provides an API as hidden App for other Apps within
+            the client. This API is used to announce all the App Instances available for
+            the domain and provides functions to configure domain passwords on a given
+            App Instance.
+        </dd>
+    </dl>
+    
+    <h2><a name="ap-domain-management"/>AP Domain Management<a></a></h2>
+
+    <p>
+        An AppWebsocket connnection with a default password "-" is used for this interface.
+    </p>
+
+    <h3>Login</h3>
+
+    <p>
+        Normal AppWebsocket Login is used.
+    </p>
+
+    <dl>
+        <dt>url</dt>
+        <dd>ws(s)://&lt;AP host address&gt;/manager/manager-domain</dd>
+        <dt>password</dt>
+        <dd>"-"</dd>
+        <dt>domain</dt>
+        <dd>The PBX domain</dd>
+    </dl>
+
+    <h3>RegisterDomain</h3>
+
+	<pre><code class="json">{
+    "mt": "RegisterDomain",
+    "pwd": string
+    "email": string
+}</code></pre><br/>
+
+    <p>
+        With this message a new domain is registered on the AP. An email confirmation is sent.
+        Only after the user clicks the link in the confirmation email, the domain is registered.
+        If the domain already exists, with the click on the link in the confirmation email
+        the password is set to the new one.
+        <br/>
+        The domain is the domain used for the login.
+    </p>
+
+    <dl>
+        <dt>pwd</dt>
+        <dd>Password to be set</dd>
+        <dt>email:</dt>
+        <dd>E-Mail adderess for the confirmation</dd>
+    </dl>
+
+    <h3>RegisterDomainResult</h3>
+
+	<pre><code class="json">{
+    "mt": "RegisterDomainResult"
+}</code></pre><br/>
+
+    <p>
+        Message sent by the AP as response to RegisterDomain
+    </p>
+    
+    <h2><a name="ap-instance-management"/>Instance Management</a></h2>
+
+    <p>
+        Instance management is done through myApps API com.innovaphone.manager. This API is
+        provided by a hidden App provided to the PBX when the Websocket Connection to
+        http(s)://&lt;AP host address&gt;/manager/manager-domain-api is opened from the AP object
+        in the PBX.
+    </p>
+    
+    <h3>ManagerControls</h3>
+
+	<pre><code class="json">{
+    "mt": "ManagerControls"
+}</code></pre><br/>
+
+    <p>
+        The ManagerControls message is used to read the list of PBX Manager plugins available
+        on the given domain
+    </p>
+
+    <h3>ManagerControlsResult</h3>
+
+	<pre><code class="json">{
+    "mt": "ManagerControlsResult",
+    "protocol": string,
+    "ap": string,
+    "apDn": string,
+    "host": string,
+    "controls": [<a href="#Control">&lt;Control&gt;</a>,...]
+}</code></pre><br/>
+
+    <p>
+        With this message the list of available PBX Manager plugins is returned
+    </p>
+    <dl>
+        <dt>protocol</dt>
+        <dd>http: or https:</dd>
+        <dt>ap</dt>
+        <dd>SIP URI user part of the AP object</dd>
+        <dt>apDn</dt>
+        <dd>Display name of the AP object</dd>
+        <dt>host</dt>
+        <dd>Host address of the AP</dd>
+        <dt>controls</dt>
+        <dd>
+            Array of objects of type Control
+        </dd>
+    </dl>
+
+    <a name="Objects"><h3>Objects</h3></a>
+
+    <a name="Control"><div class="fnhead">Control</div></a>
+
+    <pre><code class="json">{
+    "api": [string,...]
+    "uri": string,
+    "png": string,
+    "lang": string
+}</code></pre>
+
+    <p>
+        Description of an PBX Manager plugin control
+    </p>
+
+    <dl>
+        <dt>uri</dt>
+        <dd>The relative URI of the plugin (.js)</dd>
+        <dt>png</dt>
+        <dd>The relatiive URI of the plugin icon (.png)</dd>
+        <dt>lang</dt>
+        <dd>
+            The relative URI of a language file, with the reserved property "pluginTitle" for
+            the title of the plugin.
+        </dd>
+    </dl>
+
+    <h3>InstanceDomain</h3>
+
+	<pre><code class="json">{
+    "mt": "InstanceDomain",
+    "path": string,
+    "pwd": string,
+}</code></pre><br/>
+
+    <p>
+        Used to set a domain on an App Instance, which may be used by multiple domains. As domain
+        the domain used for the login to the AP is used.
+    </p>
+    <dl>
+        <dt>path</dt>
+        <dd>
+            The webserver path as configured for the instance. This is used to identify the instance
+            to which this request should be forwarded.
+        </dd>
+        <dt>pwd</dt>
+        <dd>
+            Password to be used. <!--When the instance domain is successfully set, this can be
+            used to establish a AppWebsocket connection. If no pwd is provided this message is
+            used to check if the domain already exists-->
+        </dd>
+    </dl>
+
+    <h3>InstanceDomainResult</h3>
+
+	<pre><code class="json">{
+    "mt": "InstanceDomainResult",
+    "error": string
+}</code></pre><br/>
+
+    <p>
+        Returns the result for SetInstanceDomain
+    </p>
+    <dl>
+        <dt>error</dt>
+        <dd>If present the operation was not successful</dd>
+    </dl>
+
+    <h3>SetInstancePassword</h3>
+
+    <pre><code class="json">{
+    "mt": "SetInstancePassword",
+    "path": string,
+    "pwd": string
+}</code></pre><br />
+
+    <p>
+       Used to set the password of an instance. On success, the instance is edited with the new password and an AppWebsocket connection can then be established.
+    </p>
+    <dl>
+        <dt>path</dt>
+        <dd>The webserver path used to identify the instance</dd>
+        <dt>pwd</dt>
+        <dd>The new password of the instance</dd>
+    </dl>
+
+    <h3>SetInstancePasswordResult</h3>
+    <pre><code class="json">{
+    "mt": "SetInstancePasswordResult",
+    "error": string
+}</code></pre><br />
+
+    <p>
+        Returns the result for SetInstancePassword
+    </p>
+    <dl>
+        <dt>error</dt>
+        <dd>If present the operation was not successful</dd>
+    </dl>
+
+    <h3>GetInstanceLogin</h3>
+
+	<pre><code class="json">{
+    "mt": "GetInstanceLogin",
+    "path": string,
+    "app": string,
+    "challenge": string,
+}</code></pre><br/>
+
+    <p>
+        Used to get a login for a given instance. This maybe used in the fgetlogin callback of the
+        AppWebsocket connection. With this it is possible to authenticate at instances without an
+        App Object present in the PBX, just by having access to the App Platform Manager.
+    </p>
+    <dl>
+        <dt>path</dt>
+        <dd>
+            The webserver path as configured for the instance. This is used to identify the instance
+            for which a login is requested.
+        </dd>
+        <dt>app</dt>
+        <dd>
+            An App object name used for the login. Usually this has no meaning.
+        </dd>
+        <dt>challenge</dt>
+        <dd>
+            The challenge received from the instance to which a login is requested. This is received
+            as argument of the fgetlogin callback of the AppWebsocket library.
+        </dd>
+    </dl>
+
+    <h3>GetInstanceLoginResult</h3>
+
+	<pre><code class="json">{
+    "mt": "GetInstanceLoginResult",
+    "app": string,
+    "sip": string,
+    "domain": string,
+    "guid": string,
+    "dn": string,
+    "digest": string
+}</code></pre><br/>
+
+    <p>
+        The login, which can be used for the App Instance. This object can directly passed to the login
+        function of the AppWebsocket library.
+    </p>
+</body>
+</html>

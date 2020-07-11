@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone RCC tutorial</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+    function toggleSpoiler(id) {
+        var e = document.getElementById(id);
+        if(e.style.display == "none") e.style.display = "";
+        else e.style.display = "none";
+    }
+    </script>
+    
+    <h1>Tutorial: RCC</h1>
+    <p>
+        The scope of this tutorial is to learn, how to create a source module which uses the RCC Api. 
+    </p>
+    <p>
+        We will make use of the json_api framework, which allows us to encapsulate our code in a seperate
+        source file, with well defined interfaces to the rest of the App.
+        <br/>
+        The tutorial is based on a newly created innovaphone App with the Visual Studio plugin.
+    </p>
+        
+    <h2>Basic ideas</h2>
+
+    <p>
+        The messages related to the RCC Api are identified by a property "api" having the value "RCC". The
+        json_api within the AppWebsocket library is used to route all messages with this property to the
+        code, which registered to handle this Api.
+    </p>
+    <p>
+        There may be multiple PBXs, from which a AppWebsocket connection is established, which provides this
+        Api, so one object is used to keep a list of all these connections an other global information.
+    </p>
+    <p>
+        For each AppWebsocket connection another object is used to keep the status information
+    </p>
+    
+    <h2>Step by step</h2>
+    
+    <p>
+        The used file and class names in this example are based on a newly created App with the name
+        <b>NewApp1</b> and the company name <b>innovaphone</b>.
+    </p>
+    <p>
+        Your filenames might be different according to your settings.
+    </p>
+    
+    <h3>Define the data structures in a new header file rccapi.h</h3>
+
+    <ul>
+        <li>
+            Add new file rccapi.h to the NewApp1 folder
+        </li>
+        <li>
+            Place the following code in the header file
+            <pre><code class="language-cpp">/*-----------------------------------------------------------------------------------------------*/
+/* rccapi.h                                                                                      */
+/* copyright (c) innovaphone 2019                                                                */
+/*                                                                                               */
+/*-----------------------------------------------------------------------------------------------*/
+class RccApiSession;
+class RccApi {
+    class istd::list&lt;RccApiSession&gt; sessions;
+public:
+    RccApi();
+    class JsonApi * CreateJsonApi(class IJsonApiConnection * connection, class json_io & msg, word base);
+};
+
+class RccApiSession : public JsonApi, public istd::listElement&lt;RccApiSession&gt; {
+    const char * Name() { return "RCC"; };
+    void Message(class json_io & msg, word base, const char * mt, const char * src);
+    void JsonApiConnectionClosed();
+    class RccApi * rccapi;
+    class IJsonApiConnection * connection;
+
+public:
+    RccApiSession(class RccApi * rccapi, class IJsonApiConnection * connection);
+    ~RccApiSession();
+
+};
+</code></pre>
+        </li>
+        <li>
+            The class RccApi is used to keep a list of all current sessions and provides the public function
+            CreateJsonApi to add a new AppWebsocket connection.
+        </li>
+        <li>
+            The class RccApiSession is created for each AppWebsocket connection from a PBX providing this Api
+        </li>
+    </ul>
+
+    <h3>Add sceleton implementations to the functions of the new classes</h3>
+    
+    <ul>
+        <li>
+            Add the new file rccapi.cpp to the NewApp1 folder
+        </li>
+        <li>
+            Add includes for the required header files
+            <pre>/*-----------------------------------------------------------------------------------------------*/
+/* rccapi.cpp                                                                                    */
+/* copyright (c) innovaphone 2019                                                                */
+/*                                                                                               */
+/*-----------------------------------------------------------------------------------------------*/
+
+#include "platform/platform.h"
+#include "common/ilib/json.h"
+#include "common/interface/json_api.h"
+#include "rccapi.h"
+<code class="language-cpp"></code></pre>
+        </li>
+        <li>
+            Add define for debug outputs, so debugs can be removed from released code
+            <pre><code class="language-cpp">#define DBG(x) debug->printf x</code></pre>
+        </li>
+        <li>
+            Add the code for RccApi class. The constructor and the CreateJsonApi function.
+            <pre><code class="language-cpp">/*-----------------------------------------------------------------------------------------------*/
+/* RccApi                                                                                        */
+/*-----------------------------------------------------------------------------------------------*/
+
+RccApi::RccApi()
+{
+
+}
+
+class JsonApi * RccApi::CreateJsonApi(class IJsonApiConnection * connection, class json_io & msg, word base)
+{
+    DBG(("RccApi::CreateJsonApi()"));
+    class RccApiSession * session = new RccApiSession(this, connection);
+    sessions.push_back(session);
+    return session;
+}
+</code></pre>
+        </li>
+        <li>
+            Add the code for the RccApiSession class, which is created for each AppWebsocket connection
+            <pre><code class="language-cpp">/*-----------------------------------------------------------------------------------------------*/
+/* RccApiSession                                                                                 */
+/*-----------------------------------------------------------------------------------------------*/
+
+RccApiSession::RccApiSession(class RccApi * rccapi, class IJsonApiConnection * connection)
+{
+    DBG(("RccApiSession::RccApiSession()"));
+    this->rccapi = rccapi;
+    this->connection = connection;
+    char sb[1000];
+    class json_io send(sb);
+    word base = send.add_object(0xffff, 0);
+    send.add_string(base, "mt", "Initialize");
+    send.add_string(base, "api", "RCC");
+
+    connection->JsonApiMessage(send, sb);
+    connection->RegisterJsonApi(this);
+}
+
+RccApiSession::~RccApiSession()
+{
+    DBG(("RccApiSession::~RccApiSession()"));
+    connection->UnRegisterJsonApi(this);
+}
+
+void RccApiSession::Message(class json_io & msg, word base, const char * mt, const char * src)
+{
+    connection->JsonApiMessageComplete();
+
+    DBG(("RccApiSession::Message(%s)", mt));
+    if (!strcmp(mt, "UserInfo")) {
+    }
+}
+
+void RccApiSession::JsonApiConnectionClosed()
+{
+    delete this;
+}
+</code></pre>
+        </li>
+
+    </ul>
+
+    <h3>Add the new files to the makefile</h3>
+
+    <p>
+        In NewApp1.mak add the following rule
+<pre><code class="language-cpp">APP_OBJS += $(OUTDIR)/obj/rccapi.o
+$(OUTDIR)/obj/rccapi.o: NewApp1/rccapi.cpp</code></pre>
+    </p>
+
+    <p>
+        At this point the project should run a build without an error. You should check this.
+    </p>
+
+    <h3>Integrate the new code in NewApp1</h3>
+    <ul>
+        <li>
+            In NewApp1.h add a rccapi pointer to the NewApp1 class for the created RccApi object
+            <pre><code class="language-cpp">class RccApi * rccapi;</code></pre>
+        </li>
+        <li>
+            Include the new header file in NewApp1.cpp
+            <pre><code class="language-cpp">#include "rccapi.h"</code></pre>
+        </li>
+        <li>
+            In the NewApp1 contructor the class RccApi should be created
+            <pre><code class="language-cpp">rccapi = new RccApi();</code></pre>
+        </li>
+        <li>
+            In the NewApp1 destructor the class RccApi should be deleted
+            <pre><code class="language-cpp">delete rccapi;</code></pre>
+        </li>
+        <li>
+            When a PbxInfo message is received a call to CreateJsonApi is used to make use of this
+            connection for the RCC Api
+            <pre><code class="language-cpp">else if (!strcmp(mt, "PbxInfo")) {
+    badgecount = new BadgeCountSignaling(instance, this);
+    instance->rccapi->CreateJsonApi(this, msg, base); // new line
+    AppWebsocketMessageComplete();
+}
+</code></pre>
+        </li>
+    </ul>
+
+    <h3>Run the new code</h3>
+    
+    <p>
+        Run the App and check in the log file what is happening.
+    </p>
+
+</body>
+</html>

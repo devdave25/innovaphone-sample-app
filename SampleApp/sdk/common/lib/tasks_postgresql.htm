@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Library for initializing database tables</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Library for initializing database tables</h1>
+    <p>
+        Every time an app instance is started it needs to check if the database already contains the desired tables and otherwise create them.
+        After software updates it might also need to add new columns to existing tables.
+        This library provides a small collection of tasks that facilitate that job.
+    </p>
+
+    <h2>File information</h2>
+
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/lib/tasks_postgresql.htm<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#TaskPostgreSQLInitTable">TaskPostgreSQLInitTable</a><br>
+                <a href="#TaskPostgreSQLInitEnum">TaskPostgreSQLInitEnum</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleInitDatabase">Initializing a database using multiple sequential tasks</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+
+    <h2 id="TaskPostgreSQLInitTable">TaskPostgreSQLInitTable</h2>
+    <dd>
+    <p>
+        A task that creates a single table including columns, constraints and indices, if not existing. Additional columns, constraints and indices are added if they don't exist.
+    </p>
+    <pre><code class="C++">class TaskPostgreSQLInitTable : public ITask, public UDatabase {
+    ...
+public:
+    <a href="#TaskPostgreSQLInitTable_Constructor">TaskPostgreSQLInitTable(class IDatabase * database, const char * tableName);</a>
+    virtual ~TaskPostgreSQLInitTable();
+    <a href="#TaskPostgreSQLInitTable_AddColumn">void AddColumn(const char * name, const char * type);</a>
+    <a href="#TaskPostgreSQLInitTable_AddConstraint">void AddConstraint(const char * name, const char * value);</a>
+    <a href="#TaskPostgreSQLInitTable_AddIndex">void AddIndex(const char * name, const char * value, bool unique);</a>
+    <a href="#TaskPostgreSQLInitTable_Start">void Start(class UTask * user) override;</a>
+};</code></pre>
+
+        </dd>
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitTable_Constructor">TaskPostgreSQLInitTable</h3>
+    <dd>
+    <p>
+        Contructor used to initialize the class.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class IDatabase * <b>database</b></td>
+                    <td>
+                        The IDatabase object representing the connection to the database.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>tableName</b></td>
+                    <td>
+                        The name of the table.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitTable_AddColumn">AddColumn</h3>
+    <dd>
+    <p>
+        Specifies a column for the database table.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char * <b>name</b></td>
+                    <td>
+                        The name of the column.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>type</b></td>
+                    <td>
+                        The type of the column, e.g. "VARCHAR(32) UNIQUE NOT NULL".
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitTable_AddConstraint">AddConstraint</h3>
+    <dd>
+    <p>
+        Specifies the constraint of a column.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char * <b>name</b></td>
+                    <td>
+                        The name of the column.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>value</b></td>
+                    <td>
+                        The constraint of the column, e.g. "UNIQUE (domain_id, name)".
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitTable_AddIndex">AddIndex</h3>
+    <dd>
+    <p>
+        Adds an index to the table. Indices can include a single column or multiple columns.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char * <b>name</b></td>
+                    <td>
+                        The name of the index.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>value</b></td>
+                    <td>
+                        A comma separated list of column names, e.g. "domain_id, name".
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">bool <b>unique</b></td>
+                    <td>
+                        Tells if the data in the specified columns is unique.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitTable_Start">Start</h3>
+    <dd>
+    <p>
+        Starts the task of checking / creating the table.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class UTask * <b>user</b></td>
+                    <td>
+                        The UTask object that shall receive the TaskComplete or TaskFailed callback after completion.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h2 id="TaskPostgreSQLInitEnum">TaskPostgreSQLInitEnum</h2>
+    <p>
+        A task that creates an enum in the database, if it does not already exist.
+    </p>
+    <pre><code class="C++">class TaskPostgreSQLInitEnum : public ITask, public UDatabase {
+    ...
+public:
+    <a href="#TaskPostgreSQLInitEnum_Constructor">TaskPostgreSQLInitEnum(IDatabase * const database, const char * enumName);</a>
+    virtual ~TaskPostgreSQLInitEnum();
+    <a href="#TaskPostgreSQLInitEnum_AddValue">void AddValue(const char * name);</a>
+    <a href="#TaskPostgreSQLInitEnum_Start">void Start(class UTask * user) override;</a>
+};</code></pre>
+
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitEnum_Constructor">TaskPostgreSQLInitEnum</h3>
+    <dd>
+    <p>
+        Contructor used to initialize the class.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class IDatabase * <b>database</b></td>
+                    <td>
+                        The IDatabase object representing the connection to the database.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>enumName</b></td>
+                    <td>
+                        The name of the enum.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitEnum_AddValue">AddValue</h3>
+    <dd>
+    <p>
+        Adds a single value to the enum.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char * <b>name</b></td>
+                    <td>
+                        The value to be added, e.g. "DEMO_TYPE_1"
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h3 class="fnhead" id="TaskPostgreSQLInitEnum_Start">Start</h3>
+    <dd>
+    <p>
+        Starts the task of checking / creating the enum.
+    </p>
+
+        <h4>Parameters</h4>
+
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class UTask * <b>user</b></td>
+                    <td>
+                        The UTask object that shall receive the TaskComplete or TaskFailed callback after completion.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+
+
+    <h1>Code Examples</h1>
+
+    <h2 id="ExampleInitDatabase">Initializing a database using multiple sequential tasks</h2>
+
+    <pre class="sample" style="height: auto;"><code class="language-cpp">
+#include "platform/platform.h"
+#include "common/interface/database.h"
+#include "common/interface/task.h"
+#include "common/lib/tasks_postgresql.h"
+#include "sysadmin_tables.h"
+
+TaskDatabaseInit::TaskDatabaseInit(IDatabase * database) :
+initEnum(database, "demo_type"),
+initDomains(database, "domains"),
+initLocations(database, "locations"),
+{
+    // enums
+    initEnum.AddValue("DEMO_TYPE_1");
+    initEnum.AddValue("DEMO_TYPE_2");
+    initEnum.AddValue("DEMO_TYPE_3");
+    // domains
+    initDomains.AddColumn("id", "BIGSERIAL PRIMARY KEY NOT NULL");
+    initDomains.AddColumn("name", "VARCHAR(32) UNIQUE NOT NULL");
+    initDomains.AddColum("enum_demo", "demo_type"); // Type of the field = name of the enum
+    initDomains.AddIndex("domains_index_name", "name", false);
+    // locations
+    initLocations.AddColumn("id", "BIGSERIAL PRIMARY KEY NOT NULL");
+    initLocations.AddColumn("domain_id", "BIGINT REFERENCES domains(id)");
+    initLocations.AddColumn("name", "VARCHAR(32) NOT NULL");
+    initLocations.AddConstraint("locations_unique_name", "UNIQUE (domain_id, name)");
+    initLocations.AddIndex("locations_index_name", "domain_id, name", true);  // index on several columns
+}
+
+TaskDatabaseInit::~TaskDatabaseInit()
+{
+}
+
+void TaskDatabaseInit::Start(class UTask * user)
+{
+    this->user = user;
+    initEnums.Start(this);
+}
+
+void TaskDatabaseInit::TaskComplete(class ITask * const task)
+{
+    if (task == &initEnum) initDomains.Start(this);
+    else if (task == &initDomains) initLocations.Start(this);
+    else if (task == &initLocations) user->TaskComplete(this);
+    else ASSERT(false, "TaskDatabaseInit::TaskComplete");
+}
+
+void TaskDatabaseInit::TaskFailed(class ITask * const task)
+{
+    user->TaskFailed(this);
+}
+    </code></pre>
+</body>
+</html>

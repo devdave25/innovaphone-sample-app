@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.chat (App API)</title>
+    <link rel="stylesheet" href="../lib1/innovaphone.lib1.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>com.innovaphone.chat (App API)</h1>
+    <p>
+        This API is used for communication with chat apps.
+    </p>
+
+    <h2>API model</h2>
+    <h3>Service info</h3>
+    <p>
+        The API doesn't define any service info.
+    </p>
+    <h3>Provider model</h3>
+    <p>
+        The API doesn't define a provider model.
+    </p>
+
+    <h2>API messages</h2>
+    <p>
+        All messages are JSON objects that have a mandatory attribute "mt" that specifies the message type.
+        The provider will echo the "src" attribute from requests in the corresponding responses.
+    </p>
+
+    <h3>Requests</h3>
+    <dl>
+        <dt>StartChat</dt>
+        <dd>Starts a new chat session to the given SIP URI.</dd>
+        <dd>
+            <dl>
+                <dt>sip</dt>
+                <dd>The remote SIP URI for the chat session.</dd>
+                <dt>dn (optional)</dt>
+                <dd>The display name.</dd>
+            </dl>
+        </dd>
+        <dd>Example: <code>{ mt: "StartChat", sip: "bob@example.com" }</code></dd>
+    </dl>
+    <h3>Responses</h3>
+    <p>
+        The API doesn't define any response messages.
+    </p>
+</body>
+</html>

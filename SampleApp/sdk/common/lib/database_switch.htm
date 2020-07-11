@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - database switch implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>DatabaseSwitch</h1>
+    <p>
+        The database switch can be used if one needs multiple <a href="../interface/database.htm#UDatabase">UDatabase</a> user instances
+        which work within the same logical database transaction, as one database
+        transaction just processes requests from the same UDatabase user.
+	</p>
+    <p>
+        This implementation stores the UDatabase user from the application inside a queue
+        and always uses the own UDatabase pointer.
+    </p>
+    
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/lib/database_switch.h<br><br></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                       <a href="#DatabaseSwitch">DatabaseSwitch</a><br>
+                                      </td></tr>
+        <tr><td><b>Examples</b></td><td>
+                                          <a href="#ExampleDatabaseSwitch">DatabaseSwitch</a><br>
+                                      </td></tr>
+	</table>
+	
+	
+	
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+	<a name="DatabaseSwitch"><h2>DatabaseSwitch</h2></a>
+    <pre><code class="C++">class DatabaseSwitch : public IDatabase, public UDatabase {
+public:
+    DatabaseSwitch(class IDatabase * database);
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">DatabaseSwitch(class IDatabase * database)</div>
+    <dd>
+        The constructor of the class.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IDatabase * <b>database</b></td><td>The <a href="../interface/database.htm#IDatabase">IDatabase</a> instance to be used by the switch.</td></tr>
+        </table>
+    </dd>
+    
+    <h3>Further functions</h3>
+    <p>
+    All other functions are the functions from <a href="../interface/database.htm#IDatabase">IDatabase</a> and can be used in exactly the same manner.
+    </p>
+    
+    <!-- Block with the examples -->
+    <h1>Examples</h1>
+	<a name="DatabaseSwitch"><h2>DatabaseSwitch</h2></a>
+    <pre><code class="C++">class IDatabase * database = databaseProvider->CreateDatabase(iomux, this, this);
+class IDatabase * databaseSwitch = new DatabaseSwitch(database); 
+databaseSwitch->BeginTransaction(databaseUserA);    // databaseUserA gets the BeginTransactionResult callback
+databaseSwitch->ExecSQL(databaseUserB, "...");      // databaseUserB gets the ExecSQLResult callback
+databaseSwitch->ExecSQL(databaseUserC, "...");      // databaseUserC gets the ExecSQLResult callback
+databaseSwitch->EndTransaction(databaseUserA);      // databaseUserA gets the EndTransactionResult callback</code></pre>
+</body>
+</html>

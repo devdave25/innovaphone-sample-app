@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone external app service tutorial</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+    <h1>Tutorial: External App Service</h1>
+    <p>
+        External web services may be integrated in myApps the same as services running on an App Platform.
+        The minimum requirement is, that these should make use of the PBX authentication. This tutorial
+        explains how to integrate the PBX authentication in such a web service.
+    </p>
+    <p>
+        For demonstration purposes we implement a simple HTTP GET handler in our NewApp1 project to simulate
+        the external web service. This functionality can then be transfered to the external web service
+        to whatever technology (PHP, Go, Java, ...) is used there.
+    </p>
+    <p>
+        The tutorial is based on a newly created innovaphone App with the Visual Studio plugin.
+    </p>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name
+        <b>NewApp1</b> and the company name <b>innovaphone</b>.
+    </p>
+        
+    <h2>Simulation of external Web Service</h2>
+
+    <p>
+        To simulate the external web service, we add a file webservice.htm, to the apps folder containing
+        a very simple page
+            <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8" /&gt;
+    &lt;title&gt;Webservice&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;Webservice&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </p>
+
+    <p>
+        To add this file to the static files served by the App, we add the line
+        <pre><code>    $(APPWEBPATH)/webservice.htm \</code></pre>
+        to the statement
+        <pre><code>APPWEBSRC_ZIP +=</code></pre>
+        in apps.mak
+    </p>
+
+    <p>
+        You can now build and run 
+    </p>
+    <p>
+        You should be able to open the webservice.htm with your browser from the URL
+        http://&lt;AP&gt;/newapp1/webservice.htm
+    </p>
+    
+    <h2>Simulation of Authentication Checking on the External Web Service</h2>
+    
+    <p>
+        The authentication works with a shared secret between the PBX App object and the web service.
+        In this example we use a static string "secret" for this.
+    </p>
+    <p>
+        For the login the App should first read a "challenge" from the webservice. This should be a random string
+        wich is used to create unique login requests, so that a replay attack is not possible. This challenge is
+        forwarded to the PBX.
+    </p>
+    <p>
+        The PBX uses this challenge to create a login request. This login request contains
+        <dl>
+            <dt>app</dt>
+            <dd>
+                The filename which is configure in the URL of the PBX App object. This identifies the App Service
+                addressed and can thus be used to determine righs associated with the user or licensing.
+            </dd>
+            <dt>domain</dt>
+            <dd>
+                The domain of the PBX
+            </dd>
+            <dt>sip</dt>
+            <dd>
+                SIP URI user part of the user who logs in.
+            </dd>
+            <dt>guid</dt>
+            <dd>
+                The guid of the user
+            </dd>
+            <dt>dn</dt>
+            <dd>
+                The display name of the user
+            </dd>
+            <dt>info</dt>
+            <dd>
+                An optional Json data structure containing more information.
+            </dd>
+            <dt>digest</dt>
+            <dd>
+                A SHA256 hash calculated over
+                <pre>&lt;app&gt;:&lt;domain&gt;:&lt;sip&gt;:&lt;guid&gt;:&lt;dn&gt;:&lt;info&gt;:&lt;challenge&gt;:&lt;secret&gt;</pre>
+            </dd>
+        </dl>
+    </p>
+    <p>
+        The web service can verify the login by calculating the same hash using the shared secret and verifying that
+        the result is the same.
+    </p>
+
+    <p>
+        We now add code the the NewApp1, which implements the handling of GET requests to read the challenge and to
+        verify the login
+    </p>
+    
+    <h3>Implement GET handler</h3>
+
+    <ul>
+        <li>
+            Add declaration of a class which does the GET processing to the end of NewApp1.h
+            <pre><code class="language-cpp">class WebserviceLogin : public UWebserverGet {
+    void WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet) override;
+    void WebserverGetSendResult(IWebserverGet * const webserverGet) override;
+    void WebserverGetCloseComplete(IWebserverGet * const webserverGet) override;
+    char * resourceName;
+
+public:
+    WebserviceLogin(char * resourceName);
+    ~WebserviceLogin();
+};</code></pre>
+        </li>
+        <li>
+            Add the code for this to the end of NewApp1.cpp
+            <pre><code class="language-cpp">WebserviceLogin::WebserviceLogin(char * resourceName)
+{
+    debug->printf("WebserviceLogin %s", resourceName);
+    this->resourceName = _strdup(resourceName);
+}
+
+WebserviceLogin::~WebserviceLogin()
+{
+    debug->printf("~WebserviceLogin");
+}
+
+static char * UrlArg(const char * url, const char * name, char * & tmp)
+{
+    char * s = (char *)strstr(url, name);
+    char * ret = 0;
+    if (s) {
+        ret = tmp;
+        s += strlen(name);
+        for (unsigned l = 0; s[l] && s[l] != '&'; l++) *tmp++ = s[l];
+        *tmp++ = 0;
+        str::from_url(ret);
+    }
+    return ret;
+}
+
+void WebserviceLogin::WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet)
+{
+    if (strstr(resourceName, "mt=AppChallenge")) {      // handle reading of challenge
+        const char * challenge = "{\"mt\":\"AppChallengeResult\",\"challenge\":\"1234\"}";
+        webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, strlen(challenge));
+        webserverGet->Send(challenge, strlen(challenge));
+    }
+    else if (strstr(resourceName, "?mt=AppLogin")) {    // handle login
+        const char * login = "{\"mt\":\"AppLoginResult\",\"ok\":true}";
+        char b[2000];
+        char * tmp = b;
+
+            // read the URL arguments for the login parameter
+        char * app = UrlArg(resourceName, "&app=", tmp);
+        char * domain = UrlArg(resourceName, "&domain=", tmp);
+        char * sip = UrlArg(resourceName, "&sip=", tmp);
+        char * guid = UrlArg(resourceName, "&guid=", tmp);
+        char * dn = UrlArg(resourceName, "&dn=", tmp);
+        char * info = UrlArg(resourceName, "&info=", tmp);
+        char * challenge = UrlArg(resourceName, "&challenge=", tmp);
+        char * digest = UrlArg(resourceName, "&digest=", tmp);
+
+            // calculate hash
+        class hash hash;
+        byte digest_bin[HASH_SIZE_SHA256];
+        char digest_check[HASH_SIZE_SHA256 * 2 + 1];
+        hash.init(HASH_SHA256);
+        hash.update(app, strlen(app));
+        hash.update(":", 1);
+        hash.update(domain, strlen(domain));
+        hash.update(":", 1);
+        hash.update(sip, strlen(sip));
+        hash.update(":", 1);
+        hash.update(guid, strlen(guid));
+        hash.update(":", 1);
+        hash.update(dn, strlen(dn));
+        hash.update(":", 1);
+        if (info && info[0]) {
+            hash.update(info, strlen(info));
+            hash.update(":", 1);
+        }
+        hash.update(challenge, strlen(challenge));
+        hash.update(":", 1);
+        hash.update("secret", strlen("secret"));
+        hash.final(digest_bin);
+        for (int i = 0; i < HASH_SIZE_SHA256; i++) sprintf(&digest_check[i * 2], "%02x", digest_bin[i]);
+
+            // compare the hash to verify the login. In the real implemenation on you web service, you should
+            // also check, that the challenge was used, which you sent and you should of course use a
+            // configureable password
+        if (!strcmp(digest, digest_check)) {
+
+                // send back the message to indicate the success. In your web service you should also send
+                // with this message the credentials for the authentication. For example you could set
+                // a session cookie
+            webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, strlen(login));
+            webserverGet->Send(login, strlen(login));
+        }
+        else {
+            webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, 2);
+            webserverGet->Send("{}", 2);
+        }
+    }
+    else {
+        webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, 1);
+        webserverGet->Send("X", 1);
+    }
+}
+
+void WebserviceLogin::WebserverGetSendResult(IWebserverGet * const webserverGet)
+{
+    debug->printf("WebserviceLogin::WebserverGetSendResult");
+    webserverGet->Close();
+}
+
+void WebserviceLogin::WebserverGetCloseComplete(IWebserverGet * const webserverGet)
+{
+    delete this;
+}</code></pre>
+            you should read the code carefully, because this is, what you have to implement on your web service
+            with the technology used there.
+        </li>
+        <li>
+            To be able to compile the code, you need to include a header file for the hash library
+            <pre><code class="language-cpp">#include "common/ilib/hash.h"</code></pre>
+            You should now be able to build the App again
+        </li>
+        <li>
+            To integrate the code in the HTTP handler, you need to add the following lines to the function
+            WebserverPluginHttpListenResult
+            <pre><code class="language-cpp">        plugin->Accept(new WebserviceLogin(resourceName));
+        return;
+</code></pre>
+            At the end of the if (requestType == WS_REQUEST_GET) clause.
+        </li>
+        <li>
+            You can now build and run the App Service. To test the code you can open the URL
+            http://&lt;AP&gt;/newapp1/login?mt=AppChallenge. A Json data structure with the challenge
+            should be returned
+            <pre><code class="language-json">{"mt":"AppChallengeResult","challenge":"1234"}</code></pre>
+        </li>
+    </ul>
+
+    <h2>Add the Login Page to the Web Service</h2>
+
+    <p>
+        For the login page we add a file login.htm, to the apps folder containing the login code:
+            <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en" xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8" /&gt;
+    &lt;title&gt;Webservice&lt;/title&gt;
+    &lt;script type="text/javascript" src="phpsession.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript"&gt;
+        function start() {
+            var args = location.search.split("&");
+            if (args[0].startsWith("?")) args[0] = args[0].slice(1);
+            var name = args.find(function (e) { return e.startsWith("name=") });
+            if (name) {
+                new innovaphone.PhpSession("login", name.split("=")[1], "webservice.htm", "");
+            }
+        }
+    &lt;/script&gt;
+&lt;/head&gt;
+
+&lt;body onload="start()"&gt;
+    &lt;h1&gt;Login&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </p>
+
+    <p>
+        This page requires a simple self-contained library phpsession.js, which is also found as
+        innovaphone.phpsession.js in sdk/web1/phpsession. For your web service
+        you can copy the file and change the path in login.htm accordingly. It does the HTTP GET
+        requests to the web service and the forwarding to the myApps client,
+        which does the communication to the PBX.
+    </p>
+
+    <p>
+        We add a file phpsession.js, to the apps folder containing the phpsession code:
+            <pre><code class="language-javascrip">var innovaphone = innovaphone || {};
+innovaphone.PhpSession = innovaphone.PhpSession || function (url, app, appStart, params) {
+    var instance = this,
+        url = url,
+        challenge,
+        timer;
+
+    window.addEventListener('message', onpostmessage);
+    login();
+
+
+    function login() {
+        httpGet(url + "?mt=AppChallenge", onchallenge);
+        timer = setTimeout(login, 10000);
+    }
+
+    function onchallenge(text) {
+        var obj = JSON.parse(text);
+        if (obj && obj.mt) {
+            challenge = obj.challenge;
+            if (obj.mt == "AppChallengeResult") {
+                window.parent.postMessage(JSON.stringify({ mt: "getLogin", app: app, challenge: obj.challenge }), "*");
+            }
+        }
+    }
+
+    function onpostmessage(e) {
+        var obj = JSON.parse(e.data);
+        if (obj.mt && obj.mt == "Login") {
+            console.log(app + ": AppLogin(" + obj.sip + "@" + obj.domain + ")");
+            httpGet(url + "?mt=AppLogin&app=" + encodeURIComponent(obj.app) +
+                          "&domain=" + encodeURIComponent(obj.domain) +
+                          "&sip=" + encodeURIComponent(obj.sip) +
+                          "&guid=" + encodeURIComponent(obj.guid) +
+                          "&dn=" + encodeURIComponent(obj.dn) +
+                          (obj.info ? "&info=" + encodeURIComponent(JSON.stringify(obj.info)) : "") +
+                          "&digest=" + encodeURIComponent(obj.digest) +
+                          "&challenge=" + encodeURIComponent(challenge), onlogin);
+        }
+    }
+
+    function onlogin(text) {
+        var obj = JSON.parse(text);
+        if (obj && obj.mt && obj.mt == "AppLoginResult" && obj.ok) {
+            var u = location.href.substring(0, location.href.lastIndexOf("/") + 1);
+            location.href = u + appStart + params;
+            clearTimeout(timer);
+        }
+    }
+
+    function httpGet(url, funcComplete, funcFailed) {
+        var xmlReq = new window.XMLHttpRequest();
+        if (xmlReq) {
+            xmlReq.open("GET", url, funcComplete ? true : false);
+            xmlReq.send(null);
+            if (funcComplete) {
+                xmlReq.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            funcComplete(this.responseText, this.responseXML);
+                        }
+                        else {
+                            if (funcFailed) funcFailed(this);
+                            else funcComplete("{}");
+                        }
+                    }
+                }
+            }
+        }
+        return xmlReq;
+    }
+};</code></pre>
+    </p>
+
+    <p>
+        To add these file to the static files served by the App, we add the lines
+        <pre><code>    $(APPWEBPATH)/login.htm \
+    $(APPWEBPATH)/phpsession.js \</code></pre>
+        to the statement
+        <pre><code>APPWEBSRC_ZIP +=</code></pre>
+        in apps.mak
+    </p>
+
+    <p>
+        The first argument of the innovaphone.PhpSession constructor is the filename for the HTTP GET requests
+        used for authentication to the web service.
+    </p>
+    <p>
+        The minnovaphone myApps client opens this file, when the URL is provided in an App object. It uses a
+        URL argument "name" to identify the name of the App object. This name is passed as argument to the 
+        innovaphone.PhpSession() constructor.
+    </p>
+    <p>
+        The third and fourth argument for innovaphone.PhpSession are the filename of the web service to be
+        opened and any URL arguments, which should be added.
+    </p>
+
+    <p>
+        If you execute the newly built App now, you should be able to open the URL
+        http://&lt;AP&gt;/newapp1/login.htm
+    </p>
+
+    <h2>Add the App to the PBX</h2>
+    
+    <p>
+        To add the App to the PBX, you have to create an App object for your webservice. Use the Advanced user
+        interface to create an App object with the following properties:
+        <dl>
+            <dt>Type</dt><dd>App</dd>
+            <dt>Long Name</dt><dd>Webservice</dd>
+            <dt>Name</dt><dd>webservice</dd>
+            <dt>Password</dt><dd>secret</dd>
+            <dt>App/URL</dt><dd>http://&lt;AP&gt;/newapp1/login.htm</dd>
+        </dl>
+    </p>
+    <p>
+        If you now grant a user the right to access this App, by checking "webservice" on the Apps tab in
+        the Advanced user interface when opening the user object, the user should find the Webservice App
+        in All Apps. In your Webservice you can add a icon for myApps by putting a 50x50px png file at the
+        same place as login.htm with the name login.png. Of course you can use any name for these files
+        instead of login.
+    </p>
+
+</body>
+</html>

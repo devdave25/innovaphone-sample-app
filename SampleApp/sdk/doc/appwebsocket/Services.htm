@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Services protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Services</h1>
+
+    <p>
+        The Services protocol is available on AppWebsocket connections to innovaphone PBX objects, if
+        the object is enabled for the Services api. It allows an application to find other app services that
+        provide a specific service on incoming AppWebsocket connections. Also a login for the that app service can
+        be optained. With that information an additional AppWebsocket connection can be established to the service.
+	</p>
+    <p>
+        For finding and authenticating against a service, the permission for app providing the service must be
+        configured at the own app object.
+    </p>
+
+	<a name="General structure"><h2>General structure</h2></a>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "src": string,
+    "mt": string,
+}</code></pre><br/>
+
+    <dl>
+        <dt>api</dt>
+        <dd>
+            To address this interface the value "Services" has to be used for the api property
+        </dd>
+        <dt>src</dt>
+        <dd>
+            The AppWebsocket src mechanism is supported on the interface. So a src
+            property may be used
+        </dd>
+        <dt>mt</dt>
+        <dd>
+            The message type identifies the requested operation
+        </dd>
+    </dl>
+
+	<u>Messages to the PBX</u>
+
+	<ul>
+		<li><a href="#SubscribeServices">SubscribeServices</a> - Subscribe for information about available services</li>
+        <li><a href="#UnsubscribeServices">UnsubscribeServices</a> - Unsubscribe for information available services</li>
+        <li><a href="#GetServiceLogin">GetServiceLogin</a> - Get a login for a specific service</li>
+	</ul>
+
+	<u>Messages from the PBX</u>
+
+	<ul>
+		<li><a href="#SubscribeServicesResult">SubscribeServicesResult</a> - Result of SubscribeServices</li>
+        <li><a href="#UnsubscribeServicesResult">UnsubscribeServicesResult</a> - Result of UnsubscribeServices</li>
+        <li><a href="#ServicesInfo">ServicesInfo</a> - Information about the currently available services</li>
+        <li><a href="#GetServiceLoginResult">GetServiceLoginResult</a> - Result of GetServiceLogin</li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - recurring definitions</div>
+
+    <a name="SubscribeServices"><h2>SubscribeServices</h2></a>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "mt": "SubscribeServices",
+}</code></pre>
+
+    <p>
+        With this message the application subscribes for service information. The PBX answers with 
+        <a href="#SubscribeServicesResult">SubscribeServicesResult</a> and <a href="#ServicesInfo">ServicesInfo</a>.
+        Each time the service information changes the PBX sends an updated version <a href="#ServicesInfo">ServicesInfo</a>
+        until the application unsubscribes using <a href="#UnsubscribeServices">UnsubscribeServices</a>.
+    </p>
+	
+    <a name="SubscribeServicesResult"><h2>SubscribeServicesResult</h2></a>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "mt": "SubscribeServicesResult",
+}</code></pre>
+
+    <p>
+    	Result of the SubscribeServices operation
+    </p>
+
+    <a name="UnsubscribeServices"><h2>UnsubscribeServices</h2></a>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "mt": "UnsubscribeServices",
+}</code></pre>
+
+    <p>
+    	Unsubscribes from the service info. The PBX answers with <a href="#UnsubscribeServicesResult">UnsubscribeServicesResult</a> and
+        stops sending <a href="#ServicesInfo">ServicesInfo</a> messages.
+    </p>
+
+    <a name="UnsubscribeServicesResult"><h2>UnsubscribeServicesResult</h2></a>
+
+    <pre><code class="json">{
+    "api": "Services",
+    "mt": "UnsubscribeServicesResult",
+}</code></pre>
+
+    <p>
+        Result of the UnsubscribeServices operation
+    </p>
+
+    <a name="ServicesInfo"><h2>ServicesInfo</h2></a>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "mt": "ServicesInfo",
+    "services": <a href="#AppServices">AppServices</a>,
+}</code></pre>
+
+    <p>
+        Information about an existing call at at the time of the attach.
+    </p>
+
+    <dl>
+        <dt>services</dt>
+        <dd>
+            An array containing all available app services.
+        </dd>
+    </dl>
+
+    <a name="GetServiceLogin"><h2>GetServiceLogin</h2></a>
+    <p>
+        This message requests a login for the given app service. It contains the challenge received in the AppWebsocket message <a href="AppWebsocket.htm#AppChallenge">AppChallenge</a>.
+        See the <a href="AppWebsocket.htm">AppWebsocket</a> for details.
+    </p>
+
+	<pre><code class="json">{
+    "api": "Services",
+    "mt": "GetServiceLogin",
+    "app": SipUri,
+    "challenge": string,
+}</code></pre>
+
+    <dl>
+        <dt>app</dt>
+        <dd>
+            The SIP uri of the other app service.
+        </dd>
+        <dt>challenge</dt>
+        <dd>
+            The challenge that was received from the other app service.
+        </dd>
+    </dl>
+
+    <a name="GetServiceLoginResult"><h2>GetServiceLoginResult</h2></a>
+    <p>
+        The answer to the <a href="#GetServiceLogin">GetServiceLogin</a> message.
+        Contains all the parameters that shall be forwarded to the other app service in the <a href="AppWebsocket.htm#AppLogin">AppLogin</a> message.
+        See the <a href="AppWebsocket.htm">AppWebsocket</a> for details about the individual parameters.
+    </p>
+
+    <pre><code class="json">{
+    "api": "Services",
+    "mt": "GetServiceLoginResult",
+    "domain": string,
+    "sip": string,
+    "guid": string,
+    "dn": string,
+    "pbxObj": string,
+    "app", string,
+    "info": object,
+    "digest": string,
+    "key": string,
+    "salt": string
+}</code></pre>
+
+	<a name="Objects"><h2>Objects</h2></a>
+
+    <a name="AppServices"><div class="fnhead">AppServices</div></a>
+
+    <p>
+        An array containing <a href="#AppService">AppService</a> objects.
+    </p>
+
+	<pre><code class="json">[
+        <a href="#AppService">AppService</a>,
+        <a href="#AppService">AppService</a>,
+        <a href="#AppService">AppService</a>
+]</code></pre>
+
+    <a name="AppService"><div class="fnhead">AppService</div></a>
+    <p>
+        Information about an app service.
+    </p>
+
+    <pre><code class="json">{
+    "name": SipUri,
+    "title": DisplayName,
+    "url": WebsocketUrl,
+    "info": <a href="#AppServiceInfo">AppServiceInfo</a>
+}</code></pre>
+
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The SIP URI of the app service
+        </dd>
+        <dt>title</dt>
+        <dd>
+            The display name of the app service
+        </dd>
+        <dt>url</dt>
+        <dd>
+            The websocket URL of the app service
+        </dd>
+        <dt>info</dt>
+        <dd>
+            A <a href="#ServiceInfo">ServiceInfo</a> object. 
+        </dd>
+    </dl>
+
+    <a name="AppServiceInfo"><div class="fnhead">AppServiceInfo</div></a>
+
+    <p>
+        An object containing the services that an app services provides on incoming AppWebsocket connections.
+    </p>
+
+	<pre><code class="json">{
+    ServiceId: ServiceModel,
+    ServiceId: ServiceModel
+}</code></pre>
+
+    <dl>
+        <dt>ServiceId</dt>
+        <dd>
+            The ID of the service, e.g. "com.innovaphone.devices".
+        </dd>
+        <dt>ServiceModel</dt>
+        <dd>
+            An object containing additional information, defined by the service.
+        </dd>
+    </dl>
+</body>
+</html>

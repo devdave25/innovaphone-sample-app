@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - myApps Protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>myApps Protocol</h1>
+
+    <p>
+        The myApps protocol is the websocket protocol used by the myApps web client to talk to the PBX.
+    </p>
+
+
+    <u>Messages</u>
+    <p>
+        The following messages can be used without logging-in:
+        <ul>
+            <li><a href="#CheckBuild">CheckBuild</a> / <a href="#CheckBuildResult">CheckBuildResult</a></li>
+            <li><a href="#SubscribeRegister">SubscribeRegister</a> / <a href="#UpdateRegister">UpdateRegister</a></li>
+        </ul>
+    </p>
+    <p>
+        Login messages
+        <ul>
+            <li><a href="#Login">Login</a></li>
+            <li><a href="#Authenticate">Authenticate</a></li>
+            <li><a href="#Authorize">Authorize</a></li>
+            <li><a href="#LoginResult">LoginResult</a></li>
+            <li><a href="#Redirect">Redirect</a></li>
+            <li><a href="#Logout">Logout</a></li>
+            <li><a href="#LogoutResult">LogoutResult</a></li>
+            <li><a href="#StandbyBack">StandbyBack</a></li>
+        </ul>
+    </p>
+    <p>
+        The following messages are only allowed after sucessfully logging-in.
+        <ul>
+            <li><a href="#UpdateUser">UpdateUser</a></li>
+            <li><a href="#SessionAdded">SessionAdded</a> / <a href="#SessionUpdated">SessionUpdated</a> / <a href="#SessionDeleted">SessionDeleted</a></li>
+            <li><a href="#AuthorizeSession">AuthorizeSession</a> / <a href="#DeleteSession">DeleteSession</a></li>
+            <li><a href="#SetSessionInfo">SetSessionInfo</a></li>
+            <li><a href="#SubscribeApps">SubscribeApps</a> / <a href="#UpdateApps">UpdateApps</a> / <a href="#SetApps">SetApps</a></li>
+            <li><a href="#Wake">Wake</a></li>
+            <li><a href="#AppGetLogin">AppGetLogin</a> / <a href="#AppGetLoginResult">AppGetLoginResult</a></li>
+            <li><a href="#SetUserActivity">SetUserActivity</a> / <a href="#SetOwnPresence">SetOwnPresence</a> / <a href="#UpdateOwnPresence">UpdateOwnPresence</a></li>
+            <li><a href="#SubscribePresence">SubscribePresence</a> / <a href="#UnsubscribePresence">UnsubscribePresence</a> / <a href="#UpdatePresence">UpdatePresence</a></li>
+            <li><a href="#SubscribeDialog">SubscribeDialog</a> / <a href="#UnsubscribeDialog">UnsubscribeDialog</a> / <a href="#DialogInfo">DialogInfo</a></li>
+        </ul>
+    </p>
+
+    <u>Objects - recurring definitions</u>
+    <ul>
+        <li><a href="#User">User</a></li>
+        <li><a href="#Info">Info</a></li>
+        <li><a href="#Session">Session</a></li>
+        <li><a href="#SessionInfo">SessionInfo</a></li>
+        <li><a href="#App">App</a></li>
+        <li><a href="#AppInfo">AppInfo</a></li>
+        <li><a href="#AppLoginInfo">AppLoginInfo</a></li>
+        <li><a href="#AppLoginInfoApp">AppLoginInfoApp</a></li>
+        <li><a href="#Presence">Presence</a></li>
+    </ul>
+
+    <h2>Messages</h2>
+
+    <div class="fnhead">Base Message</div>
+    <p>
+        The base message format consists only of the property mt.
+    </p>
+    <pre><code class="json">{
+    "mt": string
+}</code></pre><br />
+
+    <dl>
+        <dt>mt</dt>
+        <dd>
+            The type of the message.
+        </dd>
+    </dl>
+
+    <a name="CheckBuild"></a><div class="fnhead">CheckBuild</div>
+    <p>
+        Sent by the client.
+    </p>
+<pre><code class="json">{
+    "mt": "CheckBuild",
+    "url": string
+}</code></pre>
+    <dl>
+        <dt>url</dt>
+        <dd>
+            The URL of the used HTML page.
+        </dd>
+    </dl>
+
+    <a name="CheckBuildResult"></a><div class="fnhead">CheckBuildResult</div>
+    <p>
+        Sent by the PBX as a response to the CheckBuild message.
+    </p>
+<pre><code class="json">{
+    "mt": "CheckBuildResult",
+    "url": string,
+    "build": string,
+    "launcherUpdateBuild": string,
+}</code></pre>
+    <dl>
+        <dt>url</dt>
+        <dd>
+            Given, if a redirect is needed. The new URL should be loaded instead of the URL from the CheckBuild message.
+        </dd>
+        <dt>build</dt>
+        <dd>
+            The build number of the PBX firmware.
+        </dd>
+        <dt>launcherUpdateBuild</dt>
+        <dd>
+            The build number of the myApps launcher that shall be used for software updates.
+        </dd>
+        <dt>appStoreUrl</dt>
+        <dd>
+            The URL of the app store that shall be used for software updates.
+        </dd>
+    </dl>
+
+    <a name="SubscribeRegister"></a><div class="fnhead">SubscribeRegister</div>
+    <p>
+        Sent by the client to subscribe for <a href="#UpdateRegister">UpdateRegister</a> messages.
+    </p>
+<pre><code class="json">{
+    "mt": "SubscribeRegister"
+}</code></pre>
+
+    <a name="UpdateRegister"></a><div class="fnhead">UpdateRegister</div>
+    <p>
+        Sent by the PBX. Contains URLs for user registration and password resets to be displayed on the login page.
+    </p>
+<pre><code class="json">{
+    "mt": "UpdateRegister",
+    "signup": string,
+    "reset": string,
+    "profile": profile
+}</code></pre>
+    <dl>
+        <dt>signup</dt>
+        <dd>
+            URL for creating a new user account on the PBX.
+        </dd>
+        <dt>reset</dt>
+        <dd>
+            URL for resetting a forgotten user password.
+        </dd>
+        <dt>profile</dt>
+        <dd>
+            Name of the app that allows changing user settings.
+        </dd>
+    </dl>
+
+    <a name="Login"></a><div class="fnhead">Login</div>
+    <p>
+        Sent by the client.
+    </p>
+    <p>
+        During the login procedure the <a href="#Login">Login</a> message is sent twice. The first time it does not include any credentials and is responded with an <a href="#Authenticate">Authenticate</a> message including a challenge.
+    </p>
+<pre><code class="json">{
+    "mt": "Login",
+    "type": string,
+    "userAgent": string
+}</code></pre>
+    <p>
+        The second time it is sent with the actual login data that includes a user name and a response in the form of a digest.
+    </p>
+<pre><code class="json">{
+    "mt": "Login",
+    "type": string,
+    "method": string,
+    "username": string,
+    "nonce": string,
+    "response": string,
+    "userAgent": string
+}</code></pre>
+    <p>
+        If the authentication was successful the PBX will respond with <a href="#LoginResult">LoginResult</a>.
+        If two-factor authentication is enables the PBX will first send an <a href="#Authorize">Authorize</a> and wait with the <a href="#LoginResult">LoginResult</a> until the session
+        has been authorized over a second channel.
+    </p>
+    <dl>
+        <dt>type</dt>
+        <dd>
+            "user" for login with user credentials. This will create a persistent session that can be resumed for subsequent logins.
+        </dd>
+        <dd>
+            "session" for login with session credentials that were created during a previous login with user credentials.
+        </dd>
+        <dt>method</dt>
+        <dd>"digest" or "ntlm".</dd>
+        <dd>Must be the same method as requested in the <a href="#Authenticate">Authenticate</a> message.</dd>
+        <dt>username</dt>
+        <dd>The SIP URI of the user for type "user".</dd>
+        <dd>The session ID for type "session".</dd>
+        <dt>nonce</dt>
+        <dd>A 16-byte hexstring, encoding 8 random bytes chosen by the client software.</dd>
+        <dd>Nonces must be unique and should not be re-used for subsequent connections.</dd>
+        <dt>response</dt>
+        <dd>A digest calculated to verify the knowledge of the shared secret that can be either the user password or the session password, depending on the login type.</dd>
+        <dd>
+            For type "digest"
+        </dd>
+        <dd>
+            <pre>Hexstring(SHA256(innovaphoneAppClient:&lt;type&gt;:&lt;domain&gt;:&lt;username&gt;:&lt;password&gt;:&lt;nonce&gt;:&lt;challenge&gt;))</pre>
+        </dd>
+        <dd>
+            For type "ntlm"
+        </dd>
+        <dd>
+            <pre>Hexstring(NtlmResponse(&lt;username&gt;,&lt;password&gt))</pre>
+        </dd>
+        <dt>userAgent</dt>
+        <dd>A string describing the used software for this connection, like "myApps (Windows)".</dd>
+    </dl>
+
+
+    <a name="LoginResult"></a><div class="fnhead">LoginResult</div>
+    <p>
+        Sent by the PBX as a response to the <a href="#Login">Login</a> message.
+    </p> 
+    <p>
+        The message indicates that the login was successful and includes additional information for the client.
+    </p>
+<pre><code class="json">{
+    "mt": "LoginResult",
+    "info": <a href="#Info">Info</a>,
+    "digest": string
+}</code></pre>
+    <dl>
+        <dt>info</dt>
+        <dd>
+            A Json Object with additional information. For the digest calculation this must be json
+            encoded without any unnecessary white space and no unnecessary escaping. This is the
+            encoding done by the json_io library of the SDK, by the Javascript JSON.stringify function
+            or by PHP json_encode($input, JSON_UNESCAPED_UNICODE)
+        </dd>
+
+        <dt>digest</dt>
+        <dd>
+            A digest calculated to verify the knowledge of the shared secret that can be either the user password or the session password, depending on the login type.
+            It also protects the integrity of the included info structure.
+        </dd>
+        <dd>
+            <pre>Hexstring(SHA256(innovaphoneAppClient:loginresult:&lt;domain&gt;:&lt;username&gt;:&lt;password&gt;:&lt;nonce&gt;:&lt;challenge&gt;:&lt;info&gt;))</pre>
+        </dd>
+    </dl>
+
+    <a name="Redirect"></a><div class="fnhead">Redirect</div>
+    <p>
+        Sent by the PBX as a response to the <a href="#Login">Login</a> message.
+    </p>
+    <p>
+        The message indicates that the login was successful, but the
+        user is on a different PBX, so a redirect should be done.
+    </p>
+<pre><code class="json">{
+    "mt": "Redirect",
+    "info": <a href="#Info">Info</a>,
+    "digest": string
+}</code></pre>
+    <dl>
+        <dt>info</dt>
+        <dd>
+            A Json Object with additional information. For the digest calculation this must be json
+            encoded without any unnecessary white space and no unnecessary escaping. This is the
+            encoding done by the json_io library of the SDK, by the Javascript JSON.stringify function
+            or by PHP json_encode($input, JSON_UNESCAPED_UNICODE).
+        </dd>
+        <dd>
+            The redirect should be done to the host contained in the <a href="#Info">Info</a> part.
+        </dd>
+
+        <dt>digest</dt>
+        <dd>
+            A digest calculated to verify the knowledge of the shared secret that can be either the user password or the session password, depending on the login type.
+            It also protects the integrity of the included info structure.
+        </dd>
+        <dd>
+            <pre>Hexstring(SHA256(innovaphoneAppClient:redirect:&lt;username&gt;:&lt;password&gt;:&lt;nonce&gt;:&lt;challenge&gt;:&lt;info&gt;))</pre>
+        </dd>
+    </dl>
+
+    <a name="Logout"></a><div class="fnhead">Logout</div>
+    <p>
+        Sent by the client to logout the current session.
+    </p>
+<pre><code class="json">{
+    "mt": "Logout"
+}</code></pre>
+
+    <a name="LogoutResult"></a><div class="fnhead">LogoutResult</div>
+    <p>
+        Sent by the PBX if the current session was logged-out. This could be as a response to the <a href="#Logout">Logout</a> message or unsolicitated.
+        The client should delete all information that is related to the session.
+    </p>
+<pre><code class="json">{
+    "mt": "LogoutResult"
+}</code></pre>
+
+    <a name="StandbyBack"></a><div class="fnhead">StandbyBack</div>
+    <p>
+        The login was accepted by a standby PBX before. But now the original PBX is back. The PBX terminates the connection after that message.
+        The client should reconnect and start its normal login procedure using the same session.
+    </p>
+<pre><code class="json">{
+    "mt": "StandbyBack"
+}</code></pre>
+
+    <a name="UpdateUser"></a><div class="fnhead">UpdateUser</div>
+    <p>
+        Sent by the PBX. Contains the details of the logged-in user.
+    </p>
+<pre><code class="json">{
+    "mt": "UpdateUser",
+    "user": <a href="#User">User</a>
+}</code></pre>
+
+    <a name="SessionAdded"></a><div class="fnhead">SessionAdded</div>
+    <p>
+        Sent by the PBX if a login-session for the user has been added. If the session has the needsAuthorization flag set, the client should display the code to the user and ask if the session should be authorized.
+        Depending on the decision by the user the <a href="#AuthorizeSession">AuthorizeSession</a> or <a href="#DeleteSession">DeleteSession</a> should be sent.
+    </p>
+<pre><code class="json">{
+    "mt": "SessionAdded",
+    "id": string,
+    "info": <a href="#SessionInfo">SessionInfo</a>
+}</code></pre>
+
+    <a name="SessionUpdated"></a><div class="fnhead">SessionUpdated</div>
+    <p>
+        Sent by the PBX if a login-session for the user was updated. If the session has the needsAuthorization flag set, the client should display the code to the user and ask if the session should be authorized.
+        Depending on the decision by the user the <a href="#AuthorizeSession">AuthorizeSession</a> or <a href="#DeleteSession">DeleteSession</a> should be sent.
+    </p>
+<pre><code class="json">{
+    "mt": "SessionUpdated",
+    "id": string,
+    "info": <a href="#SessionInfo">SessionInfo</a>
+}</code></pre>
+
+    <a name="SessionDeleted"></a><div class="fnhead">SessionDeleted</div>
+    <p>
+        Sent by the PBX if a login-session for the user has been deleted. Connections in the context of the deleted session will receive the <a href="#LogoutResult">LogoutResult</a> message afterwards. 
+    </p>
+<pre><code class="json">{
+    "mt": "SessionDeleted",
+    "id": string
+}</code></pre>
+    
+    <a name="AuthorizeSession"></a><div class="fnhead">AuthorizeSession</div>
+    <p>
+        Sent by the client to complete two-factor authentication for sessions that are waiting for the second factor. Only own sessions (of the same PBX user) can be authorized.
+    </p>
+<pre><code class="json">{
+    "mt": "AuthorizeSession",
+    "id": string
+}</code></pre>
+
+    <a name="DeleteSession"></a><div class="fnhead">DeleteSession</div>
+    <p>
+        Sent by the client to reject a session that is waiting for second factor authentication or to remotely logout a session. Only own sessions (of the same PBX user) can be deleted.
+    </p>
+<pre><code class="json">{
+    "mt": "DeleteSession",
+    "id": string
+}</code></pre>
+
+    <a name="SetSessionInfo"></a><div class="fnhead">SetSessionInfo</div>
+    <p>
+        Sent by the client to store parameters about the session in the PBX.
+    </p>
+<pre><code class="json">{
+    "mt": "SetSessionInfo",
+    "token": string,
+    "wake": [string]
+}</code></pre>
+    <dl>
+        <dt>token</dt>
+        <dd>
+            The push token for this session. Used on smartphones.
+        </dd>
+
+        <dt>wake</dt>
+        <dd>
+            An array of strings containing the supported wake types. Allowed values are "phone" and "chat".
+        </dd>
+    </dl>
+
+    <a name="SubscribeApps"></a><div class="fnhead">SubscribeApps</div>
+    <p>
+        Sent by the client to subscribe for <a href="#UpdateApps">UpdateApps</a> messages. The subscription is valid until a <a href="LogoutResult">LogoutResult</a> message is received.
+    </p>
+<pre><code class="json">{
+    "mt": "SubscribeApps"
+}</code></pre>
+
+    <a name="UpdateApps"></a><div class="fnhead">UpdateApps</div>
+    <p>
+        Sent by the PBX. Contains information about all the apps that the user has access to.
+    </p>
+<pre><code class="json">{
+    "mt": "UpdateApps",
+    "apps": [<a href="#App">App</a>],
+    "deviceApps": [<a href="#App">App</a>],
+    "selected": string
+}</code></pre>
+    <dl>
+        <dt>apps</dt>
+        <dd>
+            An array of all available apps.
+        </dd>
+        <dt>deviceApps</dt>
+        <dd>
+            An array of the apps that can be attached to a device at the user object - that is the phone apps.
+        </dd>
+        <dt>selected</dt>
+        <dd>
+            A comma separated list of the app links on the home screen.
+        </dd>
+    </dl>
+
+    <a name="SetApps"></a><div class="fnhead">SetApps</div>
+    <p>
+        Sent by the client to store the apps the user selected for his or her home screen.
+    </p>
+<pre><code class="json">{
+    "mt": "SetApps",
+    "home": string
+}</code></pre>
+    <dl>
+        <dt>home</dt>
+        <dd>
+            A comma-separated list of the app links on the home screen.
+        </dd>
+    </dl>
+
+    <a name="Wake"></a><div class="fnhead">Wake</div>
+    <p>
+        Sent by the PBX. An event has occurred that requires the client to start some apps. For example this is needed on incoming phone calls when the phone app is not running yet.
+        The client starts an app if
+        <ul>
+            <li>The <a href="#AppInfo">AppInfo</a> contains the same wake type.</li>
+            <li>The hw attribute matches the name of the app (for wake type "phone", only).</li>
+            <li>The app is selected as the standard app for the corresponding wake type, or the call is outgoing (for wake type "phone" only).</li>
+        </ul>
+    </p>
+<pre><code class="json">{
+    "mt": "Wake",
+    "type": string,
+    "hw": string,
+    "incoming": boolean
+}</code></pre>
+    <dl>
+        <dt>type</dt>
+        <dd>
+            "phone" for phone calls, "chat" for incoming chat messages.
+        </dd>
+        <dt>hw</dt>
+        <dd>
+            The device on which a phone call is ringing.
+        </dd>
+        <dt>incoming</dt>
+        <dd>
+            True for incoming calls.
+        </dd>
+    </dl>
+
+    <a name="AppGetLogin"></a><div class="fnhead">AppGetLogin</div>
+    <p>
+        Sent by the client get an authentication for a given app.
+    </p>
+<pre><code class="json">{
+    "mt": "AppGetLogin",
+    "src": string,
+    "app": string,
+    "challenge": string
+}</code></pre>
+    <dl>
+        <dt>app</dt>
+        <dd>
+            The SIP URI of the app.
+        </dd>
+        <dt>challenge</dt>
+        <dd>
+            The challenge given by the app service.
+        </dd>
+    </dl>
+
+    <a name="AppGetLoginResult"></a><div class="fnhead">AppGetLoginResult</div>
+    <p>
+        Sent by the PBX as a response to the <a href="#AppGetLogin">AppGetLogin</a> message. It contains the info that shall be presented to the app service
+        to prove the successful login.
+    </p>
+<pre><code class="json">{
+    "mt": "AppGetLoginResult",
+    "src": string,
+    "domain": string,
+    "sip": string,
+    "guid": string,
+    "dn": string,
+    "pbxObj": string,
+    "app": string,
+    "info": <a href="#AppLoginInfo">AppLoginInfo</a>,
+    "digest": string,
+    "salt": string,
+    "key": string,
+    "error": unsigned,
+    "errorText": string
+}</code></pre>
+    <dl>
+        <dt>domain</dt>
+        <dd>
+            The domain of the logged in user
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            The sip user part of the logged in user.
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            The GUID of the user, if available
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name of the user, if available
+        </dd>
+        <dt>pbxObj</dt>
+        <dd>
+            Used for some Apis on the PBX to address a PBX Object. Not included in the digest calculation
+        </dd>
+        <dt>info</dt>
+        <dd>
+            A Json Object with additional information. For the digest calculation this must be json
+            encoded without any unnecessary white space and no unnecessary escaping. This is the
+            encoding done by the json_io library of the SDK, by the Javascript JSON.stringify function
+            or by PHP json_encode($input, JSON_UNESCAPED_UNICODE)
+        </dd>
+        <dt>digest</dt>
+        <dd>
+            The digest calculated to verify the knowledge of the shared secret. It is calculated as
+            SHA256 hash over the string
+            <pre><code class="json">&lt;app&gt;:&lt;domain&gt;:&lt;sip&gt;:&lt;guid&gt;:&lt;dn&gt;:&lt;info&gt;:&lt;challenge&gt;:&lt;password&gt;</code></pre>
+        </dd>
+        <dt>salt</dt>
+        <dd>
+            A salt used for the session key.
+        </dd>
+        <dt>key</dt>
+        <dd>
+            The session key that can be used for encrypted messages between the app and the app service using the AppWebsocket library.
+        </dd>
+        <dt>error</dt>
+        <dd>
+            Set if the login was unsuccessful.
+        </dd>
+        <dt>errorText</dt>
+        <dd>
+            A text describing what went wrong the the login.
+        </dd>
+    </dl>
+
+    <a name="SetUserActivity"></a><div class="fnhead">SetUserActivity</div>
+    <p>
+        Sent by the client to publish the user activity (active, inactive) in the im: presence at the user object.
+    </p>
+<pre><code class="json">{
+    "mt": "SetSessionInfo",
+    "inactive": boolean
+}</code></pre>
+    <dl>
+        <dt>inactive</dt>
+        <dd>
+            True, if the user is inactive.
+            False, if the user is active.
+        </dd>
+    </dl>
+
+    <a name="SetOwnPresence"></a><div class="fnhead">SetOwnPresence</div>
+    <p>
+        Sent by the client to publish the users activity and note in the tel: presence at the user object.
+    </p>
+<pre><code class="json">{
+    "mt": "SetOwnPresence",
+    "activity": string,
+    "note": string
+}</code></pre>
+    <dl>
+        <dt>activity</dt>
+        <dd>
+            The presence activity. Allowed values are "", "away", "busy", "dnd".
+        </dd>
+        <dt>note</dt>
+        <dd>
+            A free text defined by the user.
+        </dd>
+    </dl>
+
+    <a name="UpdateOwnPresence"></a><div class="fnhead">UpdateOwnPresence</div>
+    <p>
+        Sent by the PBX if the own presence has changed.
+    </p>
+<pre><code class="json">{
+    "mt": "UpdateOwnPresence",
+    "presence": [<a href="#Presence">Presence</a>]
+}</code></pre>
+
+    <a name="SubscribePresence"></a><div class="fnhead">SubscribePresence</div>
+    <p>
+        Starts a presence subscription for a given SIP URI or phone number. The PBX will start sending <a href="#UpdatePresence">UpdatePresence</a> messages for that endpoint.
+    </p>
+<pre><code class="json">{
+    "mt": "SubscribePresence",
+    "sip": string,
+    "num": string
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint to be monitored.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint to be monitored.
+        </dd>
+    </dl>
+
+    <a name="UnsubscribePresence"></a><div class="fnhead">UnsubscribePresence</div>
+    <p>
+        Stops a presence subscription for a given SIP URI or phone number. The PBX will stop sending <a href="#UpdatePresence">UpdatePresence</a> messages for that endpoint.
+    </p>
+<pre><code class="json">{
+    "mt": "UnsubscribePresence",
+    "sip": string,
+    "num": string
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint.
+        </dd>
+    </dl>
+
+    <a name="UpdatePresence"></a><div class="fnhead">UpdatePresence</div>
+    <p>
+        Send by the PBX if the presence of the monitored endpoint has changed.
+    </p>
+<pre><code class="json">{
+    "mt": "UpdatePresence",
+    "sip": string,
+    "num": string,
+    "up": boolean,
+    "ep": {
+        "sip": string,
+        "dn": string,
+        "num": string,
+        "email": string,
+        "url": string,
+        "type": string
+    },
+    "presence": [Presence]
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint.
+        </dd>
+        <dt>up</dt>
+        <dd>
+            True, if the monitor is connected. False otherwise.
+        </dd>
+        <dt>ep</dt>
+        <dd>
+            The details of the remote endpoint.
+        </dd>
+        <dt>presence</dt>
+        <dd>
+            An array containing presence items.
+        </dd>
+    </dl>
+    
+    <a name="SubscribeDialog"></a><div class="fnhead">SubscribeDialog</div>
+    <p>
+        Starts a dialog info subscription for a given SIP URI or phone number. The PBX will start sending <a href="#DialogInfo">DialogInfo</a> messages for that endpoint.
+    </p>
+<pre><code class="json">{
+    "mt": "SubscribeDialog",
+    "sip": string,
+    "num": string
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint to be monitored.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint to be monitored.
+        </dd>
+    </dl>
+
+    <a name="UnsubscribeDialog"></a><div class="fnhead">UnsubscribeDialog</div>
+    <p>
+        Stops a dialog info subscription for a given SIP URI or phone number. The PBX will stop sending <a href="#DialogInfo">DialogInfo</a> messages for that endpoint.
+    </p>
+<pre><code class="json">{
+    "mt": "UnsubscribeDialog",
+    "sip": string,
+    "num": string
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint.
+        </dd>
+    </dl>
+
+    <a name="DialogInfo"></a><div class="fnhead">DialogInfo</div>
+    <p>
+        Sent by the PBX if a calls of the monitored endpoints has changed its state. Note that the client needs to keep track of the current active call.
+        If a DialogInfo for an unknown call id is received the call needs to be added to the local state. If the deleted flag is set, the calls
+        must be removed again from the local state.
+    </p>
+<pre><code class="json">{
+    "mt": "DialogInfo",
+    "sip": string,
+    "num": string,
+    "callId": string,
+    "confId": string,
+    "remote": {
+        "sip": string,
+        "dn": string,
+        "num": string
+    },
+    "state": {
+        "name": string,
+        "outgoing": boolean,
+        "hold": boolean,
+        "held": boolean,
+        "waiting": boolean
+    },
+    "deleted": boolean
+}</code></pre>
+    <dl>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the endpoint.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the endpoint.
+        </dd>
+        <dt>callId</dt>
+        <dd>
+            A unique ID for the call.
+        </dd>
+        <dt>confId</dt>
+        <dd>
+            The conference ID of the call. Many calls with the same conference ID belong together.
+        </dd>
+        <dt>remote</dt>
+        <dd>
+            Details about the remote endpoint.
+        </dd>
+        <dt>state</dt>
+        <dd>
+            Details about the call state.
+        </dd>
+        <dt>deleted</dt>
+        <dd>
+            True, if the call has ended and should be removed from the local state.
+        </dd>
+    </dl>
+
+    <a name="Objects"></a><h2>Objects</h2>
+
+    <a name="User"></a><div class="fnhead">User</div>
+    <pre><code class="json">{
+    "domain": string,
+    "sip": string,
+    "guid": string,
+    "dn": string,
+    "num": string,
+    "email": string
+}</code></pre>
+    <p>
+        The info object is generated by the PBX.
+        It contains more information about the user.
+    </p>
+    <dl>
+        <dt>domain</dt>
+        <dd>
+            The domain name of the user.
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the user.
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            The GUID of the user object.
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name of the user object.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the user object.
+        </dd>
+        <dt>email</dt>
+        <dd>
+            The email address of the user object.
+        </dd>
+    </dl>
+
+    <a name="Info"></a><div class="fnhead">Info</div>
+    <pre><code class="json">{
+    "host": string,
+    "domain": string,
+    "sip": string,
+    "guid": string,
+    "dn": string,
+    "num": string,
+    "email": string,
+    "session": <a href="#Session">Session</a>
+}</code></pre>
+    <p>
+        The info object is generated by the PBX when a user logs in.
+        It contains more information about the user and optinal information about the session that has been created during the login.
+    </p>
+    <dl>
+        <dt>host</dt>
+        <dd>
+            Only present when used in the <a href="#Redirect">Redirect</a> message.
+        </dd>
+        <dt>domain</dt>
+        <dd>
+            The domain name of the user.
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            The SIP URI of the user.
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            The GUID of the user object.
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name of the user object.
+        </dd>
+        <dt>num</dt>
+        <dd>
+            The phone number of the user object.
+        </dd>
+        <dt>email</dt>
+        <dd>
+            The email address of the user object.
+        </dd>
+        <dt>session</dt>
+        <dd>
+            A <a href="#Session">Session</a> object containing session credentials.
+        </dd>
+    </dl>
+
+    <a name="Session"></a><div class="fnhead">Session</div>
+    <pre><code class="json">{
+    "usr": string,
+    "pwd": string
+}</code></pre>
+    <p>
+        During logins of type "user" a persistent session is created. This structure contains the encrypted credentials of this session.
+        They are used for encrypting selected attributes of messages. Also they are used for subsequent logins of type "session". 
+    </p>
+    <dl>
+        <dt>usr</dt>
+        <dd>
+            The encrypted session username.
+        </dd>
+        <dd>
+            <pre>Hexstring(RC4(innovaphoneAppClient:usr:&lt;nonce&gt;:&lt;password&gt;, &lt;session-username&gt;))</pre>
+        </dd>
+        <dt>pwd</dt>
+        <dd>
+            The encrypted session password.
+        </dd>
+        <dd>
+            <pre>Hexstring(RC4(innovaphoneAppClient:pwd:&lt;nonce&gt;:&lt;password&gt;, &lt;session-password&gt;))</pre>
+        </dd>
+    </dl>
+
+    <a name="SessionInfo"></a><div class="fnhead">SessionInfo</div>
+    <pre><code class="json">{
+    "id": string,
+    "current": boolean,
+    "userAgent": string,
+    "timestamp": unsigned,
+    "code": unsigned,
+    "needsAuthorization": boolean
+}</code></pre>
+    <p>
+        An object representing a persistent login session of the user.
+    </p>
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The session id.
+        </dd>
+        <dt>current</dt>
+        <dd>
+            True if it is the session that belongs to the current websocket connection.
+        </dd>
+        <dt>userAgent</dt>
+        <dd>
+            The user agent string that is the browser name or "myApps for Windows", "myApps for iOS", etc.
+        </dd>
+        <dt>timestamp</dt>
+        <dd>
+            Timestamp of the last login or update of that session.
+        </dd>
+        <dt>code</dt>
+        <dd>
+            The authorization code for two-factor authentication. It is displayed to the user for telling own and malicious pending logins apart.
+        </dd>
+        <dt>needsAuthorization</dt>
+        <dd>
+            True if two-factor authentication is activated and the session was not confirmed yet using a second factor.
+        </dd>
+    </dl>
+
+    <a name="App"></a><div class="fnhead">App</div>
+    <pre><code class="json">{
+    "name": string,
+    "title": string,
+    "text": string,
+    "url": string,
+    "inline": boolean,
+    "website": boolean,
+    "info": <a href="#AppInfo">AppInfo</a>
+}</code></pre>
+    <p>
+        An object representing an app.
+    </p>
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name / SIP URI of the app.
+        </dd>
+        <dt>title</dt>
+        <dd>
+            The display name of the app.
+        </dd>
+        <dt>text</dt>
+        <dd>
+            A description about the app defined at the user object.
+        </dd>
+        <dt>url</dt>
+        <dd>
+            The base URL of the app (without .htm).
+        </dd>
+        <dt>inline</dt>
+        <dd>
+            Obsolete.
+        </dd>
+        <dt>website</dt>
+        <dd>
+            If true the app is just a plain website. The client should not send any windows messages to the app or pass any URL parameters.
+        </dd>
+        <dt>info</dt>
+        <dd>
+            Additional info from the app service.
+        </dd>
+    </dl>
+
+    <a name="AppInfo"></a><div class="fnhead">AppInfo</div>
+    <pre><code class="json">{
+    "hidden": boolean,
+    "presence": boolean,
+    "apis": {
+        string: object,
+        ...
+    },
+    "wake": [string]
+}</code></pre>
+    <p>
+        Additional info about the properties of an app. This info is dynamic info from the app service.
+    </p>
+    <dl>
+        <dt>hidden</dt>
+        <dd>
+            If true, the app should be opened only in the background and shall not be displayed to the user. This mechanism is used for apps that provide client APIs but no UI.
+        </dd>
+        <dt>presence</dt>
+        <dd>
+            The app answers presence subscriptions. The client should establish presence subscriptions for home screen items of that app to retrieve presence info like badge counts.
+        </dd>
+        <dt>apis</dt>
+        <dd>
+            An object containing all client APIs provided by the app. The key represents the API identifier (like com.innovaphone.search) and the object is the API provider info (defined by the Client API).
+        </dd>
+        <dt>wake</dt>
+        <dd>
+            An array of wake type identifiers. Depending on the contained wake types the client should wake up the app when a <a href="#Wake">Wake</a> message containing the same wake type is received.
+            <dl>
+                <dt>phone</dt>
+                <dd>Phone calls</dd>
+                <dt>chat</dt>
+                <dd>Chat messages</dd>
+            </dl>
+        </dd>
+    </dl>
+
+    <a name="AppLoginInfo"></a><div class="fnhead">AppLoginInfo</div>
+    <pre><code class="json">{
+    "appobj": string,
+    "appdn": string,
+    "appurl": string,
+    "cn": string,
+    "unlicensed": boolean,
+    "apps": [<a href="#AppLoginInfoApp">AppLoginInfoApp</a>]
+}</code></pre>
+    <p>
+        The info object is generated by the PBX when the App is requesting a login for an App Service.
+        It contains more information about the user.
+    </p>
+    <dl>
+        <dt>appobj</dt>
+        <dd>
+            The sip/h323 id of the App Object in the PBX which grants the access
+        </dd>
+        <dt>appdn</dt>
+        <dd>
+            The display name of the App Object in the PBX which grants the access
+        </dd>
+        <dt>appdn</dt>
+        <dd>
+            The URL configured at the App Object in the PBX which grants the access. This can be used to determine the URL under which the app services is accessible.
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            The cn (Long Name) of the user logging in
+        </dd>
+        <dt>unlicensed</dt>
+        <dd>
+            Present and true if the App is running in an unlicensed mode.
+        </dd>
+        <dt>apps</dt>
+        <dd>
+            Array of Apps to which this user has granted access
+        </dd>
+    </dl>
+
+    <a name="AppLoginInfoApp"></a><div class="fnhead">AppLoginInfoApp</div>
+    <pre><code class="json">{
+    "name": string
+}</code></pre>
+    Info about the App.
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The sip/h323 identifier of the App Object
+        </dd>
+    </dl>
+
+    <a name="Presence"></a><div class="fnhead">Presence</div>
+    <pre><code class="json">{
+    "contact": string,
+    "status": string,
+    "activity": string,
+    "note": string
+}</code></pre>
+    <dl>
+        <dt>contact</dt>
+        <dd>
+            A string defining the type of the presence. Typical values are:
+            <dl>
+                <dt>tel:</dt>
+                <dd>The presence set by the user.</dd>
+                <dt>im:</dt>
+                <dd>Automatically created by the PBX. The status attribute contains the online state of the user.</dd>
+                <dt>calendar:</dt>
+                <dd>Automatically created by a calendar app like the innovaphone Calendar.</dd>
+            </dl>
+        </dd>
+        <dt>status</dt>
+        <dd>
+            Tells if the user can be contacted using the given contact. Possible values are "open", "closed".
+        </dd>
+        <dt>activity</dt>
+        <dd>
+            The presence activity. Typical values are "" for available, "away", "busy" and "dnd" for do not disturb.
+        </dd>
+        <dt>note</dt>
+        <dd>
+            A free text entered by the user giving additional information about the presence.
+        </dd>
+    </dl>
+
+</body>
+</html>

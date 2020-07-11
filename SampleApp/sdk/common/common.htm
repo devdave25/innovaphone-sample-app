@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>common</title>
+    <link rel="stylesheet" href="../web1/lib/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Common</h1>
+    <p>
+        This documentation gives instructions how to develop App Services in C++, that can run on the innovaphone App Platform. The header files for interfaces and libraries provided by the SDK can be found in the subfolders of sdk/common.
+    </p>
+
+    <h2> Folder Structure </h2>
+
+    <dl>
+        <dt>sdk/common/interface</dt>
+        <dd>
+            <ul>
+                <li>App Platform system interfaces.</li>
+                <li>Applications can include header files from here.</li>
+                <li><a href="interface/interface.htm">Documentation</a></li>
+            </ul>
+        </dd>
+    </dl>
+
+    <dl>
+        <dt>sdk/common/lib</dt>
+        <dd>
+            <ul>
+                <li>App Platform specific library.</li>
+                <li>Applications can include header files from here.</li>
+                <li><a href="lib/lib.htm">Documentation</a></li>
+            </ul>
+        </dd>
+    </dl>
+
+    <dl>
+        <dt>sdk/common/ilib</dt>
+        <dd>
+            <ul>
+                <li>Platform independet library of useful functions (XML, JSON, hashes, etc).</li>
+                <li>Applications can include header files from here.</li>
+                <li>The files in that folders don't follow the coding conventions. Sorry for that.</li>
+                <li><a href="ilib/ilib.htm">Documentation</a></li>
+            </ul>
+        </dd>
+    </dl>
+
+    <dl>
+        <dt>sdk/common/os</dt>
+        <dd>
+            <ul>
+                <li>SDK implementations.</li>
+                <li>Don't include header files from here.</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <dl>
+        <dt>sdk/common/service</dt>
+        <dd>
+            <ul>
+                <li>SDK implementations.</li>
+                <li>Don't include header files from here.</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <dl>
+        <dt>sdk/common/linux</dt>
+        <dd>
+            <ul>
+                <li>SDK implementations.</li>
+                <li>Don't include header files from here.</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h2> Developing App Services </h2>
+
+    <h3> main.cpp </h3>
+    <p>
+        For each application a main function is needed that initializes the application and
+        all of its dependencies. This main function should be located in an
+        <i>applicationname-main.cpp</i> file in the root folder of the project.
+    </p>
+
+    <h4> Includes </h4>
+    <p>
+        The main file includes all needed header files in the following order:
+    </p>
+    <ul>
+        <li>platform/platform.h</li>
+        <li>Standard libraries</li>
+        <li>Header files from common/os</li>
+        <li>Header files from common/interface</li>
+        <li>The header file of the application itself</li>
+    </ul>
+
+    <h4> Initialization </h4>
+    <p>
+        In the <i></i>main()</i> function all dependencies of the application are initialized using
+        the corresponding <i>Create()</i> function. Then the application is started.
+        All dependencies are passed to the constructor of the application using pointers
+        to their interface class (dependency injection).
+    </p>
+    <p>
+        As the main file is not shared across platforms it may use system calls, if needed.
+    </p>
+
+    <h4> Code Example </h4>
+    <p>
+        The following code snippet shows the <i>example-main.cpp</i> of an application
+        called <i>Example</i> that is dependent of ''IoMux'', ''WebserverPluginProvider'', ''PostgreSQLDatabaseProvider'' and a ''TCPSocketProvider''.
+    </p>
+    <pre>
+#include "platform/platform.h
+#include &lt;string.h&gt;
+#include &lt;sys/un.h&gt;
+#include &lt;unistd.h&gt;
+#include "common/os/iomux.h"
+#include "common/interface/webserver_plugin.h"
+#include "common/interface/database.h"
+#include "common/interface/socket.h"
+#include "common/interface/httpfile.h"
+#include "common/lib/appservice.h"
+#include "common/lib/appwebsocket.h"
+#include "example/example.h"
+int main(void)
+{
+    // dependencies
+    class IIoMux * iomux = IIoMux::Create();
+    IWebserverPluginProvider * webserverPluginProvider = CreateWebserverPluginProvider();
+    IDatabaseProvider * databaseProvider = CreatePostgreSQLDatabaseProvider();
+    ISocketProvider * socketProvider = CreateTCPSocketProvider();
+    // command line arguments
+    AppServiceArgs  serviceArgs;
+    serviceArgs.Parse(argc, argv);
+   
+    // start application
+    class Example * service = new Example(iomux, webserverPluginProvider, databaseProvider, socketProvider, &serviceArgs);
+    iomux->Run();
+   
+    // clean-up dependencies
+    delete service;
+    delete socketProvider;
+    delete databaseProvider;
+    delete webserverPluginProvider
+    delete iomux;
+    delete debug;
+    // return from application
+    return 0;
+}
+    </pre>
+
+    <h3> App Service and App Instance </h3>
+    <p><div class="fixme">@hna Explain App Services, App Instances and the communication with the Taskmanager.</div></p>
+
+    <h3> Including HTTP static files </h3>
+    <p>
+        The App hosted by the App Service is a web application that consists of a number of static files. That files need to be included in the binary of the App Service. In order to achieve that you need to
+        <ul>
+            <li>include "common/interface/httpfile.h" inside the main.cpp.</li>
+            <li>add instructions to the make file appname/apps/apps.mak to include the needed files.</li>
+        </ul>
+    </p>
+    <p>
+        Example:
+        <pre>
+$(OUTDIR)/obj/apps.cpp: apidemo/apps/*.*
+    $(IP_SRC)/exe/httpfiles -k -d apidemo/apps -t $(OUTDIR) -o $(OUTDIR)/obj/apps.cpp \
+    apidemo.htm,0,HTTP_GZIP \
+    apidemo.png,0,HTTP_GZIP \
+    innovaphone.apidemo.js,0,HTTP_GZIP
+        </pre>
+    </p>
+
+    <h2> Coding Conventions </h2>
+    <h3> Naming </h3>
+    <p>
+        Classes and function names use UpperCamelCase.
+    </p>
+    <p>
+        Variables and parameters use lowerCamelCase.
+    </p>
+    <h3> Braces </h3>
+    <p>
+        In general opening braces are put on the same line. Closing braces are put on a line on their own.
+        <pre>
+if (x > 3) {
+    ...
+}
+else {
+    ...
+}
+        </pre>
+        </p>
+    <p>
+        However, there is one special case, namely functions: they have the opening brace at the beginning of the next line.
+        <pre>
+int MyFunction(int x)
+{
+    ...
+}
+        </pre>
+    </p>
+    <h3> White space </h3>
+    <p>
+        Indentations are 4 spaces. Tabs are not to be used. There is no common definition what a tab is, if looking at code with an editor with a different understanding of tabs, tabs in the code can make code almost unreadable. 
+    </p>
+    <p>
+        Additional spaces do not necessarily make code more readable. It is better to use spaces 
+        the same way as in common written language or in mathematical expressions. 
+        <ul>
+            <li>No space before ','</li>
+            <li>No space before ';'</li>
+            <li>No space before ')'</li>
+            <li>No space between function names and '('</li>
+        </ul>
+        But
+        <ul>
+            <li>Single space after ','</li>
+            <li>Single space after ';'</li>
+            <li>Single space before and after operators (e.g. '=', '==', '+', ...)</li>
+            <li>Single space after keywords (e.g. 'if', 'while', ...)</li>
+        </ul>
+        <pre>
+int MyFunction(int a, int b, int c)
+{
+    ...
+}
+ 
+if (a == b || a == c) {
+    ...
+}
+ 
+for (int i = 0; i < 1000; i++) {
+    ...
+}
+        </pre>
+    </p>
+    <p>
+        To seperate functional blocks in the code a single empty line is good enough. 
+    </p>
+    <h3> if/else </h3>
+    <pre>
+if (x == y) {
+    ...
+}
+else if (x > y) {
+    ...
+}
+else {
+    ....
+}
+    </pre>
+    <h3> switch/case </h3>
+    <pre>
+switch (c) {
+case 1:
+    ...
+    break;
+case 2:
+    {
+        int x;
+        ...
+    }
+    break;
+default:
+    ...
+}
+    </pre>
+    <h3> do/while </h3>
+    <pre>
+do {
+    ...
+}
+while (x < y)
+    </pre>
+    <h3> for </h3>
+    <pre>
+for (int i = 0; i < 1000; i++) {
+    ...
+}
+    </pre>
+    <h3> classes </h3>
+    <pre>
+class x : public y {
+    ...
+public:
+    ...
+};
+    </pre>
+    <h3> Interfaces </h3>
+    <p>
+        All system interfaces are designed in a way that there are abstract classes,
+        with a name starting with 'I' which provide assynchronous services for applications.
+        These classes are typcally allocated with a 'Create' member function. In case of
+        the main class of an interface this is a static Create function.
+    </p>
+    <p>
+        The interfaces also define abstract 'User' classes, with a name starting with 'U'.
+        The application uses these as base classes to own classes.
+        These classes define callback functions which are called by the interface
+        to signal events like command completion or incoming requests.
+    </p>
+    <p>
+        Interfaces must be asynchronous. That means that calls to an 'I' class return immediately.
+        If the function call triggers a lengthy action, the application is notified when the action
+        is finished using a callback to the corresponding 'U' class. Calls to functions in an 'I' class 
+        should not trigger callbacks to the 'U' class, before the interface call returns.
+        All interfaces in common/interface are guaranteed
+        to follow that behaviour.
+    </p>
+    <p>
+        Example:
+        <pre>
+class ITask {
+public:
+    virtual void Start(class UTask * user) = 0;
+};
+ 
+class UTask {
+public:
+    virtual void TaskComplete(class ITask * const task) = 0;
+    virtual void TaskFailed(class ITask * const task) = 0;
+};
+        </pre>
+    </p>
+
+</body>
+</html>

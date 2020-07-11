@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Use RCC Api from external Web Page</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+    <h1>Tutorial: Use RCC Api from external Web Page</h1>
+    <p>
+        PBX Apis may be used from an external Web Page. This tutorial explains how to build a simple
+        busy lamp field in an external web page, which uses the RCC API. The same mechanism can
+        be applied for all PBX Json APIs
+    </p>
+    <p>
+        For demonstration purposes we implement a simple HTTP GET handler in our NewApp1 project to simulate
+        the external web service. The webservice creates the login to the PBX, using the shared secret between
+        the web service and a PBX App object.
+        This functionality can then be transfered to the external web service
+        to whatever technology (PHP, Go, Java, ...) is used there.
+    </p>
+    <p>
+        The tutorial is based on a newly created innovaphone App with the Visual Studio plugin.
+    </p>
+    <p>
+        The used file and class names in this example are based on a newly created App with the name
+        <b>NewApp1</b> and the company name <b>innovaphone</b>.
+    </p>
+        
+    <h2>Simulation of external Web Service</h2>
+
+    <p>
+        To simulate the external web page, we add the files webservice.htm and webservice.js
+        to the apps folder. This is an implementation of a very simple busy lamp field, using the RCC
+        Api. It used HTTP GET request to retrieve a login to the PBX, which the web service can
+        create with the shared secret.
+    </p>
+    <p>webservice.htm
+        <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8" /&gt;
+    &lt;title&gt;Webservice&lt;/title&gt;
+    &lt;script type="text/javascript" src="web/appwebsocket/innovaphone.appwebsocket.Connection.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="webservice.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+
+&lt;body onload="new Webservice()"&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </p>
+
+    <p>webservice.js
+        <pre><code class="language-javascrip">function Webservice() {
+    var args = location.search.split("&");
+    if (args[0].startsWith("?")) args[0] = args[0].slice(1);
+    var pbx = args.find(function (e) { return e.startsWith("pbx=") });
+    if (pbx) pbx = pbx.split("=")[1];
+    var app = args.find(function (e) { return e.startsWith("app=") });
+    if (app) app = app.split("=")[1];
+    var users = [];
+
+    if (pbx && app) {
+        var body = document.getElementsByTagName("body");
+        body[0].setAttribute("style", "margin:0px")
+        var panel = document.createElement("div");
+        panel.setAttribute("style", "position:absolute; width:100%; height:100%; background-color:black;" +
+                                    "display:flex; flex-wrap:wrap; align-content:flex-start");
+        body[0].appendChild(panel);
+
+        var aws = new innovaphone.appwebsocket.Connection("ws://" + pbx + "/PBX0/APPS/websocket",
+                                                          null, null, null,
+                                                          connected, message, closed, closed, login);
+    }
+
+    function login(_app, challenge) {
+        httpGet("login?mt=AppGetLogin&challenge=" + challenge + "&app=" + app, function (text) {
+            var obj = JSON.parse(text);
+            aws.login(obj);
+        });
+    }
+
+    function connected() {
+        aws.send({ mt: "Initialize", api: "RCC" });
+    }
+
+    function message(obj) {
+        console.log(JSON.stringify(obj));
+        if (obj.mt == "UserInfo") {
+            var u = users.find(function (e) { return obj.guid == e.guid() });
+            if (!u) {
+                users.push(new User(obj));
+            }
+            else {
+                if (obj.update == "del") {
+                    users.splice(users.indexOf(u), 1);
+                    u.del();
+                }
+                else {
+                    u.update(obj);
+                }
+            }
+        }
+    }
+
+    function closed() {
+        while(users.length) {
+            var u = users.pop();
+            u.del();
+        }
+    }
+
+    function User(info) {
+        var element = document.createElement("div");
+        element.setAttribute("style", "width:200px; height:20px; margin:10px; padding:10px");
+        panel.appendChild(element);
+        update();
+
+        function update(i) {
+            element.innerHTML = info.dn ? info.dn : info.cn;
+            if (info.alert) element.style.backgroundColor = "yellow";
+            else if (info.channel) element.style.backgroundColor = "red";
+            else if (info.regs) element.style.backgroundColor = "green";
+            else element.style.backgroundColor = "grey";
+        }
+        this.update = function (i) {
+            info = i;
+            update();
+        }
+
+        this.del = function () {
+            panel.removeChild(element);
+        }
+
+        this.guid = function () { return info.guid };
+    }
+
+    function httpGet(url, funcComplete, funcFailed) {
+        var xmlReq = new window.XMLHttpRequest();
+        if (xmlReq) {
+            xmlReq.open("GET", url, funcComplete ? true : false);
+            xmlReq.send(null);
+            if (funcComplete) {
+                xmlReq.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            funcComplete(this.responseText, this.responseXML);
+                        }
+                        else {
+                            if (funcFailed) funcFailed(this);
+                            else funcComplete("{}");
+                        }
+                    }
+                }
+            }
+        }
+        return xmlReq;
+    }
+}</code></pre>
+    </p>
+
+    <p>
+        To add these files to the static files served by the App, we add the lines
+        <pre><code>    $(APPWEBPATH)/webservice.htm \
+    $(APPWEBPATH)/webservice.js \</code></pre>
+        to the statement
+        <pre><code>APPWEBSRC_ZIP +=</code></pre>
+        in apps.mak
+    </p>
+
+    <p>
+        You can now build and run 
+    </p>
+    <p>
+        You should be able to open the webservice.htm with your browser from the URL
+        http://&lt;AP&gt;/newapp1/webservice.htm?app=rcc&pbx=&lt;your PBX IP&gt;.
+        A blank, black page should be displayed
+    </p>
+    
+    <h2>Simulation of Authentication Creation on the External Web Service</h2>
+    
+    <p>
+        The authentication works with a shared secret between the PBX App object and the web service.
+        In this example we use a static string "secret" for this.
+    </p>
+    <p>
+        For the login, the AppWebsocket library first reads a "challenge" from the PBX. This is then sent to
+        the web service so that the webservice can use this to create a login together with the shared
+        secret, which can be then used to call the login function of the AppWebsocket library.
+    </p>
+
+    <p>
+        We now add code the the NewApp1, which implements the handling of GET requests to create the login
+    </p>
+    
+    <h3>Implement GET handler</h3>
+
+    <ul>
+        <li>
+            Add declaration of a class which does the GET processing to the end of NewApp1.h
+            <pre><code class="language-cpp">class WebserviceLogin : public UWebserverGet {
+    void WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet) override;
+    void WebserverGetSendResult(IWebserverGet * const webserverGet) override;
+    void WebserverGetCloseComplete(IWebserverGet * const webserverGet) override;
+    char * resourceName;
+
+public:
+    WebserviceLogin(char * resourceName);
+    ~WebserviceLogin();
+};</code></pre>
+        </li>
+        <li>
+            Add the code for this to the end of NewApp1.cpp
+            <pre><code class="language-cpp">WebserviceLogin::WebserviceLogin(char * resourceName)
+{
+    debug->printf("WebserviceLogin %s", resourceName);
+    this->resourceName = _strdup(resourceName);
+}
+
+WebserviceLogin::~WebserviceLogin()
+{
+    debug->printf("~WebserviceLogin");
+}
+
+static char * UrlArg(const char * url, const char * name, char * & tmp)
+{
+    char * s = (char *)strstr(url, name);
+    char * ret = 0;
+    if (s) {
+        ret = tmp;
+        s += strlen(name);
+        for (unsigned l = 0; s[l] && s[l] != '&'; l++) *tmp++ = s[l];
+        *tmp++ = 0;
+        str::from_url(ret);
+    }
+    return ret;
+}
+
+void WebserviceLogin::WebserverGetRequestAcceptComplete(IWebserverGet * const webserverGet)
+{
+    if (strstr(resourceName, "?mt=AppGetLogin")) {    // handle login
+        char b[2000];
+        char * tmp = b;
+        char r[500];
+
+            // read the URL arguments for the login parameter
+        const char * app = UrlArg(resourceName, "&app=", tmp);
+        const char * domain = "test.com";
+        const char * sip = "";
+        const char * guid = "";
+        const char * dn = "";
+        const char * info = 0;
+        const char * challenge = UrlArg(resourceName, "&challenge=", tmp);
+
+            // calculate hash
+        class hash hash;
+        byte digest_bin[HASH_SIZE_SHA256];
+        char digest[HASH_SIZE_SHA256 * 2 + 1];
+        hash.init(HASH_SHA256);
+        hash.update(app, strlen(app));
+        hash.update(":", 1);
+        hash.update(domain, strlen(domain));
+        hash.update(":", 1);
+        hash.update(sip, strlen(sip));
+        hash.update(":", 1);
+        hash.update(guid, strlen(guid));
+        hash.update(":", 1);
+        hash.update(dn, strlen(dn));
+        hash.update(":", 1);
+        if (info && info[0]) {
+            hash.update(info, strlen(info));
+            hash.update(":", 1);
+        }
+        hash.update(challenge, strlen(challenge));
+        hash.update(":", 1);
+        hash.update("secret", strlen("secret"));
+        hash.final(digest_bin);
+        for (int i = 0; i < HASH_SIZE_SHA256; i++) sprintf(&digest[i * 2], "%02x", digest_bin[i]);
+
+        unsigned l = _sprintf(r, "{\"mt\":\"AppGetLoginResult\",\"app\":\"%s\",\"domain\":\"%s\",\"sip\":\"%s\",\"guid\":\"%s\",\"dn\":\"%s\",\"challenge\":\"%s\",\"digest\":\"%s\"}", app, domain, sip, guid, dn, challenge, digest);
+
+        webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, l);
+        webserverGet->Send(r, l);
+    }
+    else {
+        webserverGet->SetTransferInfo(WSP_RESPONSE_JSON, 1);
+        webserverGet->Send("X", 1);
+    }
+}
+
+void WebserviceLogin::WebserverGetSendResult(IWebserverGet * const webserverGet)
+{
+    debug->printf("WebserviceLogin::WebserverGetSendResult");
+    webserverGet->Close();
+}
+
+void WebserviceLogin::WebserverGetCloseComplete(IWebserverGet * const webserverGet)
+{
+    delete this;
+}</code></pre>
+            you should read the code carefully, because this is, what you have to implement on your web service
+            with the technology used there.
+        </li>
+        <li>
+            To be able to compile the code, you need to include a header file for the hash library
+            <pre><code class="language-cpp">#include "common/ilib/hash.h"</code></pre>
+            You should now be able to build the App again
+        </li>
+        <li>
+            To integrate the code in the HTTP handler, you need to add the following lines to the function
+            WebserverPluginHttpListenResult
+            <pre><code class="language-cpp">        plugin->Accept(new WebserviceLogin(resourceName));
+        return;
+</code></pre>
+            At the end of the if (requestType == WS_REQUEST_GET) clause.
+        </li>
+        <li>
+            You can now build and run the App Service. To test the code you can open the URL
+            http://&lt;AP&gt;/newapp1/login?mt=AppGetLogin&challenge=0&app=test. A Json data structure with the login
+            should be returned
+            <pre><code class="language-json">{"mt":"AppGetLoginResult","app":"test","domain":"test.com","sip":"","guid":"","dn":"","challenge":"0","digest":"66ee3f52256a8eed034603b98cbaf98890bab6f42adb4a34de928e1885d68293"}</code></pre>
+        </li>
+    </ul>
+
+    <h2>Add the App object to the PBX</h2>
+    
+    <p>
+        To use the RCC Api from your web page, you need an App object on the PBX, for the shared secret.
+        Use the Advanced user interface to create an App object with the following properties:
+        <dl>
+            <dt>Type</dt><dd>App</dd>
+            <dt>Long Name</dt><dd>RCC</dd>
+            <dt>Name</dt><dd>rcc</dd>
+            <dt>Password</dt><dd>secret</dd>
+            <dt>Grant access to APIs</dt><dd>Check RCC</dd>
+        </dl>
+    </p>
+    <p>
+        You should now be able to open the busy lamp field with the URL
+        http://&lt;AP&gt;/newapp1/webservice.htm?app=rcc&pbx=&lt;your PBX IP&gt; Still a blank black page should
+        be displayed. If you use the Advanced User Interface to assign more users to the App "rcc", these users
+        should appear. Users without phone registered grey, with phone green, with a call red and with an alerting
+        call yellow.
+    </p>
+
+</body>
+</html>

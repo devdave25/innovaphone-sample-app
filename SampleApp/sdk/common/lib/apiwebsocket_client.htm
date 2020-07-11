@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - API Websocket Client</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>API Websocket Client</h1>
+    <p>
+        This interface is used for internal modules of the myApps launcher. It is not needed by app developers.
+    </p>
+    <p>
+        The ApiWebsocketClient connects to an ApiRelay instance that is usually also a local service. It allows implementing API providers and API consumers that can interact with the apps running in myApps.
+        The websocket protocol is used for the connection. 
+    </p>
+
+    <h2>File information</h2>
+
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/lib/apiwebsocket_client.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#ApiWebsocketClient">ApiWebsocketClient</a><br>
+                <a href="#ApiProvider">ApiProvider</a><br>
+                <a href="#ApiConsumer">ApiConsumer</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <h2 id="ApiWebsocketClient">ApiWebsocketClient</h2>
+    <pre><code class="C++">class ApiWebsocketClient : public UWebsocketClient, public UTimer {
+    ...
+public:
+    <a href="#ApiWebsocketClient">ApiWebsocketClient(class IIoMux * const iomux, class ISocketProvider * const tcp, class ISocketProvider * const tls, class IDns * const dns, class IInstanceLog * const log, const char * uri, const char * pwd, const char * dn);</a>
+    virtual ~ApiWebsocketClient();
+    <a href="#ApiWebsocketClientIsConnected">bool ApiWebsocketClientIsConnected();</a>
+    <a href="#ApiWebsocketClientClose">void ApiWebsocketClientClose();</a>
+    <a href="#ApiWebsocketClientCloseComplete">virtual void ApiWebsocketClientCloseComplete() = 0;</a>
+    <a href="#ApiWebsocketClientConnected">virtual void ApiWebsocketClientConnected() {};</a>
+    <a href="#ApiWebsocketClientDisconnected">virtual void ApiWebsocketClientDisconnected() {};</a>
+};</code></pre>
+    <p>
+        Base class for websocket sessions to the ApiRelay of the myApps launcher.
+    </p>
+
+    <h3 class="fnhead" id="ApiWebsocketClient">ApiWebsocketClient</h3>
+    <p>
+        Contructor function.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char * <b>uri</b></td>
+                    <td>
+                        The websocket URI of the api relay service.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>pwd</b></td>
+                    <td>
+                        The password for authenticating to the api relay service.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>dn</b></td>
+                    <td>
+                        The display name that shall be used for API providers.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiWebsocketClientIsConnected">ApiWebsocketClientIsConnected</h3>
+    <dl>
+        <dt>Return value</dt>
+        <dd>
+            Returns true if the connection to the api relay is up. False otherwise.
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiWebsocketClientClose">ApiWebsocketClientClose</h3>
+    <p>
+        Shall be called to close the connection and all attached API providers and consumers.
+        The application will get the <code>ApiWebsocketClientCloseComplete</code> callback
+        when this is done.
+    </p>
+
+    <h3 class="fnhead" id="ApiWebsocketClientCloseComplete">ApiWebsocketClientCloseComplete</h3>
+    <p>
+        Will be called after the connection and all attached API providers and consumers have been closed.
+        Applications that use the library should not exit before this callback is received.
+    </p>
+
+    <h3 class="fnhead" id="ApiWebsocketClientConnected">ApiWebsocketClientConnected</h3>
+    <p>
+        Called if the connection went up.
+    </p>
+
+    <h3 class="fnhead" id="ApiWebsocketClientDisconnected">ApiWebsocketClientDisconnected</h3>
+    <p>
+        Called if the connection went down.
+    </p>
+
+
+
+    <h2 id="ApiProvider">ApiProvider</h2>
+    <pre><code class="C++">class ApiProvider : public btree, public UIoExec {
+    ...
+protected:
+    <a href="#ApiProviderClosed">void ApiProviderClosed();</a>
+    ...
+public:
+    <a href="#ApiProvider">ApiProvider(class ApiWebsocketClient * const client, const char * api);</a>
+    <a href="#ApiProviderSend">void ApiProviderSend(const char * client, const char * consumer, const char * src, class json_io & msg, word base, char * buffer);</a>
+    <a href="#ApiProviderUpdate">void ApiProviderUpdate(class json_io & json, word base, char * buffer);</a>
+    <a href="#ApiProviderRecv">virtual void ApiProviderRecv(const char * client, const char * consumer, const char * src, class json_io & msg, word base) = 0;</a>
+    <a href="#ApiProviderConsumerClosed">virtual void ApiProviderConsumerClosed(const char * client, const char * consumer) {}</a>
+    <a href="#ApiProviderClose">virtual void ApiProviderClose() { ApiProviderClosed(); }</a>
+    <a href="#ApiProviderConnected">virtual void ApiProviderConnected() {}</a>
+    <a href="#ApiProviderDisconnected">virtual void ApiProviderDisconnected() {}</a>
+};</code></pre>
+    <p>
+        Base class for client API providers.
+        An ApiProvider is attached during creation to an ApiWebsocketClient.
+        It is deleted by the ApiWebsocketClient. So the application doesn't need to keep a reference to it.
+    </p>
+
+    <h3 class="fnhead" id="ApiProvider">ApiProvider</h3>
+    <p>
+        Contructor function.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class ApiWebsocketClient * const <b>client</b></td>
+                    <td>
+                        The ApiWebsocketClient instance to be used by the provider.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>api</b></td>
+                    <td>
+                        The name of the API that is implemented by this class (e.g. com.innovaphone.search).
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiProviderSend">ApiProviderSend</h3>
+    <p>
+        This function is used for sending ApiResult messages.
+        The parameters client, consumer and src should be echoed from the corresponding ApiRequest message received using <code>ApiProviderRecv</code>.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char *  <b>client</b></td>
+                    <td>
+                        The opaque client ID from the API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>consumer</b></td>
+                    <td>
+                        The opaque consumer ID from the API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>src</b></td>
+                    <td>
+                        The opaque source ID from the API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing an API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">char * <b>buffer</b></td>
+                    <td>
+                        A buffer that is big enough to contain the whole encoded message.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiProviderUpdate">ApiProviderUpdate</h3>
+    <p>
+        This function is used for sending a new ApiModel to the client.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing the new API model.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">char * <b>buffer</b></td>
+                    <td>
+                        A buffer that is big enough to contain the whole encoded message.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiProviderRecv">ApiProviderRecv</h3>
+    <p>
+        This callback is called when an ApiRequest is received. ApiResults should be sent using the <code>ApiProviderSend</code> function.
+        The extra parameters (client, consumer and src) must be echoed back in the response.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char *  <b>client</b></td>
+                    <td>
+                        The opaque client ID. Must be echoed back in the API response.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>consumer</b></td>
+                    <td>
+                        The opaque consumer ID. Must be echoed back in the API response.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>src</b></td>
+                    <td>
+                        The opaque source ID chosen be the consumer. Must be echoed back in the API response.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing an API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiProviderConsumerClosed">ApiProviderConsumerClosed</h3>
+    <p>
+        This callback is called when an API consumer has been closed. This can be used to cancel any open API requests or subscriptions done by that consumer.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char *  <b>client</b></td>
+                    <td>
+                        The ID of the client.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>consumer</b></td>
+                    <td>
+                        The ID of the consumer.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiProviderClose">ApiProviderClose</h3>
+    <p>
+        This callback is called before the object is deleted by the AppWebsocketClient.
+        Subclasses should stop any activities and then call <code>ApiProviderClosed()</code>.
+    </p>
+
+    <h3 class="fnhead" id="ApiProviderConnected">ApiProviderConnected</h3>
+    <p>
+        Called when the provider is connected to the api relay.
+    </p>
+
+    <h3 class="fnhead" id="ApiProviderDisconnected">ApiProviderDisconnected</h3>
+    <p>
+        Called when the provider is disconnected from the api relay.
+    </p>
+
+    <h3 class="fnhead" id="ApiProviderClosed">ApiProviderClosed</h3>
+    <p>
+        This function should be called after the <code>ApiProviderClose()</code> callback, when the implementing class has stopped any activities.
+    </p>
+
+
+    <h2 id="ApiConsumer">ApiConsumer</h2>
+    <pre><code class="C++">class ApiConsumer : public btree, public UIoExec {
+    ....
+protected:
+    <a href="#ApiConsumerClosed">void ApiConsumerClosed();</a>
+    ...
+public:
+    <a href="#ApiConsumer">ApiConsumer(class ApiWebsocketClient * const client, const char * api);</a>
+    <a href="#ApiConsumerSend">void ApiConsumerSend(const char * provider, const char * src, class json_io & msg, word base, char * buffer);</a>
+    <a href="#ApiConsumerRecv">virtual void ApiConsumerRecv(const char * provider, const char * src, class json_io & msg, word base) {};</a>
+    <a href="#ApiConsumerUpdate">virtual void ApiConsumerUpdate(class json_io & model, word base) {};</a>
+    <a href="#ApiConsumerClose">virtual void ApiConsumerClose() { ApiConsumerClosed(); }</a>
+    <a href="#ApiConsumerConnected">virtual void ApiConsumerConnected() {}</a>
+    <a href="#ApiConsumerDisconnected">virtual void ApiConsumerDisconnected() {}</a>
+};</code></pre>
+    <p>
+        Base class for client API consumers.
+        An ApiConsumer is attached during creation to an ApiWebsocketClient.
+        It is deleted by the ApiWebsocketClient. So the application doesn't need to keep a reference to it.
+    </p>
+
+    <h3 class="fnhead" id="ApiConsumer">ApiConsumer</h3>
+    <p>
+        Contructor function.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class ApiWebsocketClient * const <b>client</b></td>
+                    <td>
+                        The ApiWebsocketClient instance to be used by the consumer.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char * <b>api</b></td>
+                    <td>
+                        The name of the API that is used by this class (e.g. com.innovaphone.search).
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiConsumerSend">ApiConsumerSend</h3>
+    <p>
+        Call this function to send an ApiRequst message to the specified provider.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char *  <b>provider</b></td>
+                    <td>
+                        Can be one of the following:
+                        <ul>
+                            <li>The ID of the provider.</li>
+                            <li>"*" to broadcast the request to all providers.</li>
+                            <li>NULL to let the client choose the provider based on user settings or by asking the user.</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>src</b></td>
+                    <td>
+                        An optional source ID that shall be mirrored back in the API result.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing an API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">char * <b>buffer</b></td>
+                    <td>
+                        A buffer that is big enough to contain the whole encoded message.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiConsumerRecv">ApiConsumerRecv</h3>
+    <p>
+        This function is called when an ApiResult message is received.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">const char *  <b>provider</b></td>
+                    <td>
+                        The provider ID.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">const char *  <b>src</b></td>
+                    <td>
+                        The source ID that was sent with the corresponding API request.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing an API result.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiConsumerUpdate">ApiConsumerUpdate</h3>
+    <p>
+        This function is called when the API model has changed.
+    </p>
+    <dl>
+        <dt>Parameters</dt>
+        <dd>
+            <table style="margin-left:-12px">
+                <tr>
+                    <td class="param">class json_io & <b>msg</b></td>
+                    <td>
+                        A JSON structure containing the new API model.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="param">word <b>base</b></td>
+                    <td>
+                        The reference pointing to the base of the message inside the JSON structure.
+                    </td>
+                </tr>
+            </table>
+        </dd>
+    </dl>
+
+    <h3 class="fnhead" id="ApiConsumerClose">ApiConsumerClose</h3>
+    <p>
+        This callback is called before the object is deleted by the AppWebsocketClient.
+        Subclasses should stop any activities and then call <code>ApiConsumerClosed()</code>.
+    </p>
+
+    <h3 class="fnhead" id="ApiConsumerConnected">ApiConsumerConnected</h3>
+    <p>
+        Called when the consumer is connected to the api relay.
+    </p>
+
+    <h3 class="fnhead" id="ApiConsumerDisconnected">ApiConsumerDisconnected</h3>
+    <p>
+        Called when the consumer is disconnected from the api relay.
+    </p>
+
+    <h3 class="fnhead" id="ApiConsumerClosed">ApiConsumerClosed</h3>
+    <p>
+        This function should be called after the <code>ApiConsumerClose()</code> callback, when the implementing class has stopped any activities.
+    </p>
+
+
+</body>
+</html>
+
+
+<!--
+
+    <h3>void ApiConsumerSend(const char * provider, const char * src, class json_io & msg, word base, char * buffer)</h3>
+    <p>
+        Call this function to send an ApiRequst message to the client.
+    </p>
+-->

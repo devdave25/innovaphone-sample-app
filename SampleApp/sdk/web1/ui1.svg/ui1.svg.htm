@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ui1.svg</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="../ui1.lib/innovaphone.ui1.lib.js" type="text/javascript"></script>
+    <script src="innovaphone.ui1.svg.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        function Try(icon) {
+            eval(document.getElementById('code').value);
+        }
+    </script>
+</head>
+
+<body>
+    <button onclick="Try('home')">Try(home)</button>
+    <button onclick="Try('hamburger')">Try(hamburger)</button>
+    <div style="position:relative; height:420px">
+        <textarea id="code" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 400px; border: 1px solid grey; font-family: Lucida Console">
+var svg = new innovaphone.ui1.Svg("width: 128px; height: 128px; fill: black;", "test.svg#" + icon, null);
+out.appendChild(svg.container);
+        </textarea>
+        <div id="out" style="position:absolute; left:610px; top:0px; width:600px; height:400px; border:1px solid grey"></div>
+    </div>
+
+
+    <h1>innovaphone.ui.Svg(style, url, cl)</h1>
+    <h2>Constructor</h2>
+    <p>
+        Creates an SVG image loaded from an external file.
+    </p>
+    <dl>
+        <dt>style</dt>
+        <dd>
+            Style attribute for the outer html. Useful values are width, height and fill.
+        </dd>
+        <dt>url</dt>
+        <dd>
+            The URL of the SVG file.
+            Use a frament identifier (#xyz) to reference a specific path inside the SVG.
+        </dd>
+        <dt>cl</dt>
+        <dd>
+            The CSS class to be applied to the outer element.
+        </dd>
+    </dl>
+    <h2>properties</h2>
+    <dl>
+        <dt>setUrl(value)</dt>
+        <dd>
+            Sets the a new SVG url. This method can be used to change the displayed image after the object has been created.
+        </dd>
+    </dl>
+
+    <h1>innovaphone.ui.SvgInline(style, viewbox, code, cl)</h1>
+    <h2>Constructor</h2>
+    <p>
+        Creates an inline SVG image.
+    </p>
+    <dl>
+        <dt>style</dt>
+        <dd>
+            Style attribute for the outer html. Useful values are width, height and fill.
+        </dd>
+        <dt>viewbox</dt>
+        <dd>
+            The viewbox for the image code, e.g. "0 0 32 32".
+        </dd>
+        <dt>code</dt>
+        <dd>
+            The inner SVG code, e.g. "&lt;path d=\"M13.5,28.5V19.68h5V28.5h6.25V16.74H28.5L16,3.5,3.5,16.74H7.25V28.5Z\" /&gt;".
+        </dd>
+        <dt>cl</dt>
+        <dd>
+            The CSS class to be applied to the outer element.
+        </dd>
+    </dl>
+    <h2>properties</h2>
+    <dl>
+        <dt>setCode(value)</dt>
+        <dd>
+            Changes the inner SVG code.
+        </dd>
+    </dl>
+</body>
+</html>

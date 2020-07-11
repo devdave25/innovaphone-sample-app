@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Json Protocol template</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>PBX Manager Plugin</h1>
+
+    <p>
+        The PBX Manager is a PBX App, which is used for configuration tasks. An App Service
+        can provide a plugin, which shows up in the PBX Manager and can configuration tasks
+        for the App Service. Typical task would be creating PBX objects, configuring
+        the App Instance, establish connections to other App Instances.
+	</p>
+
+    <p>
+        This documentation describes the following procedures used for these Plugings
+        <dl>
+            <dt><a href="#publish-manager-plugin">Publish A PBX Manager plugin</a></dt>
+            <dd>
+                An App Service may publish a PBX Manager Plugin, so that it shows up in the
+                PBX Manager App.
+            </dd>
+            <dt><a href="#plugin-javascript">Plugin Javascript</a></dt>
+            <dd>
+                The PBX Manager loads a Javascript Object which has to conform to some
+                definitions
+            </dd>
+            <dt><a href="#plugin-context">Plugin Context</a></dt>
+            <dd>
+                When the plugin is loaded, some other Javascript libraries are already
+                loaded and some API functions are available from the PBX Manager
+            </dd>
+            <dt><a href="#plugin-templates">Plugin Templates</a></dt>
+            <dd>
+                Some template files, which can be used to start a new plugin
+            </dd>
+        </dl>
+    </p>
+
+	<h2><a name="publish-manager-plugin">Publish a PBX Manager plugin</a></h2>
+
+    <p>
+        To publish a PBX Manager Plugin the App Service adds a class AppInstancePlugin to the
+        AppService pluginList by overwriting the virtual function AppInstancePlugins:
+    </p>
+
+	<pre><code class="C++">void &lt;your AppService Class&gt;::AppInstancePlugins(istd::list&lt;AppInstancePlugin&gt; * pluginList)
+{
+    pluginList->push_back(new AppInstancePlugin(&lt;Javascript filename&gt;, &lt;Icon file&gt;, &lt;Language file&gt;, &lt;multiple domains&gt;));
+}
+</code></pre>
+
+    <dl>
+        <dt>Javascript filename</dt>
+        <dd>
+            The file name of the Javascript file, which shall be loaded as plugin without the .js
+            extension.
+        </dd>
+        <dt>Icon file</dt>
+        <dd>
+            File for the Icon to be displayed in the PBX Manager App. Typically a 50x50px .png file is
+            used
+        </dd>
+        <dt>Language file</dt>
+        <dd>
+            This is a file containing localized texts so that the title of the plugin can be displayed
+            in the language of the user. It should contain a Javascript object with the same name as
+            the filename, with properties for each supported language, which should contain the
+            property "pluginTitle" as title
+        </dd>
+        <dt>multiple Domain</dt>
+        <dd>
+            If argument is true, the plugin is announced to all PBX Managers, regardless of the domain.
+            If false the Plugin is only announced if the domain of the instance matches the domain
+            of the PBX Manager.
+        </dd>
+    </dl>
+
+    <p>
+        A plugin typically consists of three files: The Javascript code of the plugin, the texts file
+        for the localized texts and a css. It is recommended to use the following naming conventions
+        for these files:
+        <dl>
+            <dt>Javascript code</dt>
+            <dd>&lt;company id&gt;.&lt;App name&gt;Manager.js</dd>
+            <dt>Texsts file</dt>
+            <dd>&lt;company id&gt;.&lt;App name&gt;ManagerTexts.js</dd>
+            <dt>CSS file</dt>
+            <dd>&lt;company id&gt;.&lt;App name&gt;Manager.css</dd>
+        </dl>
+    </p>
+
+	<h2><a name="plugin-javascript">Plugin Javascript</a></h2>
+
+    <p>
+        The PBX Manager loads the Javascript file and expects a constructor function
+<pre><code class="json">plugin.&lt;filename&gt;</code></pre>
+        to exist, which is the called to allocate a Plugin object.
+    </p>
+   
+    <p>
+        "plugin" is used as a namespace to avoid a conflict with other Javascritpt objects.
+    </p>
+    
+    <p>
+        It is recommended to use the company id as object name inside plugin to avoid conflicts
+        with any other plugin from other vendors.
+    </p>
+
+    <p>
+        The PBX Manager expects that a object which uses the innovaphone.ui1.nodePrototype as
+        prototype to be created by this constructor function. A Node "div" with a class "item-node"
+        should be created.
+    </p>
+
+    <p>
+        The constructor function has the following arguments
+    </p>
+
+    <dl>
+        <dt>start</dt>
+        <dd>
+            The innovaphone.lib1 start object, which can be used to access other myApps APIs
+        </dd>
+        <dt>item</dt>
+        <dd>
+            An object with informatio about the plugin
+<pre><code class="json">{
+    ap: string,
+    apDn: string,
+    uri: string,
+    png: string
+}</code></pre>
+            <dl>
+                <dt>ap</dt>
+                <dd>
+                    sip name of the AP object of the AP of this instance
+                </dd>
+                <dt>apDn</dt>
+                <dd>
+                    Display name of the AP Object of the AP
+                </dd>
+                <dt>uri</dt>
+                <dd>
+                    URI of the instance relative to the AP
+                </dd>
+                <dt>png</dt>
+                <dd>
+                    The icon file
+                </dd>
+            </dl>
+        </dd>
+        <dt>app</dt>
+        <dd>
+            This is the innovaphone.appwebsocket.Connection object which is connected to the PBX
+            so it can be used to access PBX APIs like "PbxAdminApi". In addition to the standard
+            AppWebsocket connection object, it has a property "domain" which is set to the
+            PBX domain.
+        </dd>
+    </dl>
+    
+    <h3>Connect to the App instance</h3>
+
+    <p>
+        The plugin can establish a AppWebsocket connection to the App instance. For authentication
+        the GetInstanceLogin message from the <a href="com.innovaphone.manager.htm">com.innovaphone.manager</a>
+        API can be used.
+    </p>
+    <pre><code class="json">    var managerApi = start.consumeApi("com.innovaphone.manager");
+    instance = new innovaphone.appwebsocket.Connection("ws" + item.uri.slice(4), "-", null, app.domain, instanceConnected, instanceMessage, null, null, instanceLogin);
+
+
+    function instanceLogin(app, challenge) {
+        managerApi.sendSrc({ mt: "GetInstanceLogin", path: item.uri.slice(item.uri.indexOf("/", 8) + 1, item.uri.lastIndexOf("/")), app: app, challenge: challenge }, item.ap, function (obj) {
+            instance.login(obj.msg);
+        });
+    }</code></pre>
+
+    <h3>Set the instance password</h3>
+
+    <p>
+        When the Manager plugin configures the first App object for an instance, it should reset the instance
+        password with a new randowm password. Use the function innovaphone.Manager.randomPwd(16) to generate such
+        a random password. The <a href="com.innovaphone.manager.htm">com.innovaphone.manager</a>
+        SetInstancePassword can be used for this purpose
+    </p>
+    <pre><code class="json">    var pwd = innovaphone.Manager.randomPwd(16);
+    managerApi.sendSrc({ mt: "SetInstancePassword", path: item.uri.slice(item.uri.indexOf("/", 8) + 1, item.uri.lastIndexOf("/")), pwd: pwd }, item.ap, function (obj) {
+        ...
+    });</code></pre>
+
+    <p>
+        If an additional App object shall be configured, the password stored in this App object can be copied
+        from an existing App object, which can be referenced with copyPwd in the UpdateObject message.
+    </p>
+    <pre><code class="json">src.send({ mt: "UpdateObject", api: "PbxAdminApi", copyPwd: copyPwd, cn: obj.title, guid: obj.guid, h323: obj.sip, pseudo: { type: "app", ... }, ... });</code></pre>
+
+    <h2><a name="plugin-context">Plugin Context</a></h2>
+
+    <p>
+        The following Javascript libries are loaded when the plugin is loaded:
+    </p>
+
+    <ul>
+        <li>innovaphone.lib1.js</li>
+        <li>innovaphone.ui1.lib.js</li>
+        <li>innovaphone.ui1.svg.js</li>
+        <li>innovaphone.ui1.scrolling.js</li>
+        <li>innovaphone.appwebsocket.connection.js</li>
+    </ul>
+
+    <h2><a name="plugin-templates">Plugin Templates</a></h2>
+
+    <p>
+        In the template files replace &lt;company id&gt; by your company in all lower case,
+        &lt;app name&gt; by your App name, starting with a capital letter
+        and &lt;app id&gt; with your App name with all lower case.
+    </p>
+
+    <div class="fnhead" style="margin-top:5px">&lt;company id&gt;.Manager&lt;app name&gt;.js</div>
+
+    <p>
+        The main plugin javascript
+    </p>
+
+<pre><code class="json">/// &lt;reference path="~/sdk/web1/lib1/innovaphone.lib1.js" /&gt;
+/// &lt;reference path="~/sdk/web1/ui1.lib/innovaphone.ui1.lib.js" /&gt;
+
+var plugin = plugin || {};
+plugin.innovaphone = plugin.innovaphone || {};
+plugin.&lt;company id&gt;.Manager&lt;app name&gt; = &lt;company id&gt;.Manager&lt;app name&gt; || function (start, item, app) {
+    this.createNode("div", null, null, "item-node");
+    innovaphone.lib1.loadCss(item.uri + ".css");
+
+    var colorSchemes = {
+        dark: {
+            "--&lt;company id&gt;-&lt;app id&gt;-c1": "#efefef",
+        },
+        light: {
+            "--&lt;company id&gt;-&lt;app id&gt;-c1": "#444444",
+        }
+    };
+
+    var schemes = new innovaphone.ui1.CssVariables(colorSchemes, start.scheme);
+    start.onschemechanged.attach(function () { schemes.activate(start.scheme) });
+
+    var texts;
+    var panel = this.add(new innovaphone.ui1.Div(null, "== plugin ==", "&lt;company id&gt;-&lt;app id&gt;-panel"));
+
+    innovaphone.lib1.loadObjectScript(item.uri + "Texts", function () {
+        texts = new innovaphone.lib1.Languages(&lt;company id&gt;.Manager&lt;app name&gt;Texts, start.lang);
+        init();
+    });
+
+    function init() {
+
+    }
+}
+plugin.innovaphone.Manager&lt;app name&gt;.prototype = innovaphone.ui1.nodePrototype;
+</code></pre>
+
+    <div class="fnhead" style="margin-top:5px">&lt;company id&gt;.Manager&lt;app name&gt;Texts.js</div>
+
+    <p>
+        The texts file
+    </p>
+
+<pre><code class="json">innovaphone.Manager&lt;app name&gt;Texts = {
+    en: {
+        pluginTitle: "&lt;app name&gt;",
+    },
+    de: {
+        pluginTitle: "&lt;app name&gt;",
+    }
+}</code></pre>
+
+    <div class="fnhead" style="margin-top:5px">&lt;company id&gt;.Manager&lt;app name&gt;.css</div>
+
+    <p>
+        The CSS
+    </p>
+
+<pre><code class="json">div.&lt;company id&gt;-&lt;app id&gt;-panel {
+    position:absolute;
+    left:0px;
+    right:0px;
+    top:0px;
+    bottom:0px;
+    color:var(--&lt;company id&gt;-&lt;app id&gt;-c1);
+    font-size:14px;
+}</code></pre>
+</body>
+</html>

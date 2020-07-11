@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - phone api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.phone</h1>
+    <p>
+        This API is used for communication with phone/softphone apps.
+    </p>
+
+    <h2><a name="consumeApi">consumeApi</a></h2>
+    <p>
+        The provideApi function is used to subscribe for API messages:
+    </p>
+    <pre><code class="javascript">var phoneApi = start.consumeApi("com.innovaphone.phone");
+
+phoneApi.send({ mt: "StartCall", num: "123" });
+
+phoneApi.onupdate.attach(function (sender, type) {
+    Object.keys(sender.model).forEach(function (key) {
+        var provider = sender.model[key];
+        if (provider.model.calls) {
+            provider.model.calls.forEach(function (call) {
+                ...
+            }
+        }
+    }
+});</code></pre>
+
+
+    <h2><a name="messages">Messages</a></h2>
+    <a href="#StartCall" style="text-decoration:none;">StartCall</a>,
+    <a href="#PrepareCall" style="text-decoration:none;">PrepareCall</a>,
+    <a href="#ConnectCall" style="text-decoration:none;">ConnectCall</a>,
+    <a href="#DisconnectCall" style="text-decoration:none;">DisconnectCall</a>,
+    <a href="#CallInfo" style="text-decoration:none;">CallInfo</a>
+
+
+    <h2><a name="StartCall">StartCall</a></h2>
+    <p>
+        Starts a new call to the given phone number or SIP-URI.
+    </p>
+    <pre><code class="json">{ mt: "StartCall", num: "200" }
+{ mt: "StartCall", sip: "bob@example.com" }
+{ mt: "StartCall", txt: "+49 (7031) 73009 - 0" }
+{ mt: "StartCall", num: "07031730090", adjust: true }</code></pre>
+
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>num</b></td><td>Phone number to be dialed [optional]</td></tr>
+        <tr><td class="param">string <b>sip</b></td><td>SIP-URI to be dialed [optional]</td></tr>
+        <tr><td class="param">string <b>txt</b></td><td>Unclassified dialstring. Phoneapp will check and take it as 'num' or 'sip' [optional]</td></tr>
+        <tr><td class="param">boolean <b>sip</b></td><td>Indicates that the number might not contain the external line prefix and might need to be added by the phone/softphone app before dialing [optional]</td></tr>
+    </table>
+
+
+    <h2><a name="PrepareCall">PrepareCall</a></h2>
+    <p>
+        Similar to "StartCall", but does not initiate the call automatically. User can verify the call destination and intiate call by clicking button.
+    </p>
+
+
+    <h2><a name="ConnectCall">ConnectCall</a></h2>
+    <p>
+        If there's an incoming call on the phone/softphone app in "Alerting" state it can be connected with this message.
+    </p>
+    <pre><code class="json">{ mt: "ConnectCall" }</code></pre>
+
+
+    <h2><a name="DisconnectCall">DisconnectCall</a></h2>
+    <p>
+        If there's an active call on the phone/softphone app any state it can be disconnected with this message.
+    </p>
+    <pre><code class="json">{ mt: "DisconnectCall" }</code></pre>
+
+    <h2><a name="CallInfo">CallInfo</a></h2>
+    <p>
+        An app can monitor call activity on phone/softphone apps and can provide context information for the call to be displayed in phone/softphone app.<br />
+        An app can either provide a piece of HTML code or an URL which is loaded in an iframe.
+        See <a href="#provider-model">Provider Model</a> on how to monitor call activity on phone/softphone apps.
+    </p>
+    <pre><code class="json">{ mt: "CallInfo", id: 1, html: "&lt;div style='color: white'&gt;Aloha from Apidemo&lt;/div&gt;" }
+{ mt: "CallInfo", id: 1, iframe: { src: "https://wikipedia.de/", height: "300px" } }</code></pre>
+
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">number <b>id</b></td><td>unique call-id [mandatory]</td></tr>
+        <tr><td class="param">string <b>html</b></td><td>HTML to be embedded [optional]</td></tr>
+        <tr><td class="param">object <b>iframe</b></td><td>[optional]</td></tr>
+        <tr><td class="param">string <b>src</b></td><td>URL of the HTML page to be embedded as iframe [optional]</td></tr>
+        <tr><td class="param">string <b>height</b></td><td>Height of the embedded iframe [optional]</td></tr>
+    </table>
+
+
+    <h2><a name="api-model">API model</a></h2>
+
+    <h3><a name="service-info">Service info</a></h3>
+    <p>
+        List of apps providing this API
+    </p>
+    <pre><code class="json">"com.innovaphone.phone": {
+    "dev:SwPh_5c6aa38f": {
+        title: "Softphone",
+        info: {
+            type: "softphone"
+        },
+        model: {}
+    },
+    "dev:00903332024b": {
+        title: "IP232",
+        info: {
+            type: "phone"
+        },
+        model: {
+            registered: true,
+            calls: []
+        },
+    }
+}</code></pre>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>type</b></td><td>Type of providing app:<br />
+            phone (an app controlling a hardware phone)<br />
+            softphone (an app that can do phone calls by itself without using a hardware phone)</td></tr>
+    </table>
+    <h3><a name="provider-model">Provider model</a></h3>
+    <p>
+    </p>
+    <pre><code class="json">{
+    registered: true,
+    calls: [
+        {
+            id: 1,
+            guid: "fff79c5bd2115d0109f400903341035b",
+            dir: "i",
+            num: "200",
+            sip: "charlie.chaplin",
+            dn: "Sir Charles Spencer Chaplin",
+            state: "Connected"
+        }
+    ]
+}</code></pre>
+
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">number <b>id</b></td><td>uniqe call-id [mandatory]</td></tr>
+        <tr><td class="param">string <b>guid</b></td><td>globally uniqe call-id [optional]</td></tr>
+        <tr><td class="param">string <b>dir</b></td><td>"i" for inbound call or "o" for outbound call [mandatory]</td></tr>
+        <tr><td class="param">string <b>num</b></td><td>Phone number (e.g. 202 or +49 7031 73009 0) [optional]</td></tr>
+        <tr><td class="param">string <b>sip</b></td><td>SIP-URI (e.g. charlie.chaplin or charlie.chaplin@unitedartists.com) [optional]</td></tr>
+        <tr><td class="param">string <b>dn</b></td><td>Display name [optional]</td></tr>
+        <tr><td class="param">string <b>state</b></td><td>Setup | Dialing | Ringback | Queued | Alerting | Connected | Holding | Held | Disconnected [mandatory]</td></tr>
+    </table>
+
+</body>
+</html>

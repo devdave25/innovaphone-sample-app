@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ui.scrolling1</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="../ui1.lib/innovaphone.ui1.lib.js" type="text/javascript"></script>
+
+    <script src="innovaphone.ui1.scrolling.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        function Try() {
+            var out = document.getElementById('out');
+            out.innerText = "";
+            eval(document.getElementById('code').value);
+        }
+    </script>
+</head>
+
+<body>
+    <h1>ui.scrolling1</h1>
+    <button onclick="Try()">Try</button>
+    <div style="position:relative; height:420px">
+        <textarea id="code" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 400px; border: 1px solid grey; font-family: Lucida Console">
+
+scrolling = new innovaphone.ui1.Scrolling("position:absolute; left:20px; right:100px; top:20px; bottom:20px; background-color:black; color:white; font-size:24px");
+out.appendChild(scrolling.container);
+scrolling.onScroll = function() {console.log("scroll " + scrolling.isScrollBottom())};
+
+scrolling.content.addHTML("Test");
+
+setTimeout(function() { 
+scrolling.content.addHTML("Line1=======================================" +
+                    "<br/>Line2<br/>Line3<br/>Line4<br/>Line5<br/>" +
+                    "Line6<br/>Line7<br/>Line8<br/>Line9<br/>" +
+                    "Line10<br/>Line11<br/>Line12<br/>Line13<br/>" +
+                    "Line14<br/>");
+ }, 3000);
+        </textarea>
+        <div id="out" style="position:absolute; left:610px; top:0px; width:600px; height:400px; border:1px solid grey">
+
+        </div>
+    </div>
+    <hr/>
+    <h1>Interface</h1>
+    <p>
+        Scrolling provides a simple stylable scrollbar, by using a scrollable div and hiding
+        the browser provided scrollbars.
+    </p>
+    <h2>innovaphone.ui1.Scrolling(style, maxWidth, maxHeight, width, color, cstyle)</h2>
+    <p>
+        Constructor function to create the scrolling element.
+    </p>
+    <dl>
+        <dt>style</dt>
+        <dd>
+            Style attribute for the outer html. This can for example be used to size and position the
+            element.
+        </dd>
+        <dt>maxWidth/maxHeight</dt>
+        <dd>
+            Can be used, if the element does not have a fixed size. The size is determined automatically
+            by the content. If the content is bigger than theses values, the scrollbars appear. A value of 0 is used for
+            the normal automatic mode so that a scrollbar is displayed if needed.
+            If -1 is used, the respective scrollbar is not displayed.
+            If -2 is is used the respective scrollbar is always displayed.
+        </dd>
+        <dt>width</dt>
+        <dd>
+            The width of the scrollbar in pixel.
+        </dd>
+        <dt>color</dt>
+        <dd>
+            The color of the scrollbar.
+        </dd>
+        <dt>cstyle</dt>
+        <dd>
+            Styling which is used for the content div. Can be used for things like setting
+            padding.
+        </dd>
+    </dl>
+    <h2>Properties</h2>
+    <dl>
+        <dt>content</dt>
+        <dd>
+            The ui1.Div element used for the content
+        </dd>
+        <dt>add</dt>
+        <dd>
+            Function to add content (calls content.add).
+        </dd>
+        <dt>rem</dt>
+        <dd>
+            Function to rem content (calls content.rem).
+        </dd>
+        <dt>firstChild</dt>
+        <dd>
+            Functions which returns the first child of content (calls content.firstChild).
+        </dd>
+        <dt>onScroll</dt>
+        <dd>
+            Property which can be set to a function, which is called when the scroll
+            position changes
+        </dd>
+        <dt>setScrollTop(top)</dt>
+            Set the top scroll position to top
+        <dd>
+        </dd>
+        <dt>getScrollTop()</dt>
+        <dd>
+            Returns the top scroll position.
+        </dd>
+        <dt>setScrollBottom(bottom)</dt>
+        <dd>
+            Set the bottom scroll position to bottom.
+        </dd>
+        <dt>getScrollBottom()</dt>
+        <dd>
+            Returns the bottom scroll position.
+        </dd>
+        <dt>scrollToBottom()</dt>
+        <dd>
+            Scroll to bottom.
+        </dd>
+        <dt>isScrollBottom()</dt>
+        <dd>
+            Returns true if scroll is at bottom
+        </dd>
+        <dt>isScrollTop()</dt>
+        <dd>
+            Returns true if scroll is at top
+        </dd>
+        <dt>contentHeight()</dt>
+        <dd>
+            Returns the height of the content
+        </dd>
+        <dt>scrollIntoView(node, scrollIntoViewOptions)</dt>
+        <dd>
+            Scrolls to the specified node, which is either an innovaphone.ui1.Node or a dom node.<br />
+            The parameter scrollIntoViewOptions is currently just used in webkit browsers, as the dom node scrollIntoView function is directly used.<br />
+            For other browsers, the own scrollbar implementation is used until these browsers support styling of a scrollbar.
+        </dd>
+    </dl>
+    <hr/>
+    <h1>Implementation</h1>
+    <p>
+        The element is build up from the following div elements (from the outside to the inside):
+    </p>
+    <h2>bars</h2>
+    <p>
+        This div has no style set by the element itself. The style attribute is set by the application.
+        It must be a absolute or relative positioned block element. The maxWidth, maxHeight arguments
+        refer to the outer size of this element.
+    </p>
+    <p>
+        It contains the following additional divs:
+    </p>
+    <dl>
+        <dt>vb, v</dt>
+        <dd>
+            These elements display the vertical scrollbar. vb defines the size and position and
+            v displays the actual moving bar.
+        </dd>
+        <dt>hb, h</dt>
+        <dd>
+            Same as vb, v but for the horizontial scrollbar
+        </dd>
+    </dl>
+    <h2>outer</h2>
+    <p>
+        Absolute position inside bars. It defines the actual visible content. If scrollbars are
+        visible it uses right and/or bottom of 8px to make room for the scrollbars. The overflow:hidden
+        property makes shure the browser scrollbars from the content are not visible
+    </p>
+    <h2>inner</h2>
+    <p>
+        The actually scrolling element. When resize is called the first time, the right and bottom
+        properties are set to a negative value representing the actual width of the browser scrollbars,
+        so that the browser scrollbars are moved out of the visible area. If a scrollbar needs to be
+        displayed, a positive value representing the size of the scrollbar is added, so that the actual
+        scrollbar is displayed at the same place as the browser scrollbar would be.
+    </p>
+    <h2>sizer</h2>
+    <p>
+        A relative positioned inline-block element. The size of this is used to set the outer size
+        automatically for automatic sizing
+    </p>
+    <p>It contains the following additional elements</p>
+    <dl>
+        <dt>obj</dt>
+        <dd>
+            An HTML object element, with a 100% width/height to fill sizer. A style is set, so that
+            it is not visible. The onresize handler of its document member is used to receive an event
+            when the size of the content changes to recalculate the scrollbars
+        </dd>
+        <dt>div</dt>
+        <dd>
+            A innovaphone.ui.elm element, which creates a div, without any style set. The
+            innovaphone.ui.content member of this element is published as this.content, so that
+            the application can use it to put content into scrolling.
+        </dd>
+    </dl>
+</body>
+</html>

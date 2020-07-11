@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Json Protocol Replication</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Replication</h1>
+
+    <p>
+        The Replication protocol is based on the AppWebsocket protocol and is used between a
+        publisher and a replicator to replicate a table of data between these two entities.
+        When the replication starts, the complete table is replicated from the publisher
+        to the replicator. During the replication session is active any changes are replicated
+        in both directions.
+	</p>
+
+	<a name="BaseMessage"><h2>General message structure</h2></a>
+
+	<pre><code class="json">{
+    "api": Name of the Table,
+    "mt": Name of the Message,
+    "src": AppWebsocket src
+}</code></pre><br/>
+
+    <p>
+        The AppWebsocket message format is used with the api, mt and src properties. To identify
+        which AppWebsocket connection can be used for Replication and is not scope of the specification,
+        but is defined for the specific publisher.
+    </p>
+
+	<u>Messages sent by the Replicator</u>
+
+	<ul>
+		<li><a href="#ReplicateStart">ReplicateStart</a> - Start the replication</li>
+		<li><a href="#ReplicateNext">ReplicateNext</a> - Get next rows</li>
+		<li><a href="#ReplicateAdd">ReplicateAdd</a> - Add a row</li>
+		<li><a href="#ReplicateDel">ReplicateDel</a> - Delete a row</li>
+		<li><a href="#ReplicateUpdate">ReplicateUpdate</a> - Update a row</li>
+	</ul>
+
+	<u>Messages sent by the Publisher</u>
+
+	<ul>
+		<li><a href="#ReplicateStartResult">ReplicateStartResult</a> - Result of replication start</li>
+		<li><a href="#ReplicateNextResult">ReplicateNextResult</a> - Send row</li>
+		<li><a href="#ReplicateAdd">ReplicateAdd</a> - Add a row</li>
+		<li><a href="#ReplicateDel">ReplicateDel</a> - Delete a row</li>
+		<li><a href="#ReplicateUpdate">ReplicateUpdate</a> - Update a row</li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - recurring definitions</div>
+
+	<a name="ReplicateStart"><h2>ReplicateStart</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateStart",
+    "add": bool,
+    "del": bool,
+    "columns": [<a href="#Column">Column</a>, ...]
+}</code></pre>
+
+    <p>
+        This message is used by the Replicator to start or restart an replication. The replicator
+        indicates it it ís able to add or delete rows and provides a list of columns it is interessted
+        in.
+    </p>
+	
+	<a name="ReplicateNext"><h2>ReplicateNext</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateNext"
+}</code></pre>
+
+    <p>
+    </p>
+
+	<a name="ReplicateAdd"><h2>ReplicateAdd</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateAdd",
+    "columns": [<a href="#Column">Column</a>, ...]
+}</code></pre>
+
+    <p>
+    </p>
+
+	<a name="ReplicateDel"><h2>ReplicateDel</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateDel",
+    "columns": [<a href="#Column">Column</a>, ...]
+}</code></pre>
+
+    <p>
+    </p>
+
+	<a name="ReplicateUpdate"><h2>ReplicateUpdate</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateAdd",
+    "columns": [<a href="#Column">Column</a>, ...]
+}</code></pre>
+
+    <p>
+    </p>
+
+	<a name="ReplicateStartResult"><h2>ReplicateStartResult</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateStartResult",
+    "columns": <a href="#Columns">Columns</a>
+}</code></pre>
+
+    <p>
+        This message is sent by the publisher in response to a ReplicateStart message. The columns
+        avaliable on the publisher are indicated in this message
+    </p>
+
+	<a name="ReplicateNextResult"><h2>ReplicateNextResult</h2></a>
+
+	<pre><code class="json">{
+    "api": TableName,
+    "mt": "ReplicateAdd",
+    "columns": [<a href="#Column">Column</a>, ...]
+}</code></pre>
+
+    <p>
+    </p>
+
+	<a name="Objects"><h2>Objects</h2></a>
+
+    <a name="Columns"><div class="fnhead">Columns</div></a>
+
+    <pre><code class="json">{
+    "&lt;row0&gt;": { &lt;"update":true&gt; },
+    "&lt;row1&gt;": { &lt;"update":true&gt; },
+    ...
+}</code></pre>
+
+    <p>
+        The columns object is used to describe the columns of a replication session. For each column
+        a property with the name of the column is used. This property is an object, with the optional
+        boolean property "update", which indicates, if update of the column is possibe/desired.
+    </p>
+
+</body>
+</html>

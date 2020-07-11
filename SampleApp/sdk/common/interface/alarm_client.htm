@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Alarm Client</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Alarm Client</h1>
+    <p>
+        The IAlarmClient is simple alarm client interface that can be used to send alarms and events to an alarm server. Upon receiving the first alarm/event, the alarm/event is queued and an http connection is established. When the connection
+        is up, the alarm is successfully sent via POST. <br />
+        Active alarms are continuously send (in ~ 30 minutes interval) until a clear alarm is recieved.
+        When the connection to the alarm server is down, the alarm client tries to re-establish it (increasing reconnect timer) until the connection is up. In this case, the queued alarms/events are resent.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/alarm_client.h<br><br></td></tr>
+
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IAlarmClient">IAlarmClient</a><br>
+                <a href="#UAlarmClient">UAlarmClient</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#ac_shutdown_reason">ac_shutdown_reason</a><br>
+                <a href="#AlarmSeverity">AlarmSeverity</a><br>
+                <a href="#AlarmType">AlarmType</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleIAlarmClient">IAlarmClient</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <a name="IAlarmClient"><h2>IAlarmClient</h2></a>
+    <pre><code class="language-cpp">class IAlarmClient {
+public:
+    static IAlarmClient * Create(class IIoMux * const iomux,
+                                class ISocketProvider * const tcpSocketProvider,
+                                class ISocketProvider * const tlsSocketProvider,
+                                class UAlarmClient * const user,
+                                class IInstanceLog * const log,
+                                char * url,
+                                char * username,
+                                char * pwd);
+    virtual ~IAlarmClient() {};
+    virtual void SetAlarm(dword code, AlarmSeverity severtiy, ulong64 time, const char * text, const char * details, const char * src);
+    virtual void ClearAlarm(dword code, AlarmSeverity severtiy, ulong64 time, const char * text, const char * details, const char * src);
+    virtual void SendEvent(dword code, AlarmSeverity severtiy, ulong64 time, const char * text, const char * details, const char * src);
+    virtual void ResetConnection(char * url, char * username, char * pwd);
+    virtual void Shutdown();
+    virtual void ChangeAlarmTimeout(unsigned int timeout);
+};</code></pre>
+
+    <h3>Overview</h3>
+    This is the interface to send alarms and events to a defined alarm server.
+
+    <h3>Logging</h3>
+    To enable logging for IAlarmClient, the flag LOG_ALARM_CLIENT must be set in the Managers diagnostic settings.
+
+    <h3>Public Functions</h3>
+    <div class="fnhead">Create</div>
+    <dd>
+        This static function creates the IAlarmClient instance. The returned instance must be release if no longer needed by using the C++ delete operator.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IIoMux * const <b>iomux</b></td><td>The <a href="../os/iomux.htm#IIoMux">IIoMux</a> instance that IAlarmClient instance will register to.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tcpSocketProvider</b></td><td>A <a href="socket.htm#ISocketProvider">ISocketProvider</a> instance that can create a TCP ISocket.</td></tr>
+            <tr><td class="param">class ISocketProvider * const <b>tlsSocketProvider</b></td><td>A <a href="socket.htm#ISocketProvider">ISocketProvider</a> instance that can create a TLS ISocket.</td></tr>
+            <tr><td class="param">class UAlarmClient * const <b>user</b></td><td>The <a href="#UAlarmClient">UAlarmClient</a> instance that will receive the callbacks of IAlarmClient.</td></tr>
+            <tr><td class="param">class IInstanceLog * const <b>log</b></td><td>The <a href="../lib/appservice.htm#IInstanceLog">IInstanceLog</a> instance used for loging purposes.</td></tr>
+            <tr><td class="param">char * <b>url</b></td><td>The address of the alarm server to connect to.</td></tr>
+            <tr><td class="param">char * <b>username</b></td><td>The username to connect to the alarm server for authentication.</td></tr>
+            <tr><td class="param">char * <b>pwd</b></td><td>The password to connect to the alarm server for authentication.</td></tr>
+        </table>
+
+        <h4>Return value</h4>
+        The IAlarmClient instance which should be freed as soon as it is no longer used by calling the C++ delete operator.
+    </dd>
+
+    <div class="fnhead">SetAlarm</div>
+    <dd>
+        This function sets an alarm and then sends it to the alarm server, if a connection is established. If the connection to the alarm server could not be established, the alarm is saved to be sent later.
+        Alarms are continuoesly sent until a clear alarm is received.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>code</b></td><td>A unique code which identifies the alarm</td></tr>
+            <tr><td class="param"><a href="#AlarmSeverity">AlarmSeverity</a> <b>severtiy</b></td><td>Defines the severity of the alarm set.</td></tr>
+            <tr><td class="param">ulong64 <b>time</b></td><td>The time at which the alarm was set (timestamp time in seconds)</td></tr>
+            <tr><td class="param">const char * <b>text</b></td><td>A string which describes the name or purpose of the alarm</td></tr>
+            <tr><td class="param">const char * <b>details</b></td><td>Additional details that might be improtant when the alarm was set.</td></tr>
+            <tr><td class="param">const char * <b>src</b></td><td>The source which set the alarm</td></tr>
+        </table>
+
+    </dd>
+
+    <div class="fnhead">ClearAlarm</div>
+    <dd>
+        This function clears a previuosly set alarm. If the connection to the alarm server could not be established, the cleared alarm is saved to be sent later.
+        Clear alarms received are queued first before sending.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>code</b></td><td>A unique code which identifies the alarm</td></tr>
+            <tr><td class="param"><a href="#AlarmSeverity">AlarmSeverity</a> <b>severtiy</b></td><td>Defines the severity of the alarm</td></tr>
+            <tr><td class="param">ulong64 <b>time</b></td><td>The time at which the alarm was cleared (timestamp time in seconds)</td></tr>
+            <tr><td class="param">const char * <b>text</b></td><td>A string which describes the name or purpose of the alarm</td></tr>
+            <tr><td class="param">const char * <b>details</b></td><td>Additional details that might be improtant when the alarm was cleared.</td></tr>
+            <tr><td class="param">const char * <b>src</b></td><td>The source which cleared the alarm</td></tr>
+        </table>
+    </dd>
+    <div class="fnhead">SendEvent</div>
+    <dd>
+        This function sends an event to the alarm server. If the connection to the alarm server could not be established, the event is saved to be sent later.
+        Events received are queued first before sending.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">dword <b>code</b></td><td>A unique code which identifies the event</td></tr>
+            <tr><td class="param"><a href="#AlarmSeverity">AlarmSeverity</a> <b>severtiy</b></td><td>Defines the severity of the event</td></tr>
+            <tr><td class="param">ulong64 <b>time</b></td><td>The time at which the event was sent (timestamp time in seconds)</td></tr>
+            <tr><td class="param">const char * <b>text</b></td><td>A string which describes the name or purpose of the event</td></tr>
+            <tr><td class="param">const char * <b>details</b></td><td>Additional details that might be improtant to the event.</td></tr>
+            <tr><td class="param">const char * <b>src</b></td><td>The source which sent the event</td></tr>
+        </table>
+
+    </dd>
+    <div class="fnhead">ResetConnection</div>
+    <dd>
+        Resets the connection to the alarm server, by closing the previuos connection (if any) and establishing a new one.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>url</b></td><td>The address of the new alarm server</td></tr>
+            <tr><td class="param">char * <b>username</b></td><td>The username for authentication</td></tr>
+            <tr><td class="param">char * <b>password</b></td><td>The password for authentication</td></tr>
+        </table>
+
+    </dd>
+    <div class="fnhead">Shutdown</div>
+    <dd>
+        Shuts down the connection to the alarm server.
+
+        <h4>Callbacks</h4>
+        After the connection is gracefully closed, UAlarmClient::AlarmClientShutdown() will be called.
+
+    </dd>
+    <div class="fnhead">ChangeAlarmTimeout</div>
+    <dd>
+        Changes the default timeout of the alarms. This function is used only for test purposes.
+    </dd>
+
+    <a name="UAlarmClient"><h2>UAlarmClient</h2></a>
+    <pre><code class="language-cpp">class UAlarmClient {
+public:
+    ~UAlarmClient() {}
+    virtual void AlarmClientShutdown(IAlarmClient * const alarmClient);
+};</code></pre>
+
+    <h3>Overview</h3>
+    The UAlarmClient class is used to receive callbacks from an IAlarmClient instance. An application must subclass UAlarmClient, implement the functions that must be implemented and pass that class as user to IAlarmClient::Create().
+    The instance of that subclass must not be freed before the IAlarmClient instance assigned to. One UAlarmClient instance can be assigned to multiple IAlarmClient instances, because the calling IAlarmClient will be passed as parameter
+    to the callback functions.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">AlarmClientShutdown</div>
+    <dd>
+        Will be called, after calling IAlarmClient::Shutdown() and after the connection had been closed.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IAlarmClient * const <b>alarmClient</b></td><td>The calling IAlarmClient instance.</td></tr>
+        </table>
+    </dd>
+
+    <h1>Data types</h1>
+    <a name="ac_shutdown_reason"><h2>ac_shutdown_reason</h2></a>
+    <h3>Overview</h3>
+    When the connection had been closed, UAlarmClient::AlarmClientShutdown() will be called with the reason for closing the connection. 
+    <h4>Values</h4>
+    <table style="margin-left: 20px">
+        <tr><td><b>AC_SHUTDOWN_NORMAL</b></td><td>The conenction had been closed successfully.</td></tr>
+        <tr><td><b>AC_HTTP_CONNECTION_ERROR</b></td><td>The conenction had been closed due to an http error.</td></tr>
+
+    </table>
+    <a name="AlarmSeverity"><h2>AlarmSeverity</h2></a>
+    <h3>Overview</h3>
+    Defines the severity of an alarm or event, which is used for SetAlarm, ClearAlarm and SendEvent functions.
+    <h4>Values</h4>
+    <table style="margin-left: 20px">
+        <tr><td><b>ALARM_SEVERITY_INDETERMINATE</b></td></tr>
+        <tr><td><b>ALARM_SEVERITY_MAJOR</b></td></tr>
+        <tr><td><b>ALARM_SEVERITY_CRITICAL</b></td></tr>        
+    </table>
+
+    <a name="AlarmType"><h2>AlarmType</h2></a>
+    <h3>Overview</h3>
+    Defines internally the type of the alarm or event to be send to the alarm server.
+    <h4>Values</h4>
+    <table style="margin-left: 20px">
+        <tr><td><b>SET_ALARM</b></td><td>The alarm type is set after a call to SetAlarm.</td></tr>
+        <tr><td><b>CLEAR_ALARM</b></td><td>The alarm type is set after a call to ClearAlarm.</td></tr>
+        <tr><td><b>ERROR</b></td><td>The event type is set after a call to SendEvent.</td></tr>
+    </table>
+
+    <a name="ExampleIAlarmClient"><h1> Code Example </h1></a>
+    <h2>IAlarmClient</h2>
+        <pre class="sample"><code class="language-cpp">void app::CreateAlarm(char * url, char * username, char * pwd)
+{
+    this->alarmClient = IAlarmClient::Create(iomux, tcpSocketProvider, tlsSocketProvider, this, this, url_1, username_1, pwd_1);
+}
+void app::SetAlarm()
+{
+    this->alarmClient->SetAlarm(FAULT_CODE_1, ALARM_SEVERITY_CRITICAL, ITime::TimeStampMilliseconds() / 1000, text, details, app_SRC));
+}
+void app::ClearAlarm()
+{
+    this->alarmClient->ClearAlarm(FAULT_CODE_1, ALARM_SEVERITY_INDETERMINATE, ITime::TimeStampMilliseconds() / 1000, text, details, app_SRC);
+}
+void app::SendEvent()
+{
+    this->alarmClient->SendEvent(ERROR_CODE_1, ALARM_SEVERITY_MAJOR, ITime::TimeStampMilliseconds() / 1000, text, details, app_SRC);
+}
+void * app::ResetConnection()
+{
+    this->alarmClient->ResetConnection(url_2, username_2, pwd_2);
+}
+void app::Shutdown()
+{
+    if (this->alarmClient) {
+        this->alarmClient->Shutdown();
+    }
+}
+</pre></code>   
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Debug</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>debug</h1>
+
+    <p>
+        The debug class is automatically created and can be globally accessed by using the reference * debug.
+        It has to be freed after the iomux Run function in the main class.<br />
+        <b>In your app code, you shouldn't use the debug class in release builds directly, <br />
+        but instead the log functions of your AppInstance class.<br />
+        </b>
+        <br />
+        If you use <i>VisualGDB</i> or <i>Valgrind</i> to run your App, the logs are written to STDOUT.<br />
+        Otherwise they are written to a logfile under <i>/var/log/apps/appname-timestamp.txt</i>.<br />
+        There are up to <b>5</b> log files for each App and each log file can have a maximum size of <b>5</b> MB.
+    </p>
+
+    <h2>Logs within an AppInstance object</h2>
+    
+    <p>
+        The AppInstance object itself provides log functions, where the appName and appDomain are always printed<br />
+        to make out different AppInstance objects.<br />
+        In addition, these log functions do only write logs to the log file, if the corresponding log flag<br />
+        for the application is set within the taskmanager or your code.<br />
+        See <a href="../lib/appservice.htm">appservice.htm</a> for more information.
+    </p>
+
+    <h2>LOG_FLAGS and IInstanceLog base class</h2>
+    <p>
+        See <a href="../lib/appservice.htm">appservice.htm</a> for more information.
+    </p>
+
+    <h2>The following functions can be used to debug data independent of the current log flags.</h2>
+
+    <dl>
+        <dt>void printf(const char * format, ...)</dt>
+        <dd>
+            Can be used like the standard printf.
+        </dd>
+
+        <dt>void hexdump(const void * buffer, size_t size)</dt>
+        <dd>
+            Prints a hexdump of the given buffer with the given size.
+        </dd>
+
+        <dt>void appPrintf(const char * appName, const char * appDomain, const char * format, ...)</dt>
+        <dd>
+            The same as printf, but <i>appName@appDomain</i> are also printed. This method is used <br />
+            to debug different AppInstance objects.
+        </dd>
+
+        <dt>void appPrintfV(const char * appName, const char * appDomain, const char * format, va_list ap)</dt>
+        <dd>
+            The same as appPrintf, but with an va_list ap as last argument.
+        </dd>
+
+        <dt>void appHexdump(const char * appName, const char * appDomain, const void * buffer, size_t size)</dt>
+        <dd>
+            The same as hexdump, but <i>appName@appDomain</i> are also printed. This method is used <br />
+            to debug different AppInstance objects.
+        </dd>
+
+        <dt>void SetLogging(bool on)</dt>
+        <dd>
+            Disables or enables the complete logging of the whole app. This might be usefull to prevent some important logs to get lost.
+        </dd>
+
+        <dt>void SetHexdump(bool on)</dt>
+        <dd>
+            Disables or enables all hexdumps within the whole app. This might be usefull if you just want to see the call flow of functions without data.
+        </dd>
+
+        <dt>void SetLogFileSize(off_t size)</dt>
+        <dd>
+            Set the maximum log file size for the app. This setting is normally controlled by the manager.
+        </dd>
+
+        <dt>Example:</dt>
+        <dd>
+            <code type="cpp">
+<pre>
+debug->printf("MyClass::TestFunction %s %x", "Hallo", 1234); 
+// 2016-11-07 13:29:05.663103 MyClass::TestFunction Hallo 0x42d
+byte buf[4];
+debug->HexDump(buf, sizeof(buf));   
+// 2016-11-07 13:29:05.663103 Hexdump of address 0x7EFFFC60, 4 bytes:
+// 2016-11-07 13:29:05.663301 0x00000000   00 00 00 00
+</pre>
+            </code>
+        </dd>
+    </dl>
+</body>
+</html>

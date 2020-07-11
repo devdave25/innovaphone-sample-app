@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Json Protocol template</title>
+    <link rel="stylesheet" href="innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="vs.css">
+    <script src="highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>Protocol Template</h1>
+
+    <p>
+        Basic ideas, Overview, ...
+	</p>
+
+	<a name="BaseMessage"><h2>Base message</h2></a>
+
+	<pre><code class="json">{
+    "api": "Api",
+    "mt": "MessageType"
+}</code></pre><br/>
+
+    <p>
+        BaseMessage Description
+    </p>
+
+    <dl>
+        <dt>api</dt>
+        <dd>Description Api</dd>
+        <dt>mt</dt>
+        <dd>Description MessageType</dd>
+    </dl>
+
+	<u>Message class 1</u>
+
+	<ul>
+		<li><a href="#Message">Message</a> - Message short description</li>
+	</ul>
+
+	<u>Message class 2</u>
+
+	<ul>
+		<li><a href="#MessageResult">MessageResult</a> - MessageResult short description</li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - recurring definitions</div>
+
+	<a name="Message"><h2>Message</h2></a>
+
+	<pre><code class="json">{
+    "api": "Api",
+    "mt": "Message"
+}</code></pre>
+
+    <p>
+        Description Message
+    </p>
+	
+	<a name="MessageResult"><h2>MessageResult</h2></a>
+
+	<pre><code class="json">{
+    "api": "Api",
+    "mt": "MessageResult",
+    "Objs": [<a href="#Obj1">Obj1, Obj1, ...</a>]
+}</code></pre>
+
+    <p>
+    	Description MessageResult
+    </p>
+
+    <dl>
+        <dt>Objs</dt>
+        <dd>Description of Objs</dd>
+    </dl>
+
+	<a name="Objects"><h2>Objects</h2></a>
+
+    <a name="Obj1"><div class="fnhead">Obj1</div></a>
+
+    <pre><code class="json">{
+    "p1": "Property1",
+    "p2": "Property2",
+    "..." : ...,
+}</code></pre>
+
+    <p>
+        Description ob Obj1
+    </p>
+
+    <dl>
+        <dt>p1</dt>
+        <dd>Description p1</dd>
+        <dt>p2</dt>
+        <dd>Description p2</dd>
+    </dl>
+
+</body>
+</html>

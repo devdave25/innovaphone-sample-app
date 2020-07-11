@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.phone (App API)</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>com.innovaphone.phone (App API)</h1>
+    <p>
+        This API is used for communication with phone apps.
+    </p>
+    <div class="fixme">Write documentation</div>
+
+    <h2>API model</h2>
+    <h3>Service info</h3>
+    <p>
+        The app should declare it's type that can be:
+        <dl>
+            <dt>phone</dt>
+            <dd>An app controlling a hardware phone.</dd>
+            <dt>softphone</dt>
+            <dd>An app that can do phone calls by itself without using a hardware phone.</dd>
+        </dl>
+        <pre>
+{
+  "type": "softphone"
+}</pre>
+    </p>
+    <h3>Provider model</h3>
+    <p>
+        <pre>
+{
+  "mt": "ApiModel",
+  "api": "com.innovaphone.phone",
+  "model": {
+    "registered": true,
+    "calls": [
+      {
+        "id": 1,
+        "num": "200",
+        "sip": "charlie.chaplin",
+        "dn": "Sir Charles Spencer Chaplin",
+        "state": "Connected"
+      }
+    ]
+  }
+}</pre>
+    </p>
+
+    <h2>API messages</h2>
+    <p>
+        All messages are JSON objects that have a mandatory attribute "mt" that specifies the message type.
+    </p>
+    <h3>Requests</h3>
+    <dl>
+        <dt>StartCall</dt>
+        <dd>Starts a new call to the given SIP URI or phone number.</dd>
+        <dd>
+            <dl>
+                <dt>sip (optional)</dt>
+                <dd>The SIP URI to be dialed.</dd>
+                <dt>num (optional)</dt>
+                <dd>The phone number to be dialed.</dd>
+                <dt>txt (optional)</dt>
+                <dd>Unclassified dialstring. Phoneapp will check and take it as 'num' or 'sip'</dd>
+                <dt>adjust (obtional)</dt>
+                <dd>Bool that tells that the number might not contain the external line prefix and might need to be adjusted by the provider before dialing.</dd>
+            </dl>
+        </dd>
+        <dd>Example: <code>{ mt: "StartCall", num: "200" }</code></dd>
+        <dd>Example: <code>{ mt: "StartCall", sip: "bob@example.com" }</code></dd>
+        <dd>Example: <code>{ mt: "StartCall", txt: "+49 (7031) 73009 - 0" }</code></dd>
+        <dt>PrepareCall</dt>
+        <dd>Provides a phone number or text that should be copied to the dial input field of the provider, so the user can verify it before initiating the call.</dd>
+        <dd>
+            <dl>
+                <dt>txt</dt>
+                <dd>Unclassified dialstring. Phoneapp will check and take it as 'num' or 'sip'</dd>
+                <dt>adjust (obtional)</dt>
+                <dd>Bool that tells that the number might not contain the external line prefix and might need to be adjusted by the provider before dialing.</dd>
+            </dl>
+        </dd>
+        <dd>Example: <code>{ mt: "PrepareCall", txt: "07031/73009(0)", adjust: true }</code></dd>
+    </dl>
+    <h3>Responses</h3>
+    <p>
+        The API doesn't define any response messages.
+    </p>
+</body>
+</html>

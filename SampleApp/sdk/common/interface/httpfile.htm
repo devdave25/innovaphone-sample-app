@@ -1,0 +1,108 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>httpfile</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>httpfile</h1>
+    <p>
+        httpfile is a class used by the IWebserverPlugin to realize static files. A static file that will be provided by the IWebserverPlugin needs
+        to converted with the httpfiles tool and added to the project during the building process (have a look to an innovaphone App created from
+        the template within Visual Studio to see how to implement static files). Each file that will be statically included will be represented by
+        an httpfile instance and placed inside a btree. So generally there is no need to use the httpfile class "manually".
+        <br><b>NOTE:</b> The interface of httpfile is compatible to the innovaphone firmware internals.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/httpfile.h<br><br/></td></tr>
+        <tr><td><b>Classes</b></td><td>
+                                    <a href="#httpfile">httpfile</a><br/>
+                                    <br/>
+                               </td></tr>
+        <tr><td><b>Static Variables</b></td><td>
+                                      <a href="#staticFilesRoot">staticFilesRoot</a><br/>
+                                      <br/>
+                                  </td></tr>
+    </table>    
+    
+    <h1>Classes</h1>
+    <h2 id="httpfile">httpfile</h2>
+    <pre><code class="C++">class httpfile: public btree {
+public:
+    httpfile(const char * fileName, word /* servlettype unused */, word theFlags, byte * data, size_t dataSize);
+    ~httpfile();
+
+    const char * GetFileName() { return fileName; }
+    const byte * GetData() { return data; }
+    size_t GetSize() { return dataSize; }
+    word GetResourceType() { return type; }
+    word GetFlags() { return flags; }
+    const char * GetMD5String() { return md5str; }
+};</code></pre>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">httpfile (Constructor)</div>
+    <dd>
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>fileName</b></td><td>The name of the static file including the path to the file a path inside the virtual web directory of an app registered to the webserver (e. G. "/main/index.html")</td></tr>
+            <tr><td class="param">word <b><i>&lt;unused&gt;</i></b></td><td>Unused on the AppPlatform side. This parameter only exists for compatibility reasons with other innovaphone projects. Set always to 0.</td></tr>
+            <tr><td class="param">word <b>theFlags</b></td><td>Flags for the file. Currently ond one flag exist (HTTP_GZIP) to declare the file as stored in compressed format.</td></tr>
+            <tr><td class="param">byte * <b>data</b></td><td>Pointer to the data of the file.</td></tr>
+            <tr><td class="param">size_t <b>dataSize</b></td><td>The size of the data.</td></tr>
+        </table>
+        
+        <h4>Remarks</h4>
+        If the file is compressed, the webserver will handle the necessary header fields need by the browser.
+    </dd>
+
+    <div class="fnhead">GetFileName</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the name of the file including the path (like set with the fileName parameter of the constructor).
+    </dd>
+    
+    <div class="fnhead">GetFileName</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns a pointer to the file date.
+    </dd>
+
+    <div class="fnhead">GetSize</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the size of the file. If the file is compressed, the file size is in compressed state.
+    </dd>
+
+    <div class="fnhead">GetResourceType</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the resource type of the file. That value will send from the webbrowser as content-type header field. The
+        constructor of httpfile autodetecst the resource type by the file suffix.
+    </dd>
+    
+    <div class="fnhead">GetFlags</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the flags set for the file. For now, only HTTP_GZIP is supported to indicate, that the file data is in gzip compressed format.
+    </dd>
+    
+    <div class="fnhead">GetMD5String</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the MD5 checksum of the file date. This value will be calculated by the constructor and used by the IWebserverPlugin / Webserver
+        as etag to support file caching of the browser.
+    </dd>
+
+    <h1>Static Variables</h1>
+    <h2 id="staticFilesRoot">staticFilesRoot</h2>
+    All httpfile instances are put to the staticFilesRoot btree for fast accessing them when requested. Don't manipulate that btree, it will completly be managed
+    by the httpfile instances themselfs and accessed by the IWebserverPlugin.
+</body>
+</html>

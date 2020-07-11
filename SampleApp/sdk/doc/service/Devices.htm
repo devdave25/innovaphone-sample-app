@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - devices service api</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.devices</h1>
+
+    <p>
+        The com.innovaphone.devices services api enables apps to use the whole websocket communication API from devices. The users App uses this functionality on the C++ part of the App for provisioning.<br>
+        All messages are send as JSON strings and must use the <b>mt</b> property which is the message type.
+	</p>
+
+	<a name="GetService"><h2>GetService</h2></a>
+    
+    <p>
+        See <a href="../common/interface/services.htm">services</a> for the information how to exactly work with IServices!<br>
+<pre><code class="c++">
+        IServicesApi * services = ...;    // must be retrieved within the PBX websocket connection PbxInfo message to the app service.
+        IService * service = services->GetService("com.innovaphone.devices");
+        class IAppWebsocketClient * awsClient = IAppWebsocketClient::Create(iomux, this, tcpSocketProvider, tlsSocketProvider, dns, log);
+        awsClient->Connect(service->GetWebsocketUrl(), service->GetName(), session->services->CreateAuthenticator());
+</code></pre>
+    </p>
+    
+    <h2>AppLogin</h2>
+    <p>
+        If you do not work with IServices and you know the intance password of the Devices instance, you can also use the standard AppLogin mechanism to login to Devices.<br>
+        In a multi domain environment in Devices, you're automatically admin with access to all domains, if you login with the instance password and the instance domain.<br>
+        If you login with the domain password from a domain different than the instance domain, you just have access to your own domain or domains, where you got access to.
+    </p>
+    
+    <h2>Messages send to the service</h2></a>
+    <a href="#GetProvisioningCategories" style="text-decoration:none;">GetProvisioningCategories</a><br/>
+    <a href="#GetProvisioningCode" style="text-decoration:none;">GetProvisioningCode</a><br/>
+    <a href="#GetProvisionedDevice" style="text-decoration:none;">GetProvisionedDevice</a><br/>
+    
+    <h2>Messages received by the service</h2></a>
+    <a href="#DeviceProvisioned" style="text-decoration:none;">DeviceProvisioned</a><br/>
+    
+    <a name="GetProvisioningCategories"><h3>GetProvisioningCategories</h3></a>
+
+    <p>
+        Retrieves all provisioning categories. With type='PHONE' you can just retrieve provisioning categories suitable for phones (device configurations Phone/Analog Phone exist).
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">ulong64 <b>domainId </b></td><td>The domain ID (optional). If not given, the domain of the currently logged in user is used.</td></tr>
+        <tr><td class="param">string <b>type </b></td><td>Device types: VA|GW|PHONE|DECT|APP_PLATFORM.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Will be echoed in the result message (optional).</td></tr>
+    </table>
+
+    <h3>GetProvisioningCategoriesResult</h3>    
+    <p>
+        The result message for the GetProvisioningCategories request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">array <b>categories </b></td><td>An array of <a href="#CategoryObject">category objects</a>.</td></tr>
+        <tr><td class="param">boolean <b>last </b></td><td>If true, no more GetProvisioningCategoriesResult messages are to be expected, otherwise more will follow with further categories.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>Set to an error code if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="CategoryObject"><h4>Category object</h4></a>
+    <table style="margin-left:-12px">
+        <tr><td class="param">ulong64 <b>id </b></td><td>A unique ID for this category.</td></tr>
+        <tr><td class="param">ulong64 <b>domainId </b></td><td>The domain ID of this category.</td></tr>
+        <tr><td class="param">string <b>name </b></td><td>The name of the category.</td></tr>
+        <tr><td class="param">boolean <b>config </b></td><td>If true, this category is used for provisioning and device configurations.</td></tr>
+    </table>
+    <h5>Example</h5>
+    <pre><code class="javascript">
+{
+    "mt":"GetProvisioningCategories",
+    "last":true,
+    "categories":[
+        {
+            "id":1,
+            "name":"Cat1",
+            "domainId":2,
+            "config":true
+        }
+    ]
+}
+</code></pre>
+
+    <a name="GetProvisioningCode"><h3>GetProvisioningCode</h3></a>
+
+    <p>
+        Generates a new provisioning code and triggers a <a href="#DeviceProvisioned">DeviceProvisioned</a> message on provisioning afterwards.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">ulong64 <b>domainId </b></td><td>The domain ID (optional). If not given, the domain of the currently logged in user is used.</td></tr>
+        <tr><td class="param">string <b>category </b></td><td>The category name.</td></tr>
+        <tr><td class="param">string <b>sip </b></td><td>The SIP name of the provisioning user (optional).</td></tr>
+        <tr><td class="param">boolean <b>rollout </b></td><td>If true, the provisioning code will be valid for 7 days, otherwise 15 minutes (optional, default false).</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+    </table>
+
+    <h3>GetProvisioningCodeResult</h3>    
+    <p>
+        The result message for the GetProvisioningCode request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>code </b></td><td>The generated code.</td></tr>
+        <tr><td class="param">ulong64 <b>validUntil </b></td><td>A UTC unixtimestamp until the code is valid.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="GetProvisionedDevice"><h3>GetProvisionedDevice</h3></a>
+
+    <p>
+        Gets the device provisioned with a certain code. This is useful if a provisioning was interrupted and might have been finished in the meantime.<br/>
+        If not, a <a href="#DeviceProvisioned">DeviceProvisioned</a> message will be triggered later.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">ulong64 <b>domainId </b></td><td>The domain ID (optional). If not given, the domain of the currently logged in user is used.</td></tr>
+        <tr><td class="param">string <b>code </b></td><td>The code to be checked.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+    </table>
+
+    <h3>GetProvisionedDeviceResult</h3>    
+    <p>
+        The result message for the GetProvisionedDevice request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">object <b>device </b></td><td>A <a href="#DeviceObject">device object</a>. Just given, if provisioning with the requested code was already done.</td></tr>
+        <tr><td class="param">string <b>code </b></td><td>The provisioning code.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+        <tr><td class="param">string <b>error </b></td><td>An error string if an error happened (optional).</td></tr>
+    </table>
+    
+    <a name="DeviceObject"><h4>Device object</h4></a>
+    <table style="margin-left:-12px">
+        <tr><td class="param">number <b>id </b></td><td>A unique ID for this device.</td></tr>
+        <tr><td class="param">string <b>hwId </b></td><td>The hardware ID.</td></tr>
+        <tr><td class="param">string <b>name </b></td><td>The name of the device, if configured.</td></tr>
+        <tr><td class="param">number <b>domainId </b></td><td>The domain ID.</td></tr>
+        <tr><td class="param">string <b>product </b></td><td>The product name, e.g. IP811.</td></tr>
+        <tr><td class="param">string <b>version </b></td><td>The software and hardware version, e.g. 13r1 dvl [13.A110/13A146/200]</td></tr>
+        <tr><td class="param">string <b>type </b></td><td>The hardware type (possible types are <b>GW,VA,PHONE,DECT,APP_PLATFORM</a>).</td></tr>
+        <tr><td class="param">boolean <b>pbxActive </b></td><td>If true, the PBX is enabled on this device.</td></tr>
+        <tr><td class="param">boolean <b>online </b></td><td>If true, this device is currently online.</td></tr>
+        <tr><td class="param">boolean <b>hasLeaseLicenses </b></td><td>If true, this device has rental licenses.</td></tr>
+        <tr><td class="param">string <b>uri </b></td><td>The URI under which this device is accessible during the current session.</td></tr>
+    </table>
+    <h5>Example</h5>
+    <pre><code class="javascript">
+{
+    "mt":"GetProvisionedDeviceResult",
+    "code": "123123123123",
+    "device":[
+        {
+            "id":1,
+            "hwId":"0090334100be",
+            "name":"Kari2",
+            "domainId":2,
+            "product":"IP811",
+            "version":"13r1 dvl [13.A110/13A146/200]",
+            "type":"GW",
+            "pbxActive":true,
+            "online":true
+        }
+    ]
+}
+</code></pre>
+
+    <h3>DeviceProvisioned</h3>    
+    <p>
+        Message from the service if a device has been provisioned after the GetProvisioningCode request.
+    </p>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">object <b>device </b></td><td>A <a href="#DeviceObject">device object</a>. Just given, if provisioning with the requested code was already done.</td></tr>
+        <tr><td class="param">string <b>code </b></td><td>The provisioning code.</td></tr>
+        <tr><td class="param">string <b>src </b></td><td>Echoed (optional).</td></tr>
+    </table>
+    
+</body>
+</html>

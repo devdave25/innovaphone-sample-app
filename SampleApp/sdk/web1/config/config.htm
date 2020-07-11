@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Config (JavaScript)</title>
+    <!-- Take care to adjust the 3 paths if needed, e. g.: "../../web1/doc" if the file is in the common/interface folder -->
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Config library (JavaScript)</h1>
+    <p>
+        The JavaScript Config library is the counterpart of the <a href="../../common/lib/config.htm">C++ Config library</a>. Both parts are communicating to each other
+        using an active appwebsocket connection. Each config item defined on the C++ side will be mapped to the JavaScript part. So if e. G. the app-service has a
+        config item with the name "enableSync", the same field will exist on the JavaScript side after the first synchronization between them. Also password fields will
+        be automaticaly encrypted and decrypted and number fields with min / max values will be handled correctly.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>web/config/innovaphone.config.js<br><br></td></tr>
+        <tr>
+            <td><b>Objects</b></td>
+            <td>
+                <a href="#config">innovaphone.Config</a><br>
+                <br> <!-- Keep it for better formatting! -->
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ConfigSample">Config Sample</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Objects</h1>
+    <a name="innovaphone.Config"><h2>innovaphone.Config</h2></a>
+    <pre><code class="JavaScript">var innovaphone = innovaphone || {};
+innovaphone.Config = innovaphone.Config || function() {
+    function save() {}
+    function getItemsChoices(itemName) {}
+    function init(appWebsocket) {}
+
+    this.evOnConfigItemsReceived = evOnConfigItemsReceived;
+    this.evOnConfigLoaded = evOnConfigLoaded;
+    this.evOnConfigSaveResult = evOnConfigSaveResult;
+
+    this.save = save;
+    this.getItemChoices = getItemChoices;
+    this.init = init;
+}</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">init</div>
+    <dd>
+        Initializes the object buy requesting the config items and the current configuration from the C++ Config library.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">appWebsocket</td><td>An active an already connected appWebsocket object.</td>
+            </tr>
+        </table>
+
+        <h4>Events</h4>
+        After init and receiving data, the following events will be raised (in the order below):
+        <ul>
+            <li>evOnConfigItemsReceived</li>
+            <li>evOnConfigLoaded</li>
+        </ul>
+
+        <h4>Remarks</h4>
+        Because init() directly starts to communicate with the C++ part, it must be called after the appWebsocket object is connected. So onAppConnected of appWebsocket will be
+        a good place to call init(). See <a href="../appwebsocket.htm#innovaphone.appwebsocket">appWebsocket</a> for details.<br/>
+        After the config items had been received, evOnConfigItemsReceived will be 
+    </dd>
+
+    <div class="fnhead">getItemChoices</div>
+    <dd>
+        The C++ library provides an config item with type choice. Those items have a a list of choices. After receiving the items (noted by the evOnConfigItemsReceived event), the list
+        of an choice item can be accessed using getItemChoices.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">itemName</td><td>The name of the item to get the choices from.</td>
+            </tr>
+        </table>
+
+        <h4>Return value</h4>
+        If the item given in itemName exist aand is a choice item and have a list of choices, getItemChoices() returns a JavaScript array with all the choices of the items.
+        Else null will be returned.
+    </dd>
+
+    <div class="fnhead">save</div>
+    <dd>
+        An app can also change config values (as long as they are not defined as unmanaged - see the <a href="../../common/lib/config.htm">C++ Config library</a> docu for details). Calling
+        save() will send the items to the app-service and let the service save them to the database.
+
+ 
+        <h4>Events</h4>
+        The function will lead to a evOnConfigSaveResult event.
+    </dd>
+
+    <h3>Public events</h3>
+    <div class="fnhead">evOnConfigItemsReceived</div>
+    <dd>
+        This event will be raised after calling init() and after the config object has received the list and types of config items, including the list of choices for the choice-items.
+        This event is only called once, after the initialization is complete. This event will pass one parameter to an attached event handler.
+    
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">sender</td><td>The sender of the event.</td>
+            </tr>
+        </table>
+
+        <h4>Remarks</h4>
+        Please note that when receiving this event, the current config itself still had not been loaded. This
+        will noticed by the evOnConfigLoaded event.<br/>
+        When this event had been reaised, the innovaphone.Config instance will have a property for each config item on the C++ side. The name of the property
+        is the same as the name of the config item defined from the app service. See the <a href="../../common/lib/config.htm">C++ Config library</a> docu for details.
+    </dd>
+
+    <div class="fnhead">evOnConfigLoaded</div>
+    <dd>
+        This event will be raised when the config object has received the config values from the app-service side. The event will pass one parameter to an attached event handler.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">sender</td><td>The sender of the event.</td>
+            </tr>
+        </table>
+
+        <h4>Remarks</h4>
+        This event can occure multiple times. If there are one than more session using the config or if there are some changes on the C++ side, the config will be send to each active
+        session that uses an innovaphone.Config object. This on the other hand will raise that even again. So an app should update what ever is necessary inside the handler of this event.
+    </dd>
+
+    <div class="fnhead">evOnConfigSaveResult</div>
+    <dd>
+        After calling save() and after the config had been saved to the databsae on the app-service side, this event will be raised. The event will pass two parameters to an attached event handler.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">sender</td><td>The sender of the event.</td>
+            <tr><td class="param">result</td><td>True, if the config had been saved successfully, else false.</td>
+            </tr>
+        </table>
+
+        <h4>Remarks</h4>
+        Note that the only information about saving the config is, if it was successfull or not. In case of doubts, more informations can be found inside the app-services log (if logging the config
+        is enabled). See see the <a href="../../common/lib/config.htm">C++ Config library</a> docu for details.
+    </dd>
+
+    <h1> Code Example </h1>
+    <a name="ConfigSample">Config Sample</h2></a>
+    <pre class="sample"><code class="JavaScript">// Let assume, that the appWebsocket initialization alrady have been done.
+// Let's also assume, that there are two config items on the apps-service side:
+//
+//    activeLog (bool)
+//    logType (Choice: DB, TXT, CSV)
+//
+var config = null;
+
+appWebsocket.onconnected = onAppWSConnected;
+
+function onAppWSConnected(appWebsocket) {
+    config = new innovaphone.Config(); 
+    config.evOnConfigItemsReceived = onConfigItemsReceived;
+    config.evOnConfigLoaded = onConfigLoaded;
+    config.evOnConfigSaveResult = onConfigSaveResult;
+    config.init(appWebsocket);
+}
+
+function onConfigItemsReceived(sender) {
+    var choices = config.getItemChoices("logType");
+    console.log("Choices available for logType = " + choices);
+}
+
+function onConfigLoaded(sender) {
+    console.log("Logging activated: " + config.activeLog ? "YES" : "NO");
+
+    var choices = config.getItemChoices("logType");
+    consoleLog("Log Type          : " + choices[config.logType]);
+
+    config.activeLog = !config.activeLog;
+    config.save();
+}
+
+function onConfigSaveResult(sender, result) {
+    console.log("Config save-result: " + result);
+}
+</pre>
+</body>
+</html>

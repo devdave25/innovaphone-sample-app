@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Lookup and authentication for websocket services</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Lookup and authentication for websocket services</h1>
+    <p>
+        App instances can provide services on incoming appwebsocket connections that can be used by the PBX or other app instances.
+        Those services are JSON APIs that are identified by a string. For ensuring the uniqueness, we recommend using the reverse domain name notation like "com.innovaphone.provisioning".
+        See the documentation of <code class="C++">AppWebsocket::AppWebsocketServiceInfo</code> on how to publish services.
+    </p>
+    <p>
+        If you want to find and authenticate against one of those services you can use this library. After attaching it to the websocket connection from the PBX you can
+        <ul>
+            <li>get the available services and their websocket URLs for a given service id.</li>
+            <li>get an authentication for a service from the PBX.</li>
+        </ul>
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/services.h<br><br></td></tr>
+        <tr>
+            <td><b>Public functions</b></td>
+            <td>
+                <a href="#CreateServicesApi">CreateServicesApi</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IServicesApi">IServicesApi</a><br>
+                <a href="#UServicesApi">UServicesApi</a><br>
+                <a href="#IService">IService</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleAttach">Attaching to the websocket connection from the PBX</a><br>
+                <a href="#ExampleLookup">Lookup and authentication</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!--- Block with the functions -->
+    <h1>Functions</h1>
+    <h2>Functions to initialize</h2>
+    <pre><code class="C++">extern class IServicesApi * CreateServicesApi(class UServicesApi * user, class IJsonApiConnection * conn);
+</code></pre>
+    <div id="CreateServicesApi" class="fnhead">CreateServicesApi</div>
+    <dd>
+        Creates an instance of the service API and attaches it to a IJsonApiConnection.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class UServicesApi * <b>user</b></td><td>The <a href="#UServicesApi">UServicesApi</a> implementation that will handle the callbacks.</td></tr>
+            <tr><td class="param">class IJsonApiConnection * <b>conn</b></td><td>The <a href="json_api.htm#IJsonApiConnection">IJsonApiConnection</a> instance that shall be used. It must be an appwebsocket connection from a PBX that offered the "Services" API in the PbxInfo message.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        The actual IServicesApi object. The object is owned by the IJsonApiConnection and is deleted when the connection is closed. It must not be deleted by the application.
+    </dd>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="IServicesApi"><h2>IServicesApi</h2></a>
+    <pre><code class="C++">class IServicesApi {
+public:
+    virtual ~IServicesApi() {};
+    virtual class IService * GetService(const char * api) = 0;
+    virtual class IAppWebsocketAuthenticator * CreateAuthenticator(class UAppWebsocketAuthenticator * user = 0) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    This class provides lookup and authentication for services.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">GetService</div>
+    <dd>
+        Returns the first IService object for the given API ID.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>api</b></td><td>The ID of the API, typically in reverse domain name notation.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        An <a href="#IService">IService</a> object representing the first found service. If there is no matching service the return value will be NULL.
+        <h4>Remarks</h4>
+        The returned object is volatile. The application should not store a pointer to it but just use the contained values or copy them.
+    </dd>
+    <div class="fnhead">CreateAuthenticator</div>
+    <dd>
+        Creates an object that can handle the authentication against services. It can be passed to <a href="json_api.htm#IAppWebsocketClient">IAppWebsocketClient::Connect</a>.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class UAppWebsocketAuthenticator * <b>user</b></td><td>A pointer to the <a href="appwebsocket_authenticator.htm#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a> that uses the authentication. Pass 0, if used with <a href="json_api.htm#IAppWebsocketClient">IAppWebsocketClient::Connect</a>.</td></tr>
+        </table>
+        <h4>Return value</h4>
+        The created <a href="appwebsocket_authenticator.htm#UAppWebsocketAuthenticator">UAppWebsocketAuthenticator</a> object that will be used by <a href="json_api.htm#IAppWebsocketClient">IAppWebsocketClient::Connect</a>. 
+    </dd>
+
+    <a name="UServicesApi"><h2>UServicesApi</h2></a>
+    <pre><code class="C++">class UServicesApi {
+public:
+    virtual void ServicesApiUpdated(class IServicesApi * servicesApi) = 0;
+    virtual void ServicesApiClosed(class IServicesApi * servicesApi) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for applications that use the library.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">ServicesApiUpdated</div>
+    <dd>
+        Called if there are updates on the available services. This can happen if services appear, disappear or the details are changed.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IServicesApi * <b>servicesApi</b></td><td>A pointer to the source of the callback.</td></tr>
+        </table>
+    </dd>
+    <div class="fnhead">ServicesApiClosed</div>
+    <dd>
+        Called if the IServicesApi is closed. The application must not do any more function calls on it.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">class IServicesApi * <b>servicesApi</b></td><td>A pointer to the source of the callback.</td></tr>
+        </table>
+        <h3>Remarks</h3>
+        The application must not delete the <a href="#IServicesApi">IServicesApi</a>. This is done by the <a href="json_api.htm#IJsonApiConnection">IJsonApiConnection</a> that owns the object.
+    </dd>
+
+    <a name="IService"><h2>IService</h2></a>
+    <pre><code class="C++">class IService {
+public:
+    virtual const char * GetName() = 0;
+    virtual const char * GetTitle() = 0;
+    virtual const char * GetWebsocketUrl() = 0;
+    virtual const char * GetApiInfo() = 0;
+    virtual class IService * GetNext() = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    This class provides the information about a single service and a pointer to the next service of the same type.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">GetName</div>
+    <dd>
+        <h4>Return value</h4>
+        The SIP URI of the app instance providing the service.
+    </dd>
+    <div class="fnhead">GetTitle</div>
+    <dd>
+        <h4>Return value</h4>
+        The display name of the app instance providing the service.
+    </dd>
+    <div class="fnhead">GetWebsocketUrl</div>
+    <dd>
+        <h4>Return value</h4>
+        The websocket URL of the service.
+    </dd>
+    <div class="fnhead">GetApiInfo</div>
+    <dd>
+        <h4>Return value</h4>
+        A string containing a JSON structure with further information about the service.
+    </dd>
+    <div class="fnhead">GetNext</div>
+    <dd>
+        <h4>Return value</h4>
+        Returns the next IService in the list or NULL if there are no more.
+    </dd>
+
+ 
+    <h1> Code Example </h1>
+    <a name="ExampleAttach"><h2>Attaching to the websocket connection from the PBX</h2></a>
+    <pre class="sample" style="height:250px;"><code class="language-cpp">void MyAppwebsocketSession::AppWebsocketMessage(class json_io & msg, word base, const char * mt, const char * src)
+{
+    if (!strcmp(mt, "PbxInfo")) {
+        servicesApi = CreateServicesApi(this, this);
+        AppWebsocketMessageComplete();
+    }
+    else {
+        AppWebsocketMessageComplete();
+    }
+}</code></pre>
+
+    <a name="ExampleLookup"><h2>Lookup and authentication</h2></a>
+    <pre class="sample" style="height:250px;"><code class="language-cpp">class IService * service = services.GetService("com.innovaphone.provisioning");
+if (service) {
+    appWebsocketClient->Connect(service->GetWebsocketUrl(), service->GetName(), servicesApi->CreateAuthenticator());
+}
+</code></pre>
+</body>
+</html>

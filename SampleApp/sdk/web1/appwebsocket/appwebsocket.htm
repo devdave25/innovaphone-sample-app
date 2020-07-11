@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>appwebsocket</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>appwebsocket</h1>
+    <hr/>
+    <h2>innovaphone.appwebsocket.Connection(url, app)</h2>
+    <p>
+        Creates an websocket connection to 'url' for an app entity named 'app'.
+        It uses the Javascript function opener.GetLogin(app,challenge,onlogin(app, user, key))
+        to obtain login credentials from the web page which opened the app.
+    </p>
+    <p>
+        It provides a send function to send messages. The messages are provided to the send
+        function as javascript object, which are JSON coded by the library. For receiving messages
+        a onmessage handler is provided.
+    </p>
+    <p>
+        To route messages to multiple objects inside the App a mechanism is provided with the
+        this.src constructor function. The idea is, that each object, which independtly sends
+        and receives messages using the same websocket connection allocates an object with this
+        constructor function. Each object is identifies itself by a name, which has to be unique
+        within the App. Then the send and onmessage functions of this 'src' object are used
+        to send and receive messages. This mechanism uses the 'src' member inside the JSON
+        messages.
+    </p>
+    <dl>
+        <dt>this.onconnected = function(domain, user, dn, appdomain) { }</dt>
+        <dd>
+            To be overwritten by the app. Is called, when the connection is established.
+            <dl>
+                <dt>domain</dt>
+                <dd>Domain of the looged in user</dd>
+                <dt>user</dt>
+                <dd>username of the logged in user</dd>
+                <dt>dn</dt>
+                <dd>Display name of the logged in user</dd>
+                <dt>appdomain</dt>
+                <dd>Domain of the App Instance to which the user is logged in</dd>
+            </dl>
+        </dd>
+        <dt>this.onmessage = function (message) { }</dt>
+        <dd>
+            To be overwritten by the app. Is called when a message is received. The argument
+            'message' is a javascript object constructed from the received json message.
+        </dd>
+        <dt>this.onerror = function (error) { }</dt>
+        <dd>
+        </dd>
+        <dt>this.onclosed = function () { }</dt>
+        <dd>
+        </dd>
+        <dt>this.src = function (src)</dt>
+        <dd>
+            Constructor function to create an object, which routes received messages based on
+            the string 'src'. This can be used, if the app contains different objects, which
+            independently send requests and receive responses or indications.
+            Each object may allocate a src object and set the onmessage member of this object
+            to receive messages.
+            If the send function of this src object is used, a member 'src' is added to each
+            sent JSON message.
+        </dd>
+        <dt>this.checkBuild</dt>
+        <dd>
+            Boolean. If set to true, the CheckBuild mechanism will be used.
+        </dd>
+    </dl>
+    <hr/>
+    <h2>Messages</h2>
+    <p>
+        The following Messages are used on the websocket connection for this:
+    </p>
+    <h3>mt: "Challenge"</h3>
+    <dl>
+        <dt>mt</dt><dd>"Challenge"</dd>
+        <dt>app</dt><dd>Name of the app entity (same as H.323 id of corresponding PBX object)</dd>
+    </dl>
+    <h3>mt: "ChallengeResult"</h3>
+    <dl>
+        <dt>mt</dt><dd>"ChallengeResult"</dd>
+        <dt>challenge</dt><dd>Challenge created by the App</dd>
+    </dl>
+    <h3>mt: "Login"</h3>
+    <dl>
+        <dt>mt</dt><dd>"Login"</dd>
+        <dt>app</dt><dd>Name of the app entity (same as H.323 id of corresponding PBX object)</dd>
+        <dt>user</dt><dd>User logged in at PBX</dd>
+        <dt>key</dt><dd>Hash calculated over &lt;app&gt;:&lt;user&gt;:&lt;challenge&gt;:&lt;password&gt;</dd>
+    </dl>
+    <h3>LoginResult</h3>
+    <dl>
+        <dt>mt</dt><dd>"LoginResult"</dd>
+        <dt>ok</dt><dd>Boolean, true if login succeeded</dd>
+    </dl>
+</body>
+</html>

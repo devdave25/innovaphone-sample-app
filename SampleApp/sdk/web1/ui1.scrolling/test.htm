@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ui.Scrolling</title>
+    <link rel="stylesheet" href="../lib/innovaphone.lib1.css" type="text/css" />
+    <link rel="stylesheet" href="../lib/innovaphone.doc.css" type="text/css" />
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="../ui1.lib/innovaphone.ui1.lib.js" type="text/javascript"></script>
+
+    <style>
+        .no-size {
+        }
+
+        .no-size::-webkit-scrollbar {
+            display: initial;
+            width: 9px;
+            height: 9px;
+        }
+
+        .no-size::-webkit-scrollbar-thumb {
+            background-color: red;
+        }
+    </style>
+
+    <script src="innovaphone.ui1.scrolling.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        function load() {
+            var s = null;
+
+            var x = 0;
+            var y = 0;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute content x scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            console.log("1");
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:100px; height:30px; background-color:green"));
+            console.log("2");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute content x/y scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:100px; height:100px; background-color:green"));
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute content y scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:30px; height:100px; background-color:green"));
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute content no scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:30px; height:30px; background-color:green"));
+
+            y += 150;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute Auto sizing x scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:100px; height:30px; background-color:green"));
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute Auto sizing x/y scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:100px; height:100px; background-color:green"));
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute Auto sizing y scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:30px; height:100px; background-color:green"));
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Absolute Auto sizing no scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.add(new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:30px; height:30px; background-color:green"));
+
+            y += 150;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Text Content x-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.addHTML("TestTestTestTest<br/>TestTestTest");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Text Content x/y-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.addHTML("TestTestTestTestTest<br/>TestTestTestTest<br/>TestTestTest<br/>TestTest<br/>");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Text Content y-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest<br/>TestTest<br/>");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Text Content no-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; width:130px; height:100px; background-color:black; color:white")).container);
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest<br/>");
+
+            y += 150;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Auto size x-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.addHTML("TestTestTestTest<br/>TestTestTest");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Auto size x/y-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.addHTML("TestTestTestTestTest<br/>TestTestTestTest<br/>TestTestTest<br/>TestTest<br/>");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Auto size y-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest<br/>TestTest<br/>");
+
+            x += 200;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "Auto size no-scrolling").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; background-color:black; color:white", 130, 100)).container);
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest<br/>");
+
+            y += 150;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "").container);
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; right: 50px; height: 100px; background-color:black; color:white", -1, -1)).container);
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest TestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTest<br/>");
+            s.content.container.contentEditable = true;
+            s.content.container.style.backgroundColor = "blue";
+
+            y += 150;
+
+            x = 0;
+            document.body.appendChild(new innovaphone.ui1.Node("div", "position:absolute; left:" + (x + 50) + "px; top:" + y + "px", "within a flex box").container);
+            s = new innovaphone.ui1.Node("div", "position:absolute; display:flex; font-size:24px; left:" + (x + 50) + "px; top:" + (y + 30) + "px; right:50px; height: 100px; background-color:black; color:white", "");
+            document.body.appendChild(s.container);
+            s.add(new innovaphone.ui1.Div("color:red; background-color:green; padding:10px", "Item left", "item-left"));
+            s = s.add(new innovaphone.ui1.Div("flex:1; position:relative; background-color:black; color:white", null, "content"));
+            s = s.add(new innovaphone.ui1.Scrolling("position:absolute; width: 100%; height: 100%", -1, -1));
+            s.content.addHTML("TestTest<br/>TestTest<br/>TestTest<br/>TestTest<br/>TestTest TestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTest<br/>");
+            s.content.container.contentEditable = true;
+
+            y += 150;
+            document.body.appendChild((s = new innovaphone.ui1.Scrolling("position:absolute; left:" + (x + 50) + "px; top:" + (y + 30) + "px; max-width:400px; max-height:200px; margin-bottom:20px; background-color:black; color:white", 400, 200, 0, "red", null, "no-size")).container);
+            s.add(new innovaphone.ui1.Div("margin:10px; font-size:24px;")).addHTML("Test<br/>Test<br/>Test<br/>");
+            setTimeout(function () {
+                s.add(new innovaphone.ui1.Div("margin:10px; font-size:24px;")).addHTML("TestTestTestTestTestTestTestTestTestTestTestTestTestTest<br/>Test<br/>Test<br/>Test<br/>Test<br/>Test<br/>");
+            }, 3000);
+        }
+    </script>
+</head>
+
+<body onload="load()">
+</body>
+</html>

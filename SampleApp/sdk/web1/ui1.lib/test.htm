@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ui.lib1</title>
+    <link rel="stylesheet" href="../lib1/innovaphone.lib1.css" type="text/css" />
+    <link rel="stylesheet" href="../lib/innovaphone.doc.css" type="text/css" />
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="innovaphone.ui1.lib.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var ev;
+        var div;
+        function load() {
+            div = new innovaphone.ui1.Node("div", "position:absolute; left:50px; top:50px; width:50px; height:50px; background-color:grey");
+            document.body.appendChild(div.container);
+            div.addText("Test1");
+            ev = div.addEvent("click", onClick, "click1");
+
+            var checkbox1 = new innovaphone.ui1.Checkbox("position:absolute; left:150px; top:50px; width: 20px; height: 20px; background-color: #1aa0ad;", false, null);
+            var checkbox2 = new innovaphone.ui1.Checkbox("position:absolute; left:150px; top:80px; width: 20px; height: 20px; background-color: #1aa0ad;", true, null);
+            checkbox1.addEvent("change", function (e) { checkbox2.setValue(!checkbox1.getValue()) }).setTooltip("This is my first Checkbox");
+            checkbox2.addEvent("change", function (e) { checkbox1.setValue(!checkbox2.getValue()) }).setTooltip("This is my second Checkbox");
+            document.body.appendChild(checkbox1.container);
+            document.body.appendChild(checkbox2.container);
+        }
+
+        function onClick(obj, e) {
+            alert(obj);
+            ev.rem();
+            var ev2 = div.addEvent("click", function (obj, e) { alert(obj); ev2.rem() }, "click2");
+        }
+    </script>
+</head>
+
+<body onload="load()">
+</body>
+</html>

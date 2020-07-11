@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Users Implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Users</h1>
+    <p>
+        Interface to change the password of a system user.
+    </p>
+    <h2>File information</h2>
+
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/users.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IUsers">IUsers</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#users_password_change_error_t">users_password_change_error_t</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleChangePassword">IUsers::ChangePassword</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <a name="IUsers"><h2>IUsers</h2></a>
+    <pre><code class="language-cpp">class IUsers {
+public:
+    <a href="#ChangePassword" style="text-decoration:none;">static users_password_change_error_t ChangePassword(const char * user, const char * oldPassword, const char * newPassword);</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="ChangePassword">ChangePassword (static function)</div>
+    <dl>
+        <dd>
+            This function changes the password of a given <i>user</i>. The old and the new password must be both provided.
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">const char * <b>user </b></td><td>The system user which must exist</td></tr>
+                <tr><td class="param">const char * <b>oldPassword </b></td><td>The old password of the system user</td></tr>
+                <tr><td class="param">const char * <b>newPassword </b></td><td>The desired new password</td></tr>
+            </table>
+            <h4>Return value</h4>
+            If the password is successfully changed <code>USERS_PASSWORD_CHANGE_SUCCESS</code> is returned.
+            <h4 id="ExampleChangePassword">Code Example</h4>
+            <pre class="sample" style="height:auto;"><code class="language-cpp">users_password_change_error_t error = IUsers::ChangePassword("root", "topSecret", "superTopSecret");
+                </code></pre>
+        </dd>
+    </dl>
+
+    <h1>Data types</h1>
+    <h2 id="users_password_change_error_t">users_password_change_error_t</h2>
+    <pre><code class="laguage-cpp">typedef enum {
+    USERS_PASSWORD_CHANGE_SUCCESS = 0,
+    USERS_PASSWORD_CHANGE_PAM,
+    USERS_PASSWORD_CHANGE_AUTHENTICATION,
+    USERS_PASSWORD_CHANGE_ACCOUNT,
+    USERS_PASSWORD_CHANGE_FAILURE
+} users_password_change_error_t;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">enum users_password_change_error_t</code> is an error enum which can be used to check if changing the passowrd was a success or a failure.
+    <h3>Values</h3>
+    <table style="margin-left: 20px">
+        <tr><td>USERS_PASSWORD_CHANGE_SUCCESS</td><td> The password was changed successfully</td></tr>
+        <tr><td>USERS_PASSWORD_CHANGE_PAM</td><td>Error: A PAM (Pluggable Authentication Modules Library) transcation could not be created</td></tr>
+        <tr><td>USERS_PASSWORD_CHANGE_AUTHENTICATION</td><td>Error: The system user could not be authenticated</td></tr>
+        <tr><td>USERS_PASSWORD_CHANGE_ACCOUNT</td><td>Error: The user account might not be valid</td></tr>
+        <tr><td>USERS_PASSWORD_CHANGE_FAILURE</td><td>Error: The password could not be changed</td></tr>
+    </table>
+</body>
+</html>

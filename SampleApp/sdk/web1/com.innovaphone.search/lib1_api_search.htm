@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>com.innovaphone.search (App API)</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>com.innovaphone.search (App API)</h1>
+    <p>
+        This API provides an interface for cross-app searches.
+    </p>
+    <div class="fixme">Write documentation</div>
+
+    <h2>API model</h2>
+    <h3>Service info</h3>
+    <p>
+        The API doesn't define any service info.
+    </p>
+    <h3>Provider model</h3>
+    <p>
+        The API doesn't define a provider model.
+    </p>
+
+    <h2>API messages</h2>
+    <p>
+        All messages are JSON objects that have a mandatory attribute "mt" that specifies the message type.
+    </p>
+    <h3>Requests</h3>
+    <dl>
+        <dt>Search</dt>
+        <dd>Starts a search for a given phone number.</dd>
+        <dd>
+            <dl>
+                <dt>type</dt>
+                <dd>Type of serach information (e.g. "contact")</dd>
+                <dt>search</dt>
+                <dd>The pattern to be searched</dd>
+            </dl>
+        </dd>
+        <dd>Example: <code>{ mt: "Search", type: "contact", search: "673" }</code></dd>
+    </dl>
+    <h3>Responses</h3>
+    <dl>
+        <dt>SearchInfo</dt>
+        <dd>Zero or more SearchInfo are returned for each <b>Search</b> request</dd>
+        <dd>
+            <dl>
+                <dt>type</dt>
+                <dd>Type of serach information (e.g. "contact")</dd>
+                <dt>dn</dt>
+                <dd>Display name</dd>
+                <dt>link</dt>
+                <dd>App-Item-Link (if the originating app can display item details)</dd>
+                <dt>entry</dt>
+                <dd>
+                    Directory entry that matches the criteria. An entry contains the following optional members:
+                    <dl>
+                        <dt>sn, givenname, company, displayname </dt>
+                        <dt>telephonenumber (ARRAY), mobile (ARRAY), homephone (ARRAY), extension (ARRAY), facsimiletelephonenumber (ARRAY) </dt>
+                        <dt>sip (ARRAY), email (ARRAY)</dt>
+                        <dt>title, position, url, department, description, info, roomnumber </dt>
+                        <dt>city, street, postalcode, state, country </dt>
+                        <dt>privatecity, privatestreet, privatepostalcode, privatestate, privatecountry </dt>
+                    </dl>
+                </dd>
+            </dl>
+        </dd>
+        <dd>Example: <pre>
+    {
+        mt: "SearchInfo",
+        type: "contact",
+        dn: "Jake Blues",
+        link:"someapp?id=4",
+        contact: {
+            telephonenumber: ["673"],
+            givenname: "Jake",
+            sn: "Blues",
+            company: "Blues Brothers",
+            sip: ["jbl@example.com"],
+            email: ["john.blues@example.com"]
+        }
+    }</pre></dd>
+
+        <dt>SearchResult</dt>
+        <dd>One single SearchResult is returned for each <b>Search</b> request (after all SearchInfo)</dd>
+        <dd>
+            <dl>
+            </dl>
+        </dd>
+        <dd>Example: <code>{ mt: "SearchResult" }</code></dd>
+    </dl>
+</body>
+</html>

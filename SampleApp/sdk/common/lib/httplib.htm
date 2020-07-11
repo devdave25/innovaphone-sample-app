@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>httplib</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>httplib</h1>
+    <p>
+        The HTTPlib is a collection of classes to handle HTTP Headers (reading / creating them). They are used by the webserver, so normally there
+        is no need to use them as long as you don't use IWebserverPassthrough. There it could become in handy using the HTTPlib classes to handle the
+        HTTP header stuff. After setting the version number and the HTTP result (or the HTTP request method), the header is prepared to be send.
+        You can set what ever field you want to and send that header directly by getting the buffer to the byte-stream and the size of it. So there
+        is no need for any other function to prepare a http header. Just set the version, the request or result, what ever field you want to set more
+        (it will always be a good idea to set at least the content length, even if it will be 0) and send the header.
+    </p>
+
+    <h2>File information</h2>
+        <table style="margin-left:-12px">
+            <tr><td><b>File</b></td><td>common/lib/httplib.h<br><br></td></tr>
+            <tr><td><b>Classes</b></td><td>
+                                        <a href="#HTTPLib">HTTPLib</a><br>
+                                        <a href="#HTTPHeader">HTTPHeader</a><br/>
+                                        <a href="#HTTPParser">HTTPParser</a><br>
+                                        <a href="#UHTTPParser">UHTTPParser</a><br>
+                                        <a href="#HTTPHeaderField">HTTPHeaderField</a><br>
+                                        <a href="#HTTPRange">HTTPRange</a><br>
+                                        <br>
+                                   </td></tr>
+            <tr><td><b>Data types</b></td><td>
+                                          <a href="#CLRF">CLRF</a><br>
+                                          <a href="#HTTP_GET_KEY">HTTP_GET_KEY</a><br>
+                                          <a href="#HTTP_HEAD_KEY">HTTP_HEAD_KEY</a><br>
+                                          <a href="#HTTP_POST_KEY">HTTP_POST_KEY</a><br>
+                                          <a href="#HTTP_PUT_KEY">HTTP_PUT_KEY</a><br>
+                                          <a href="#HTTP_CONNECT_KEY">HTTP_CONNECT_KEY</a><br>
+                                          <a href="#HTTP_OPTIONS_KEY">HTTP_OPTIONS_KEY</a><br>
+                                          <a href="#HTTP_TRACE_KEY">HTTP_TRACE_KEY</a><br>
+                                          <a href="#HTTP_PROPFIND_KEY">HTTP_PROPFIND_KEY</a><br>
+                                          <a href="#HTTP_MKCOL_KEY">HTTP_MKCOL_KEY</a><br>
+                                          <a href="#HTTP_COPY_KEY">HTTP_COPY_KEY</a><br>
+                                          <a href="#HTTP_MOVE_KEY">HTTP_MOVE_KEY</a><br>
+                                          <a href="#HTTP_DELETE_KEY">HTTP_DELETE_KEY</a><br>
+                                          <a href="#HTTP_LOCK_KEY">HTTP_LOCK_KEY</a><br>
+                                          <a href="#HTTP_UNLOCK_KEY">HTTP_UNLOCK_KEY</a><br>
+                                          <a href="#HTTP_PROPPATCH_KEY">HTTP_PROPPATCH_KEY</a><br>
+                                          <a href="#HTTP_SYSCLIENT_KEY">HTTP_SYSCLIENT_KEY</a><br>
+                                          <a href="#HTTP_VERSION_1_0">HTTP_VERSION_1_0</a><br>
+                                          <a href="#HTTP_VERSION_1_1">HTTP_VERSION_1_1</a><br>
+                                          <a href="#http_request_method_t">HTTPLib::http_request_method_t</a><br>
+                                          <a href="#http_connection_t">HTTPLib::http_connection_t</a><br>
+                                          <a href="#http_upgrade_t">HTTPLib::http_upgrade_t</a><br>
+                                          <a href="#http_encoding_t">HTTPLib::http_encoding_t</a><br>
+                                          <a href="#http_result_t">HTTPLib::http_result_t</a><br>
+                                          <a href="#result_codes">HTTP result codes</a><br>
+                                          <br>
+                                      </td></tr>
+            <tr><td><b>Examples</b></td><td>
+                                          <a href="#example">Code Example</a><br>
+                                          <br>
+                                      </td></tr>
+        </table>
+    
+    <h1>Classes</h1>
+    <h2 id="HTTPLib">HTTPLib</h2>
+    <pre><code class="C++">class HTTPLib {
+public:
+    static inline const char * GetHTTPRequestMethodName(http_request_method_t method);
+};
+</code></pre>    
+    <p>
+    This class actually is only for wrapping the types and constants used by the HTTP lib (beside the one helper function described here). The other parts of
+    that class are described in the data types section of this document (see below).<br/>
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">GetHTTPRequestMethodName</div>
+    <dd>
+        This inline function simply is for getting the name (as string) for a given HTTP method.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">http_request_method_t <b>method</b></td><td>The method id to get the name for.</td></tr>
+        </table>
+        
+        <h4>Return Values</h4>
+        The name of the method as string.
+    </dd>
+
+    <h2 id="HTTPHeader">HTTPHeader</h2>
+    <pre><code class="C++">class HTTPHeader {
+public:
+    HTTPHeader();
+    ~HTTPHeader();
+
+    void SetHTTPVersion(int major, int minor);
+    void SetHTTPResult(const HTTPLib::http_result_t * result);
+    void SetContentSize(size_t size);
+    void SetContentRange(size_t start, size_t end, size_t completeSize);
+    void SetContentType(const char * contentType);
+    void SetEncoding(HTTPLib::http_encoding_t enc);
+    void SetETag(const char * etag);
+    void SetConnection(HTTPLib::http_connection_t connection);
+    void SetUpgrade(HTTPLib::http_upgrade_t upgrade);
+    void SetWebsocketAcceptKey(const char * key);
+    void SetCustomField(const char * field);
+    void SetCustomField(const char * field, const char * value);
+    void SetDate();
+    void SetRequest(HTTPLib::http_request_method_t req, const char * resource);
+
+    const char * GetHeaderData() { return buffer; }
+    size_t GetHeaderSize() { return contentSize; }
+};</code></pre> 
+    <p>
+        This class is used for creating an HTTP header asresponse or request. If you want to parse an HTTP Header, <a href="HTTPParser">HTTPParse</a> must be used.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">SetHTTPVersion</div>
+    <dd>
+        Sets the major and minor version of the HTTP protocol you want to use. If a header will be created as a response, the HTTP version requested can be obtained
+        from an HTTPParser instance by calling HTTPParser::GetMajorVersion() or HTTPParser::GetMinorVersion() and set the same version for the response as used for
+        the request.<br/>
+        <br/>
+        This function must be called before using any other function, or the header you're going to build up will be incorrect. However, if you need to build a HTTP
+        header multiple times for response to requests, you can reuse a HTTPHeader instance, setting the version only once and reuse it by setting the HTTP result
+        code at first.
+        
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">int <b>major</b></td><td>The major HTTP version to set.</td></tr>
+            <tr><td class="param">int <b>minor</b></td><td>The minor HTTP version to set.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">SetHTTPResult</div>
+    <dd>
+        Set the result code for the HTTP header, to response to a HTTP request. This function will reset all other, previous set header data (except the HTTP version).
+        So by setting the result code first n already existing HTTPHeader object can be reused for further response header creation.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_result_t * <b>result</b></td><td>Pointer to the result code. Must be one of the HTTPLib::HTTP_* constants (see below).</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">SetContentSize</div>
+    <dd>
+        Set the content-length field of the header. It should be set every time, regardless if the size is 0 (for no content) or not.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">size_t <b>size</b></td><td>The content length to set.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetContentRange</div>
+    <dd>
+        Set the Content-Range field of the header. The start and end values are numbered from 0. The range field will be encoded with the given
+        complete size in the format "start-end/completeSize".
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">size_t <b>start</b></td><td>The start of the range.</td></tr>
+            <tr><td class="param">size_t <b>end</b></td><td>The end of the range.</td></tr>
+            <tr><td class="param">size_t <b>completeSize</b></td><td>The complete size of the requested resource.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">SetContentType</div>
+    <dd>
+        Set the mime-type of the content field of the header.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>contentType</b></td><td>The mime-type of the content to set (e. g. "text/html; charset=utf-8").</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetContentType</div>
+    <dd>
+        Set the mime-type of the content field of the header.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>contentType</b></td><td>The mime-type of the content to set (e. g. "text/html; charset=utf-8").</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetContSetEncodingentType</div>
+    <dd>
+        Set the encoding of the content. For now, there are only two encoding type: HTTP_ENCODING_NONE and HTTP_ENCODING_GZIP if the content is in gzip compressed format.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_encoding_t <b>enc</b></td><td>The encoding type to set.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">SetETag</div>
+    <dd>
+        Set the etag. The etag field will be used to support browser side caching of data.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>etag</b></td><td>The etag to set.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetConnection</div>
+    <dd>
+        Set the connection type.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_connection_t <b>connection</b></td><td>The type of the connection (HTTP_CONNECTION_NONE, HTTP_CONNECTION_KEEP_ALIVE, HTTP_CONNECTION_UPGRADE).</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetUpgrade</div>
+    <dd>
+        Set the upgrade type for connections defined with HTTP_CONNECTION_UPGRADE. For now, only HTTP_UPGRADE_WEBSOCKET is supported.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_upgrade_t <b>upgrade</b></td><td>The upgrade type for the connection.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetWebsocketAcceptKey</div>
+    <dd>
+        Set the key to accept incomming websocket connection (only for response headers).
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>key</b></td><td>The key to set.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetCustomField (overloaded)</div>
+    <dd>
+        Set a custom header field. In this version of the function, the header field with the value must be given with the HTTP header conform format ("FieldName: Value").
+        Custom header field means not only totally user defined header fields, but also every protocol defined header field not covered by any of the other Set*() functions.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>key</b></td><td>The headerfield with the value to set.</td></tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SetCustomField (overloaded)</div>
+    <dd>
+        Set a custom header field. In this version, the header field anem and the value can be given seperately. Custom header field means not only totally user defined
+        header fields, but also every protocol defined header field not covered by any of the other Set*() functions.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>field</b></td><td>The name of the headerfield to set.</td></tr>
+            <tr><td class="param">const char * <b>key</b></td><td>The value for that field.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">SetDate</div>
+    <dd>
+        Set the date-time field for the HTTP header, using the current time.
+    </dd>
+
+
+    <div class="fnhead">SetRequest</div>
+    <dd>
+        (For request only) Set the request the header is for. This function resets all internal fields, starting to build up a new header.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_request_method_t <b>method</b></td><td>The HTTP request method to build the header for.</td></tr>
+            <tr><td class="param">const char * <b>resource</b></td><td>The resource to request.</td></tr>
+        </table>
+    </dd>
+    
+    <div class="fnhead">GetHeaderData</div>
+    <dd>
+        <h4>Return Value</h4>
+        The http header in completely build up version, ready to send.
+    </dd>
+
+    <div class="fnhead">GetHeaderSize</div>
+    <dd>
+        <h4>Return Value</h4>
+        The length of the HTTP header.
+    </dd>
+    <br/>
+
+    <h2 id="HTTPParser">HTTPParser</h2>
+    <pre><code class="C++">class HTTPParser {
+public:
+    typedef enum {
+        HTTP_PARSE_DONE,
+        HTTP_PARSE_NEED_DATA,
+        HTTP_PARSE_CANCEL,
+        HTTP_PARSE_ERROR
+    } parseresult_t;
+
+    HTTPParser();
+    ~HTTPParser();
+
+    size_t ParseData(char * data, size_t len, UHTTPParser * user = nullptr);
+
+    parseresult_t GetParseResult() const { return (parseresult_t)parseResult; }
+    HTTPLib::http_encoding_t GetAcceptEncoding() const { return acceptEncoding; }
+    HTTPLib::http_request_method_t GetRequestMethod() const { return reqMethod; }
+    const char * GetRequestTarget() const { return requestTarget; }
+    const char * GetRequestParameters() const { return requestParameters; }
+    int GetMajorVersion() const { return httpVersion >> 8; }
+    int GetMinorVersion() const { return httpVersion & 0x00FF; }
+    int GetVersion() const { return httpVersion; }
+    const HTTPHeaderField * GetHeaderField(const char * fieldName)  const;
+
+    size_t GetContentLength() const { return contentLength; }
+    bool IsConnectionType(HTTPLib::http_connection_t ct) const { return (connectionType & ct) != 0; }
+    bool IsChunkedTransfer();
+    const char * GetCookie() const { return cookie; }
+    const char * GetETag() const { return etag; }
+    const char * GetContentType() const { return contentType; }
+    const char * GetHost() const { return host; }
+    HTTPLib::http_upgrade_t GetUpgrade() const { return upgradeType; }
+    const HTTPRange * GetRange() const { return rangeListStart; }
+    size_t GetRangeCount() const { return rangeCount; }
+    HTTPLib::http_encoding_t GetEncoding() const { return encoding; }
+
+    const char * GetWebsocketKey() const { return websocketKey; }
+    int GetWebsocketVersion() const { return websocketVersion; }
+    const char * GetOrigin() const { return origin; }
+
+    const HTTPLib::http_result_t * GetHTTPResultCode() const { return httpResultCode; }
+
+    size_t GetHeaderSize() const { return 0; }
+    char * MakeHeaderCopy() const { return nullptr; };
+    void GetFieldListCopy(byte * & buffer, size_t & bufferSize) const;
+};</code></pre> 
+    <p>
+        This class will be used to parse a byte stream for a HTTP header and extract the fields / data from the header. Note that the byte stream
+        must begin with a valid HTTP header, or an error will be returned.
+    </p>
+
+    <h3>Public functions</h3>
+    <div class="fnhead">ParseData</div>
+    <dd>
+        Parsed the given data with the given length. You have to first call this function and then call GetParseResult() to check the status of the parsing process.
+        Everything will be copied to an inside buffer, so the given buffer can be reused to receive additional header data to parse.
+           
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">char * <b>data</b></td><td>The data to parse.</td></tr>
+            <tr><td class="param">size_t <b>len</b></td><td>The number of bytes inside the given data buffer.</td></tr>
+            <tr><td class="param">UHTTPParser * <b>user</b></td><td>An UHTTPParser instance that will be called after the request line had been parsed. This helps to define, wheter
+                                                                    parsing should continue or not. See <a href="UHTTPParser">UHTTPParser</a> for more information.</td></tr>
+        </table>
+        
+        <h4>Callbacks</h4>
+        If the header indicates a HTTP request and if user is not nullptr, UHTTPParser::HTTPParserValidateRequest() will be called after parsing the first line (which is the request
+        line), so that the request can be accepted or recjected before continue parsing the rest of the header.
+        
+        <h4>Return Values</h4>
+        The number of bytes processed from the given data buffer. If less then len, the value should be added to data to acces the data behind the header inside the byte stream.
+    </dd>
+    
+    <div class="fnhead">GetParseResult</div>
+    <dd>
+        <h4>Return Value</h4>
+        The result of the last ParseData() call. The result determines how to continue and will be one of the following value:
+        <ul>
+            <li><b>HTTP_PARSE_DONE</b>: Parsing had been finished succesfully. You can now access the values of the parsed header.</li>
+            <li><b>HTTP_PARSE_NEED_DATA</b>: The end of the given bytestream had been reached without reaching the end of the header. ParseData() must be called again with the continouse data of the byte stream.</li>
+            <li><b>HTTP_PARSE_ERROR</b>: An error occures during parsing. Noramly that means, that a correct header could not been found or that there was some error inside the header structure. In this case, the bytestream should be discarded, because there is no way of recovering the broken header and correctly interpreting whatever data follow.</li>
+        </ul>
+    </dd>
+
+    <div class="fnhead">GetAcceptEncoding</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the encoding the other requested server or requesting client side will accept. For now, HTTPlib only support the GZIP encoding (HTTP_ENCODING_GZIP).
+    </dd>
+
+    <div class="fnhead">GetRequestMethod</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the request method of the header. Will be one of the following values:
+        <ul>
+            <li>HTTP_NONE</li>
+            <li>HTTP_GET</li>
+            <li>HTTP_HEAD</li>
+            <li>HTTP_POST</li>
+            <li>HTTP_PUT</li>
+            <li>HTTP_CONNECT</li>
+            <li>HTTP_OPTIONS</li>
+            <li>HTTP_TRACE</li>
+            <li>HTTP_PROPFIND</li>
+            <li>HTTP_MKCOL</li>
+            <li>HTTP_COPY</li>
+            <li>HTTP_MOVE</li>
+            <li>HTTP_DELETE</li>
+        </ul>
+    </dd>
+
+    <div class="fnhead">GetRequestTarget</div>
+    <dd>
+        <h4>Return Value</h4>
+        Retruns the requested target aka requested resource.
+    </dd>
+
+    <div class="fnhead">GetMajorVersion</div>
+    <dd>
+        <h4>Return Value</h4>
+        Retruns the major version of the HTTP protocol for the request.
+    </dd>
+
+    <div class="fnhead">GetMinorVersion</div>
+    <dd>
+        <h4>Return Value</h4>
+        Retruns the minor version of the HTTP protocol for the request.
+    </dd>
+
+    <div class="fnhead">GetHeaderField</div>
+    <dd>
+        Use this function to ask for a specified header field. Use this if the headerfield you need canot be accessed through the functions of the mostly used
+        header fields provided by HTTPParser.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">const char * <b>fieldName</b></td><td>The name of the header field to get.</td></tr>
+        </table>
+        
+        <h4>Return Value</h4>
+        If the header field canot be found, the function returns nullptr. Else a HTTPHeaderField instance will be returned, providing the detail of the field. That instance
+        canot be deleted and will completely managed by HTTPParser itself.
+    </dd>
+    
+
+    <div class="fnhead">GetContentLength</div>
+    <dd>
+        <h4>Return Value</h4>
+        (For response only) Reports the content length defined by the header. This will be the amount of data to read from the byte stream to completely process the response. Can be 0.
+        
+        <h4>Remarks</h4>
+        The return value of 0 doesn't mean, that there is no further data to process. The data send with a response can also be chunk encoded. Check IsChunkedTransfer() to get
+        that information.
+    </dd>
+
+    <div class="fnhead">IsConnectionType</div>
+    <dd>
+        Can be used to check if the parsed header defines a special type of connection.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPLib::http_connection_t <b>ct</b></td><td>The connection type to check for.</td></tr>
+        </table>
+
+        <h4>Return Value</h4>
+        True, of the conenction type given is defined in the header, else false.
+        
+        <h4>Remarks</h4>
+        The value for ct must be HTTP_CONNECTION_NONE, HTTP_CONNECTION_KEEP_ALIVE or HTTP_CONNECTION_UPGRADE. See the data types section below for details.
+    </dd>
+
+    <div class="fnhead">IsChunkedTransfer</div>
+    <dd>
+        <h4>Return Value</h4>
+        True, if there is data available in chunk encoded format. reading and handling the cunks will be the applications responsebility.
+    </dd>
+
+    <div class="fnhead">GetCookie</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the value of the cookie header field.
+    </dd>
+    
+    <div class="fnhead">GetETag</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the value of the etag header field.
+    </dd>
+
+    <div class="fnhead">GetContentType</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the content type (aka mime-type) declared by the header.
+    </dd>
+
+    <div class="fnhead">GetHost</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the host reported by the header.
+    </dd>
+
+    <div class="fnhead">GetUpgrade</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the upgrade type (if there is any). For now, the HTTPlib only supports HTTP_UPGRADE_WEBSOCKET.
+    </dd>
+
+    <div class="fnhead">GetRange</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns an HTTPRange object to access the values given by the range header field. If there is no range request, nullptr will be returned.
+		The returned object is the start of a linked list of ranges. See <a href="HTTPRange">HTTPRange</a> for more information.
+    </dd>
+
+    <div class="fnhead">GetEncoding</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the value of the headers content-encoding field.
+    </dd>
+
+    <div class="fnhead">GetWebsocketKey</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the websocket key.
+    </dd>
+    
+    <div class="fnhead">GetWebsocketVersion</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the requested websocket version.
+    </dd>
+
+    <div class="fnhead">GetOrigin</div>
+    <dd>
+        <h4>Return Value</h4>
+        Returns the value of the origin field.
+    </dd>
+    
+    <div class="fnhead">GetHTTPResultCode</div>
+    <dd>
+        <h4>Return Value</h4>
+        For response headers, the function returns the HTTP result code of the previous request. If the incomming header was a request and there was an error during parsing the header,
+        the function returns the HTTP result code to send as an answer.
+    </dd>
+    
+    <div class="fnhead">GetFieldListCopy</div>
+    <dd>
+        Makes a copy of the field list from the header.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">byte * &amp; <b>buffer</b></td><td><i>(Out)</i> A reference to a byte * variable the buffer with the copy will be written to.</td></tr>
+            <tr><td class="param">size_t &amp; <b>bufferSize</b></td><td><i>(Out)</i> A reference to a size_t variable the size of the buffer with the copy will be written to.</td></tr>
+        </table>
+        
+        <h4>Return Value</h4>
+        After creating the copy, the pointer to the malloced buffer will be stored int the variable bufffer, and the size of it in bufferSize. The caller is responsible for
+        releasing the buffer if no longer needed by calling free(buffer).
+    </dd>
+    <br/>
+
+    <h2 id="UHTTPParser">UHTTPParser</h2>
+    <pre><code class="C++">class UHTTPParser {
+public:
+    virtual ~UHTTPParser() {}
+    virtual bool HTTPParserValidateRequest(class HTTPParser * httpParser) = 0;
+};</code></pre> 
+    <p>
+        This class is for passing a user to HTTPParser::ParseData(). After parsing the request line, UHTTPParser::HTTPParserValidateRequest() will be called. The app can
+        check the request and validate it the HTTPParser continues with parsing the rest of the header. This can be done by checking the values of the given HTTPParser
+        instance. Note that only the request type and the requested resource will be available at this point, but no header fields.
+    </p>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">HTTPParserValidateRequest</div>
+    <dd>
+        Will be called after parsing the request line to let the app decide, whether to continue parsing or not.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">HTTPParser * <b>httpParser</b></td><td>The calling HTTPParser object.</td></tr>
+        </table>
+        
+        <h4>Return Value</h4>
+        True to continue parsing, false to cancel it.
+        
+        <h4>Remarks</h4>
+        When canceling the parsing process, the app must take care of eating up all unused data to clean the byte stream (if the same byte stream should be used for parsing
+        the next header).
+    </dd>
+    <br/>
+
+    <h2 id="HTTPHeaderField">HTTPHeaderField</h2>
+    <pre><code class="C++">class HTTPHeaderField {
+public:
+    const char * GetValue(size_t idx) const { return values[idx]; }
+    size_t GetValueCount() const { return valueCount; }
+};</code></pre> 
+    <p>
+        Represents a HTTP header field and its values. Even if a field can have more values (that means, that field appears mutltiple times in the header), there also can be
+        multiple values set, seperated by ';'. Those will be handled as one value only, so an app must seperate them if needed. An header field can be obtained by calling
+        HTTPParser::GetHeaderField().
+    </p>
+    
+    <h3>Public functions</h3>
+    <div class="fnhead">GetValue</div>
+    <dd>
+        Returns the value of the header field.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr><td class="param">size_t <b>idx</b></td><td>The index of the value to get. Must be between 0 and GetValueCount().</td></tr>
+        </table>
+        
+        <h4>Return Value</h4>
+        The value of the header.
+        
+        <h4>Remarks</h4>
+        Don't manipulate that string (even not by typecasting). If there is need to edit the items, a copy of that return value mast be made.
+    </dd>
+    
+    <div class="fnhead">GetValueCount</div>
+    <dd>
+        <h4>Return Value</h4>
+        The number of values available for that field.
+    </dd>
+    <br/>
+
+    <h2 id="HTTPRange">HTTPRange</h2>
+    <pre><code class="C++">class HTTPRange {
+public:
+    HTTPRange() { this->next = NULL; }
+    virtual ~HTTPRange() {}
+
+    enum {
+        RANGE_NONE        = 0x00,
+        RANGE_START_END   = 0x01,
+        RANGE_START_ONLY  = 0x02,
+        RANGE_LAST_BYTES  = 0x03
+    } rangeType;
+    size_t start;
+    size_t end;
+    HTTPRange * next;
+};</code></pre> 
+    <p>
+        Represents the values of ranges send with an HTTP header. An instance of HTTPRange will be returned by HTTPParser::GetRange(). The retunred instance is the start of a linked list.
+        So you must not call delete on it! HTTPParser itself will take care of releasing the objects when needed. The class itself has no functions. You have access directly to the fields
+        of the class.
+    </p>        
+    
+    
+    <div class="fnhead">start</div>
+    <dd>
+        The start of the range given by the HTTP header.
+    </dd>
+    
+    
+    <div class="fnhead">end</div>
+    <dd>
+        The end of the range given by the HTTP header.
+    </dd>
+    
+    <div class="fnhead">rangeType</div>
+    <dd>
+        The type of the range. Depending on the type the values of start and end need to be interpreted. rangeType can be one of the following:
+        <ul>
+            <li>RANGE_NONE: only used internally for initialization.</li>
+            <li>RANGE_START_END: a range with start and end, with the values in the fields start and end.</li>
+            <li>RANGE_START_ONLY: only the start had been given. So the application should return everything from of the from the byte given in start to the end of the file. The value of end is undefined and should be ignored.</li>
+            <li>RANGE_LAST_BYTES: only the last bytes of a file should be retunred. The number of the bytes to return are set in start. The value of end is undefined and should be ignored.</li>
+        </ul>
+    </dd>
+
+
+    <h1>Data types</h1>
+    <h2>Defines / Statics</h2>
+<pre><code style="laguage-cpp">#define CLRF                 "\r\n"
+
+#define HTTP_GET_KEY         "GET"       
+#define HTTP_HEAD_KEY        "HEAD"      
+#define HTTP_POST_KEY        "POST"      
+#define HTTP_PUT_KEY         "PUT"       
+#define HTTP_CONNECT_KEY     "CONNECT"   
+#define HTTP_OPTIONS_KEY     "OPTIONS"   
+#define HTTP_TRACE_KEY       "TRACE"     
+#define HTTP_PROPFIND_KEY    "PROPFIND"
+#define HTTP_MKCOL_KEY       "MKCOL"
+#define HTTP_COPY_KEY        "COPY"
+#define HTTP_MOVE_KEY        "MOVE"
+#define HTTP_DELETE_KEY      "DELETE"
+#define HTTP_LOCK_KEY        "LOCK"
+#define HTTP_UNLOCK_KEY      "UNLOCK"
+#define HTTP_PROPPATCH_KEY   "PROPPATCH"
+#define HTTP_SYSCLIENT_KEY   "SYSCLIENT"
+
+#define HTTP_VERSION_1_0    0x0100
+#define HTTP_VERSION_1_1    0x0101</code></pre>
+    <br/>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td id="CLRF"><b>CLRF</b></td><td>The end of line, used inside the HTTP header. The Header ends with on empty line, which is a line that only holds CLRF.</td></tr>
+            <tr><td id="HTTP_GET_KEY"><b>HTTP_GET_KEY</b></td><td>The keyword for a GET request.</td></tr>
+            <tr><td id="HTTP_HEAD_KEY"><b>HTTP_HEAD_KEY</b></td><td>The keyword for a HEAD request.</td></tr>
+            <tr><td id="HTTP_POST_KEY"><b>HTTP_POST_KEY</b></td><td>The keyword for a POST request.</td></tr>
+            <tr><td id="HTTP_PUT_KEY"><b>HTTP_PUT_KEY</b></td><td>The keyword for a PUT request.</td></tr>
+            <tr><td id="HTTP_CONNECT_KEY"><b>HTTP_CONNECT_KEY</b></td><td>The keyword for a CONNECT request.</td></tr>
+            <tr><td id="HTTP_OPTIONS_KEY"><b>HTTP_OPTIONS_KEY</b></td><td>The keyword for a OPTIONS request.</td></tr>
+            <tr><td id="HTTP_TRACE_KEY"><b>HTTP_TRACE_KEY</b></td><td>The keyword for a TRACE request.</td></tr>
+            <tr><td id="HTTP_PROPFIND_KEY"><b>HTTP_PROPFIND_KEY</b></td><td>The keyword for a PROPFIND request.</td></tr>
+            <tr><td id="HTTP_MKCOL_KEY"><b>HTTP_MKCOL_KEY</b></td><td>The keyword for a MKCOL request.</td></tr>
+            <tr><td id="HTTP_COPY_KEY"><b>HTTP_COPY_KEY</b></td><td>The keyword for a COPY request.</td></tr>
+            <tr><td id="HTTP_MOVE_KEY"><b>HTTP_MOVE_KEY</b></td><td>The keyword for a MOVE request.</td></tr>
+            <tr><td id="HTTP_DELETE_KEY"><b>HTTP_DELETE_KEY</b></td><td>The keyword for a DELETE request.</td></tr>
+            <tr><td id="HTTP_LOCK_KEY"><b>HTTP_LOCK_KEY</b></td><td>The keyword for a LOCK request.</td></tr>
+            <tr><td id="HTTP_UNLOCK_KEY"><b>HTTP_UNLOCK_KEY</b></td><td>The keyword for a UNLOCK request.</td></tr>
+            <tr><td id="HTTP_PROPPATCH_KEY"><b>HTTP_PROPPATCH_KEY</b></td><td>The keyword for a PROPPATCH request.</td></tr>
+            <tr><td id="HTTP_SYSCLIENT_KEY"><b>HTTP_SYSCLIENT_KEY</b></td><td>Internally AppPlatform specified request - don't use it.</td></tr>
+            <tr><td id="HTTP_VERSION_1_0"><b>HTTP_VERSION_1_0</b></td><td>Dword constant for HTTP 1.0.</td></tr>
+            <tr><td id="HTTP_VERSION_1_1"><b>HTTP_VERSION_1_1</b></td><td>Dword constant for HTTP 1.1.</td></tr>
+        </table>
+    </dd>
+    <br/>
+    
+    <h2 id="http_request_method_t">http_request_method_t</h2>
+<pre><code style="laguage-cpp">typedef enum {
+    HTTP_NONE,
+    HTTP_GET,
+    HTTP_HEAD,
+    HTTP_POST,
+    HTTP_PUT,
+    HTTP_CONNECT,
+    HTTP_OPTIONS,
+    HTTP_TRACE,
+    HTTP_PROPFIND,
+    HTTP_MKCOL,
+    HTTP_COPY,
+    HTTP_MOVE,
+    HTTP_DELETE,
+    HTTP_LOCK,
+    HTTP_UNLOCK,
+    HTTP_PROPPATCH,
+    HTTP_SYSCLIENT
+} http_request_method_t;</code></pre>
+    <p>
+       This enum is used to define the method to use for a HTTP request and must be one of the following:
+    </p>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td><b>HTTP_NONE</b></td><td>(NO HTTP VALUE!!!) Dummy value to initialize variable.</td></tr>
+            <tr><td><b>HTTP_GET</b></td><td>Transfer a current representation of the target resource.</td></tr>
+            <tr><td><b>HTTP_HEAD</b></td><td>Same as GET, but only transfer the status line and header section.</td></tr>
+            <tr><td><b>HTTP_POST</b></td><td>Perform resource - specific processing on the request payload.</td></tr>
+            <tr><td><b>HTTP_PUT</b></td><td>(WebDAV) Replace all current representations of the target resource with the request payload.</td></tr>
+            <tr><td><b>HTTP_CONNECT</b></td><td>Establish a tunnel to the server identified by the target resource.</td></tr>
+            <tr><td><b>HTTP_OPTIONS</b></td><td>(WebDAV) Describe the communication options for the target resource.</td></tr>
+            <tr><td><b>HTTP_TRACE</b></td><td>(WebDAV) Perform a message loop - back test along the path to the target resource.</td></tr>
+            <tr><td><b>HTTP_PROPFIND</b></td><td>(WebDAV) Used to revceive properties for the given resource.</td></tr>
+            <tr><td><b>HTTP_MKCOL</b></td><td>(WebDAV) Creates a new collection at the specified location.</td></tr>
+            <tr><td><b>HTTP_COPY</b></td><td>(WebDAV) Copy the given resource to a specificed location.</td></tr>
+            <tr><td><b>HTTP_MOVE</b></td><td>(WebDAV) Moves the given resource to a specified location.</td></tr>
+            <tr><td><b>HTTP_DELETE</b></td><td>(WebDAV) Deletes the given resource.</td></tr>
+            <tr><td><b>HTTP_LOCK</b></td><td>(WebDAV) Locks the given resource.</td></tr>
+            <tr><td><b>HTTP_UNLOCK</b></td><td>(WebDAV) Unlocks the previously locked resource.</td></tr>
+            <tr><td><b>HTTP_PROPPATCH</b></td><td>(WebDAV) Patches the properties of the given resource.</td></tr>
+            <tr><td><b>HTTP_SYSCLIENT</b></td><td>(Used internally only) Sysclient request to authenticate localsocket requests - internally used.</td></tr>
+        </table>
+    </dd>
+    <br/>
+    
+    <h2 id="http_connection_t">http_connection_t</h2>
+<pre><code style="laguage-cpp">typedef enum {
+    HTTP_CONNECTION_NONE = 0x00,
+    HTTP_CONNECTION_KEEP_ALIVE = 0x01,
+    HTTP_CONNECTION_CLOSE = 0x02,
+    HTTP_CONNECTION_UPGRADE = 0x04
+} http_connection_t;</code></pre>
+    <p>
+       This enum describes the type of a connection and must be one of the following:
+    </p>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td><b>HTTP_CONNECTION_NONE</b></td><td>The connection has no special state. This is the default.</td></tr>
+            <tr><td><b>HTTP_CONNECTION_KEEP_ALIVE</b></td><td>The connection is defiend to keep alive.</td></tr>
+            <tr><td><b>HTTP_CONNECTION_CLOSE</b></td><td>If defined, the connection must be closed after responding or receiving the response to a request.</td></tr>
+            <tr><td><b>HTTP_CONNECTION_UPGRADE</b></td><td>The connection should be (for requests) or had been (for responses) upgraded. Normally that will be used to establish websocket connections.</td></tr>
+        </table>
+        <h4>Remarks</h4>
+        The way how to handle HTTP_CONNECTION_KEEP_ALIVE and HTTP_CONNECTION_CLOSE depends on the used HTTP protocol version. For HTTP 1.0, close will be the default. So if HTTP_CONNECTION_KEEP_ALIVE is
+        not set, the connection must close after responding or receiving the response of a request. For HTTP 1.1, keep alive is the default. So the connection should only be closed after receiving the
+        response or responding a request, if HTTP_CONNECTION_CLOSE is set.
+    </dd>
+    <br/>
+
+    <h2 id="http_upgrade_t">http_upgrade_t</h2>
+    <pre><code style="laguage-cpp">typedef enum {
+    HTTP_UPGRADE_NONE,
+    HTTP_UPGRADE_WEBSOCKET
+} http_upgrade_t;</code></pre>
+    <p>
+       These are the upgrades the a request can define.
+    </p>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td><b>HTTP_UPGRADE_NONE</b></td><td>No upgrade, just a normal connection. This is the default.</td></tr>
+            <tr><td><b>HTTP_UPGRADE_WEBSOCKET</b></td><td>The connection had been or should be upgraded to be a websocket connection.</td></tr>
+        </table>
+    </dd>
+    <br/>
+    
+    <h2 id="http_encoding_t">http_encoding_t</h2>
+    <pre><code style="laguage-cpp">typedef enum {
+    HTTP_ENCODING_NONE,      // Default
+    HTTP_ENCODING_GZIP
+} http_encoding_t;</code></pre>
+    <p>
+       These are the encoding types for a HTTP connection (the moment, only gzip is supported as special encoding).
+    </p>
+    <dd>
+        <table style="margin-left: 20px">
+            <tr><td><b>HTTP_ENCODING_NONE</b></td><td>No encoding. This is the default.</td></tr>
+            <tr><td><b>HTTP_ENCODING_GZIP</b></td><td>The data received or sent is in gzip compressed format.</td></tr>
+        </table>
+    </dd>
+    <br/>
+    
+    
+    <h2 id="http_result_t">http_result_t</h2>
+<pre><code style="laguage-cpp">typedef struct {
+    int code;
+    const char * description;
+    size_t descLen;
+} http_result_t;</code></pre>
+    <p>
+        This structure holds an HTTP result code in three parts: an integer value (easier to use for checking inside the code), a descroption string (actualle the one
+        tha must be put to the header) and the length of the description. The HTTPLib defines constants for most of the result codes (see below). That constans
+        can be used to pass to functions loke HTTPHeader::SetHTTPResult(). For more information about the resturn codes see <a href="https://tools.ietf.org/html/rfc7231#page-49">RFC 7231, Page 41</a>.
+    </p>
+    <dd>
+        <h4>Values</h4>
+        <table style="margin-left: 20px">
+            <tr><td>int <b>code</b></td><td>The HTTP code as interger value.</td></tr>
+            <tr><td>const char * <b>description</b></td><td>The description of the code.</td></tr>
+            <tr><td>size_t <b>descLen</b></td><td>The length of the description.</td></tr>
+        </table>    
+
+        <h4 id="result_codes">Remarks</h4>
+        HTTPLib has most of the HTTP return codes predefined in HTTP_* constants. The interger code of them is the same a the code of the result. So HTTP 100 has the integer number 100.
+        The Description is a combination of the code number and the description defined by RFC (e. G. "200 OK"). The following result codes are offered by HTTPLib:<br/>
+        <br/>
+        <table style="margin-left: 20px">
+            <tr><td><b>HTTP_100</b></td><td>Continue</td></tr>
+            <tr><td><b>HTTP_101</b></td><td>Switching Protocols</td></tr>
+            <tr><td><b>HTTP_200</b></td><td>OK</td></tr>
+            <tr><td><b>HTTP_201</b></td><td>Created</td></tr>
+            <tr><td><b>HTTP_202</b></td><td>Accepted</td></tr>
+            <tr><td><b>HTTP_203</b></td><td>Non-Authoritative Information</td></tr>
+            <tr><td><b>HTTP_204</b></td><td>No Content</td></tr>
+            <tr><td><b>HTTP_205</b></td><td>Reset Content</td></tr>
+            <tr><td><b>HTTP_206</b></td><td>Partial Content</td></tr>
+            <tr><td><b>HTTP_207</b></td><td>Multi-Status</td></tr>
+            <tr><td><b>HTTP_300</b></td><td>Multiple Choices</td></tr>
+            <tr><td><b>HTTP_301</b></td><td>Moved Permanently</td></tr>
+            <tr><td><b>HTTP_302</b></td><td>Found</td></tr>
+            <tr><td><b>HTTP_303</b></td><td>See Other</td></tr>
+            <tr><td><b>HTTP_304</b></td><td>Not Modified</td></tr>
+            <tr><td><b>HTTP_305</b></td><td>Use Proxy</td></tr>
+            <tr><td><b>HTTP_307</b></td><td>Temporary Redirect</td></tr>
+            <tr><td><b>HTTP_400</b></td><td>Bad Request</td></tr>
+            <tr><td><b>HTTP_401</b></td><td>Unauthorized</td></tr>
+            <tr><td><b>HTTP_402</b></td><td>Payment Required</td></tr>
+            <tr><td><b>HTTP_403</b></td><td>Forbidden</td></tr>
+            <tr><td><b>HTTP_404</b></td><td>Not Found</td></tr>
+            <tr><td><b>HTTP_405</b></td><td>Method Not Allowed</td></tr>
+            <tr><td><b>HTTP_406</b></td><td>Not Acceptable</td></tr>
+            <tr><td><b>HTTP_407</b></td><td>Proxy Authentication Required</td></tr>
+            <tr><td><b>HTTP_408</b></td><td>Request Timeout</td></tr>
+            <tr><td><b>HTTP_409</b></td><td>Conflict</td></tr>
+            <tr><td><b>HTTP_410</b></td><td>Gone</td></tr>
+            <tr><td><b>HTTP_411</b></td><td>Length Required</td></tr>
+            <tr><td><b>HTTP_412</b></td><td>Precondition Failed</td></tr>
+            <tr><td><b>HTTP_413</b></td><td>Payload Too Large</td></tr>
+            <tr><td><b>HTTP_414</b></td><td>URI Too Long</td></tr>
+            <tr><td><b>HTTP_415</b></td><td>Unsupported Media Type</td></tr>
+            <tr><td><b>HTTP_416</b></td><td>Range Not Satisfiable</td></tr>
+            <tr><td><b>HTTP_417</b></td><td>Expectation Failed</td></tr>
+            <tr><td><b>HTTP_423</b></td><td>Locked</td></tr>
+            <tr><td><b>HTTP_426</b></td><td>Upgrade Required</td></tr>
+            <tr><td><b>HTTP_500</b></td><td>Internal Server Error</td></tr>
+            <tr><td><b>HTTP_501</b></td><td>Not Implemented</td></tr>
+            <tr><td><b>HTTP_502</b></td><td>Bad Gateway</td></tr>
+            <tr><td><b>HTTP_503</b></td><td>Service Unavailable</td></tr>
+            <tr><td><b>HTTP_504</b></td><td>Gateway Timeout</td></tr>
+            <tr><td><b>HTTP_505</b></td><td>HTTP Version Not Supported</td></tr>
+            <tr><td><b>HTTP_507</b></td><td>Insufficient Storage</td></tr>
+        </table>
+    </dd>
+
+    <h1 id="example">Code examples</h1>
+    <pre><code class="C++">// This example shows how to use the HTTP library to response to an incomming HTTP request.
+// The class itself is a subclass of USocket (for receiving data) and UHTTPParser
+// (to check the request and only accept GET requests).
+
+void MyApp::SocketRecvResult(ISocket * const socket, void * buf, size_t len) {
+    // parser is an HTTPParser instance of the object the function here is part of.
+    this->parser->ParseData(buf, len, this);
+
+    switch (this->parser->GetParseResult())
+    {
+        case HTTPParser::HTTP_PARSE_NEED_DATA:
+            // More data need for the header. Note that we must make a partial Recv() call here.
+            socket->Recv(buffer, 8192, true);
+            break;
+
+        case HTTPParser::HTTP_PARSE_ERROR:
+            debug->printf("Error while parsing the HTTP header.");
+            socket->Shutdown();
+            break;
+
+        case HTTPParser::HTTP_PARSE_CANCEL: // Unsupported request - see below
+            debug->printf("Parsing canceled.");
+            socket->Shutdown();
+            break;
+
+        case HTTPParser::HTTP_PARSE_DONE:
+            this->ResponseGETRequest(socket);
+            break;
+    }
+}
+
+
+// The callback function from UHTTPParser. We only accept GET requests...
+bool MyApp::HTTPParserValidateRequest(class HTTPParser * httpParser)
+{
+    if (httpParser->GetRequestMethod()) == HTTPLib::HTTP_GET) return true;
+    
+    debug->printf("Only GET requests are supported.");
+    return false;
+}
+
+
+void MyApp::ResponseGETRequest(ISocket * socket)
+{
+    const char * responseData = "&lt;!DOCTYPE html&gt;&lt;html xmlns=\&quot;http://www.w3.org/1999/xhtml\&quot;&gt;&lt;body&gt;Hello World&lt;/body&gt;&lt;/html&gt;"
+    size_t responseLen = strlen(responseData);
+    
+    // Use the object on the stack - no need to delete it later.
+    HTTPHeader header;
+    header.SetHTTPVersion(this->parser->GetMajorVersion(), this->parser->GetMinorVersion());
+    header.SetHTTPResult(&amp;HTTPLib::HTTP_200);
+    header.SetContentSize(responseLen);
+    
+    // Finally - send everything.
+    socket->Send(header.GetHeaderData(), header.GetHeaderSize());
+    socket->Send(responseData, responseLen);
+}</code></pre>    
+</body>
+</html>

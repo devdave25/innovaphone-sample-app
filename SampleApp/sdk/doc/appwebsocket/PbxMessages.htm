@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - PbxMessages protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>PbxMessages</h1>
+
+    <p>
+        The PbxMessages protocol is available on AppWebsocket connections to innovaphone PBX objects,
+        if the object is enabled for the PbxMessages api. It allows an application to send requests to
+        the Messages instance, which is configured at the object.
+	</p>
+    <p>
+        These requests are forwarded to the Messages instance using the AppWebsocket connection
+        which is established by the Messages PBX object to the Messages instance.
+    </p>
+    <p>
+        Chat applications may use this Api to connect to messages and read stored chat messages
+    </p>
+
+	<a name="General structure"><h2>General structure</h2></a>
+
+	<pre><code class="json">{
+    "api": "PbxMessages",
+    "src": string,
+    "mt": string,
+}</code></pre><br/>
+
+    <dl>
+        <dt>api</dt>
+        <dd>
+            To address this interface the value "PbxMessages" has tp be used for the api property
+        </dd>
+        <dt>src</dt>
+        <dd>
+            The AppWebsocket src mechanism is supported on the interface. So a src
+            property may be used
+        </dd>
+        <dt>mt</dt>
+        <dd>
+            The message type identifies the requested operation
+        </dd>
+    </dl>
+
+    <p>
+        Any message with a "mt" property not being "Session" is forwarded to Messages, if a
+        session is already established with the "Session" message. When the message is forwarded
+        the following operations are performed on the message
+    </p>
+
+    <ul>
+        <li>The api property is removed</li>
+        <li>A "user" property is added with the sip/h323 id of the object using the Api</li>
+        <li>A "session" property with the session id is added</li>
+    </ul>
+
+	<u>Messages to the PBX</u>
+
+	<ul>
+		<li><a href="#Session">Session</a> - Establish a session</li>
+	</ul>
+
+	<u>Messages from the PBX</u>
+
+	<ul>
+		<li><a href="#SessionResult">SessionResult</a> - Confirmation of session establishment</li>
+		<li><a href="#Error">Error</a> - Error indication</li>
+	</ul>
+
+	<a name="Session"><h2>Session</h2></a>
+
+	<pre><code class="json">{
+    "api": "PbxMessages",
+    "mt": "Session",
+    "src": string,
+    "flags": string
+}</code></pre>
+
+    <p>
+        This message initiates a session to the messages instance. A unique session_id is generated
+        on the PBX. In addition to the normal operations on messages a property "dn" is added for
+        the display name of the object using this api and the message is forwarded to Messages.
+    </p>
+
+	<a name="SessionResult"><h2>SessionResult</h2></a>
+
+	<pre><code class="json">{
+    "api": "PbxMessages",
+    "mt": "SessionResult",
+    "src": string,
+    "session": ulong64
+}</code></pre>
+
+    <p>
+    	Returns the session id
+    </p>
+
+	<a name="Error"><h2>Error</h2></a>
+
+	<pre><code class="json">{
+    "api": "PbxMessages",
+    "mt": "Error",
+}</code></pre>
+
+    <p>
+        Indicates that an error happened and the session is not valid anymore. A new Session
+        Message is needed to re-establish the session. A timeout before re-establishing the
+        session is recommened, because Error may be sent as response to Session.
+    </p>
+</body>
+</html>

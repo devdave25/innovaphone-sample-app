@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - Generic network interface</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>Generic network interface</h1>
+    <p>
+        Interface to get ip addresses of local network interfaces
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/network.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#INetwork">INetwork</a><br>
+                <a href="#LocalAddr">LocalAddr</a><br>
+                <a href="#LocalAddresses">LocalAddresses</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="INetwork"><h2>INetwork</h2></a>
+    <pre><code class="C++">class INetwork {
+public:
+    static LocalAddresses * GetLocalAddresses()
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for searching local ip addresses.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">GetLocalAddresses</div>
+    <dd>
+        Platform dependent method that will look for local interfaces and get the corresponding ip addresses.
+    </dd>
+
+    <a name="LocalAddr"><h2>LocalAddr</h2></a>
+    <pre><code class="C++">class LocalAddr {
+public:
+    bool iPv6;
+    char * addr;
+    LocalAddr(char * addr, bool iPv6) { 
+        this->addr = addr; 
+        this->iPv6 = iPv6; 
+    };
+    ~LocalAddr() { if(addr) free(addr); };
+};</code></pre>
+
+    <h3>Overview</h3>
+    Helper class that contains a local ip address and a boolean to indicate if this is an IPv6 address.
+
+    <a name="LocalAddr"><h2>LocalAddresses</h2></a>
+    <pre><code class="C++">class LocalAddresses {
+public:
+    istd::list <class localaddr> localAddresses;
+    ~LocalAddresses() {
+        while(this->localAddresses.front()) {
+            delete this->localAddresses.front();
+        }
+    }
+};</code></pre>
+
+    <h3>Overview</h3>
+    Helper class that contains a list of LocalAddr returned by the GetLocalAddresses method.
+
+</body>

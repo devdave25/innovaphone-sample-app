@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ui1.ListView</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <script src="../lib1/innovaphone.lib1.js" type="text/javascript"></script>
+    <script src="../ui1.lib/innovaphone.ui1.lib.js" type="text/javascript"></script>
+    <script src="../ui1.svg/innovaphone.ui1.svg.js" type="text/javascript"></script>
+
+    <script src="innovaphone.ui1.listview.js" type="text/javascript"></script>
+    <style>
+        .headercl{
+            background-color:lightgray;
+        }
+        .rowcl{
+            background-color:white;
+        }
+        .text{
+            left:0px;
+            text-align:left;
+            overflow:hidden;
+        }
+        .arrow{
+            position:absolute;
+            right:10px; 
+            top:7px; 
+            width:8px; 
+            height:8px; 
+            transform:none; 
+            fill: white; 
+            pointer-events: none;
+        }
+        tr {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
+
+    <script type="text/javascript">
+        //var listView;
+        function Try() {
+            var out = document.getElementById('out');
+            out.innerText = "";
+            eval(document.getElementById('code').value);
+            /*var list = new innovaphone.ui1.Div("position: absolute; left:20px; top:10px; right:20px; height:300px", null, "");
+            document.getElementById("out").appendChild(list.container)
+
+            listView = new innovaphone.ui1.ListView(list, 30, "headercl", "arrow", false);
+            var columns = 7;
+            var rows = 4;
+            var img = new innovaphone.ui1.Node("img", "position:absolute; left:10px; top:0px; height:10px; width:10px", null, "arrowcl");
+            img.container.src = "arrow.png";
+            listView.addColumn(null, "text", img, 0, 40, false);
+            for (i = 1; i < columns; i++) {
+                listView.addColumn(null, "text", "C" + i, i, 40, false);
+            }
+            for (i = 0; i < rows; i++) {
+                var row = [];
+                var img = new innovaphone.ui1.Node("img", "position:absolute; background-color:gray; left:10px; top:10px; height:10px; width:10px", null, "arrowcl");
+                img.container.src = "arrow.png";
+                row[0] = img;
+                for (j = 1; j < columns; j++) {
+                    row.push("C(" + i + "," + j + ")");
+                }
+                listView.addRow(row, "rowcl", "#A0A0A0", "#82CAE2");
+            }*/
+        }
+        /*function Selected() {
+            var ids = [];
+            var data = [];
+            ids = listView.getSelectedRows();
+            console.log(ids);
+            for (var i = 0; i < ids.length; i++) {
+                data = listView.getRowData(ids[i]);
+                console.log(data);
+            }
+            listView.removeRow(2);
+            listView.removeColumn(4);
+            listView.hideColumn(2);
+            listView.hideColumn(3);
+            listView.displayColumn(2);
+        }*/
+    </script>
+</head>
+
+<body>
+    <h1>ui1.ListView</h1>
+    <p>
+        To create a responsive table.
+    </p>
+    <button onclick="Try()">Try</button>
+    <!--<button onclick="Selected()">Selected</button>-->
+    <div style="position:relative; height:420px">
+        <textarea id="code" style="position: absolute; left: 0px; top: 0px; width: 600px; height: 400px; border: 1px solid grey; font-family: Lucida Console">
+            var list = new innovaphone.ui1.Div("position: absolute; left:20px; top:10px; right:20px; height:300px", null, "");
+            document.getElementById("out").appendChild(list.container)
+
+            listView = new innovaphone.ui1.ListView(list, 30, "headercl", "arrow", false);
+            var columns = 7;
+            var rows = 4;
+            var img = new innovaphone.ui1.Node("img", "position:absolute; left:10px; top:0px; height:10px; width:10px", null, "arrowcl");
+            img.container.src = "arrow.png";
+            listView.addColumn(null, "text", img, 0, 40, false);
+            for (i = 1; i < columns; i++) {
+            listView.addColumn(null, "text", "C" + i, i, 40, false);
+            }
+            for (i = 0; i < rows; i++) {
+            var row = [];
+            var img = new innovaphone.ui1.Node("img", "position:absolute; background-color:gray; left:10px; top:10px; height:10px; width:10px", null, "arrowcl");
+            img.container.src = "arrow.png";
+            row[0] = img;
+            for (j = 1; j < columns; j++) {
+            row.push("C(" + i + "," + j + ")");
+            }
+            listView.addRow(i, row, "rowcl", "#A0A0A0", "#82CAE2");
+            }
+        </textarea>
+        <div id="out" style="position:absolute; left:610px; top:0px; right:10px; height:400px; border:1px solid grey">
+
+        </div>
+    </div>
+
+    <h2>innovaphone.ui1.ListView(container, rowHeight, headercl, arrowcl, vertical)</h2>
+    <p>
+        Creates a table
+    </p>
+    <dl>
+        <dt>container</dt>
+        <dd>
+            The container where the table will be placed.
+        </dd>
+        <dt>rowHeight</dt>
+        <dd>
+            The height that will be applied to every row.
+        </dd>
+        <dt>headercl</dt>
+        <dd>
+            cl to be applied on the header.
+        </dd>
+        <dt>arrowcl</dt>
+        <dd>
+            cl to be applied on the sort arrow when a column is sorted.
+        </dd>
+        <dt>vertical</dt>
+        <dd>
+            true if the table will be vertical, false if the table will be horizontal.
+        </dd>
+    </dl>
+    <h2>addColumn(cl, contentcl, content, id, minWidth, int)</h2>
+    <p>
+        Creates a column
+    </p>
+    <dl>
+        <dt>cl</dt>
+        <dd>
+            cl to be applied on the header field.
+        </dd>
+        <dt>contentcl</dt>
+        <dd>
+            cl to be applied on the content.
+        </dd>
+        <dt>content</dt>
+        <dd>
+            The text to be written into the header field.
+        </dd>
+        <dt>id</dt>
+        <dd>
+            The id of the column.
+        </dd>
+        <dt>minWidth</dt>
+        <dd>
+            The  minimum width for a column on draggind (resize).
+        </dd>
+        <dt>int</dt>
+        <dd>
+            true if the content is a number, false if the content is a string. Used on sort by column.
+        </dd>
+    </dl>
+    <h2>addRow(id, elements, cl, overColor, selectedColor, hidenData, clField)</h2>
+    <p>
+        Creates a row.
+    </p>
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The id of the row.
+        </dd>
+        <dt>elements</dt>
+        <dd>
+            The elements of the row.
+        </dd>
+        <dt>cl</dt>
+        <dd>
+            cl to be applied on the row.
+        </dd>
+        <dt>overColor</dt>
+        <dd>
+            The background color when the mouse is over.
+        </dd>
+        <dt>selectedColor</dt>
+        <dd>
+            The background color when the row is selected.
+        </dd>
+        <dt>hidenData</dt>
+        <dd>
+            Data that we want to attach to the row but not be displayed.
+        </dd>
+        <dt>clField</dt>
+        <dd>
+            cl to be applied on each element of the row.
+        </dd>
+    </dl>
+    <h2>removeRow(num)</h2>
+    <p>
+        Removes a row.
+    </p>
+    <dl>
+        <dt>num</dt>
+        <dd>
+            The row number (starting on "0").
+        </dd>
+    </dl>
+    <h2>removeRowById(id)</h2>
+    <p>
+        Removes a row.
+    </p>
+    <dl>
+        <dt>id</dt>
+        <dd>
+            The row id that we have set on addRow.
+        </dd>
+    </dl>
+    <h2>updateRow(num, rowData, id)</h2>
+    <p>
+        Updates the row data displayed.
+    </p>
+    <dl>
+        <dt>num</dt>
+        <dd>
+            The row number (starting on "0").
+        </dd>
+        <dt>rowData</dt>
+        <dd>
+            The array with the new row data.
+        </dd>
+        <dt>id</dt>
+        <dd>
+            The new id of the row, if we want to change it.
+        </dd>
+    </dl>
+    <h2>removeColumn(num)</h2>
+    <p>
+        Removes a column.
+    </p>
+    <dl>
+        <dt>num</dt>
+        <dd>
+            The column number (starting on "0").
+        </dd>
+    </dl>    
+    <h2>hideColumn(num)</h2>
+    <p>
+        Hides a column.
+    </p>
+    <dl>
+        <dt>num</dt>
+        <dd>
+            The column number (starting on "0").
+        </dd>
+    </dl>
+    <h2>displayColumn(num)</h2>
+    <p>
+        Displays a column if it was hidden.
+    </p>
+    <dl>
+        <dt>num</dt>
+        <dd>
+            The column number (starting on "0").
+        </dd>
+    </dl>
+    <h2>search(text)</h2>
+    <p>
+        Displays just the rows that include text.
+    </p>
+    <dl>
+        <dt>text</dt>
+        <dd>
+            The text string to search (if the length is 0, all rows are displayed).
+        </dd>
+    </dl>
+    <h2>resizeTable()</h2>
+    <p>
+        Resizes the table to optimize the width.
+    </p>
+    <dl>
+    </dl>
+</body>
+</html>

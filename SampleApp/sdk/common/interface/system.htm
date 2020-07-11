@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - System Implementation</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>System</h1>
+    <p>
+        Interface to get system information regarding system architecture, label and release state.
+    </p>
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/system.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#ISystem">ISystem</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Data types</b></td>
+            <td>
+                <a href="#architecture_t">architecture_t</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+    <h2 id="ISystem">ISystem</h2>
+    <pre><code class="language-cpp">class ISystem {
+public:
+    <a href="#GetArchitecture" style="text-decoration:none;">static void GetArchitecture(char * buffer, size_t len)</a>;
+    <a href="#GetArchitecture_arch" style="text-decoration:none;">static architecture_t GetArchitecture()</a>;
+    <a href="#Sync" style="text-decoration:none;">static void Sync()</a>;
+    <a href="#Label" style="text-decoration:none;">static const char * Label()</a>;
+    <a href="#ReleaseState" style="text-decoration:none;">static const char * ReleaseState()</a>;
+    <a href="#SetBindServiceCapability" style="text-decoration:none;">static bool SetBindServiceCapability(const char * path)</a>;
+    <a href="#IsVirtualMachine" style="text-decoration:none;">static bool IsVirtualMachine()</a>;
+};</code></pre>
+
+    <h3>Public functions</h3>
+    <div class="fnhead" id="GetArchitecture">GetArchitecture (static function)</div>
+    <dl>
+        <dd>
+            The function is used to get a string containing the architecture of the machine (e.g. armv7l on IP811)
+
+            <h4>Parameters</h4>
+            <table style="margin-left:-12px">
+                <tr><td class="param">char * <b>buffer</b></td><td>To hold the architecture string</td></tr>
+                <tr><td class="param">size_t * <b>len</b></td><td> The length of the buffer</td></tr>
+            </table>
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="GetArchitecture_arch">GetArchitecture (static function)</div>
+    <dl>
+        <dd>
+            The function is used to get the architecture of the system.
+
+            <h4>Return value</h4>
+            Returns the architecture of the system (ARM or X86_64) as an <code>enum</code> of type <i>architecture_t</i>.   
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Sync">Sync (static function)</div>
+    <dl>
+        <dd>
+            A call to this function will synchronize data on disk with memory. Any buffered data in memory is writen out to disk.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="Label">Label (static function)</div>
+    <dl>
+        <dd>
+            The function is used to get the label of the installed application platform.
+
+            <h4>Return value</h4>
+            Returns the actaul label of the App platform.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="ReleaseState">ReleaseState (static function)</div>
+    <dl>
+        <dd>
+            The function is used to get the release state of the installed application platform.
+
+            <h4>Return value</h4>
+            Returns the actaul release state of the App platform.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="SetBindServiceCapability">SetBindServiceCapability (static function)</div>
+    <dl>
+        <dd>
+            The function is used to set the capability flag <code> CAP_NET_BIND_SERVICE</code> for the pathname pointed to by <i>path</i>. The flags assocaited with the capability are 
+            <code>CAP_EFFECTIVE</code> and <code>CAP_PERMITTED</code>. This function is strictly used by the Manager App.
+
+            <h4>Return value</h4>
+            If the capability is successfully set true is returned; otherwise false.
+        </dd>
+    </dl>
+
+    <div class="fnhead" id="IsVirtualMachine">IsVirtualMachine (static function)</div>
+    <dl>
+        <dd>
+            Checks if the system is running on a virtual machine.
+
+            <h4>Return value</h4>
+            In case of virtual machine achitecture true is returned; otherwise false.
+        </dd>
+    </dl>
+
+    <h1>Data types</h1>
+    <h2 id="architecture_t">architecture_t</h2>
+    <pre><code class="laguage-cpp">typedef enum {
+    ARM,
+    X86_64
+} architecture_t;</code></pre>
+
+    <h3>Overview</h3>
+    The <code class="laguage-cpp">enum architecture_t</code> defines the two achitectures supported by the interface.
+
+    <h3>Values</h3>
+    <table style="margin-left: 20px">
+        <tr><td>ARM</td><td></td></tr>
+        <tr><td>X86_64</td><td></td></tr>       
+    </table>
+</body>
+</html>

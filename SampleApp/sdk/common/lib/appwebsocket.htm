@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - AppWebsocket</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>AppWebsocket</h1>
+    <p>
+        The appwebsocket library contains a class AppWebsocket, which can be used as base class
+        for a session object allocated for incoming websocket connections. This class handles the
+        authentication protocol using the myPBX authentication. It relates to the
+        innovaphone.appwebsocket.js library on the client side. There are member functions
+        for sending and receiving messages.
+    </p>
+    <h3>Protocol</h3>
+    <p>
+        JSON messages are used on this interface. There are some common properties, which are defined
+        by the this library already, which is documented as
+        <a href="../../doc/protocol/appwebsocket.htm">AppWebsocket</a>
+    </p>
+    <h3>APIs</h3>
+    <p>
+        The library uses the mechanism defined by <a href="../interface/json_api.htm">json_api.h</a>
+        to plug-in code to implement a specific API, which is addressed by the "api" property. Any App
+        may use or provide APIs. These are documented in the context of these Apps. There are also
+        libraries using this API mechanism (e.g. <a href="../interface/replication.htm">Replication</a>).
+    </p>
+
+    <h2>File information</h2>
+
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/lib/appwebsocket.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#AppWebsocket">AppWebsocket</a><br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Examples</b></td>
+            <td>
+                <a href="#ExampleAppInfo">Publishing app information</a><br>
+                <a href="#ExampleServiceInfo">Publishing service information</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+
+    <h2 id="AppWebsocket">AppWebsocket</h2>
+
+    <pre><code class="C++">class AppWebsocket : public UWebsocket, public IJsonApiConnection {
+
+    ...
+
+public:
+    <a href="AppWebsocket">AppWebsocket(IWebserverPlugin * plugin, class IInstanceLog * const log, class JsonApiContext * jsonApiContext = 0);</a>
+    ~AppWebsocket();
+
+    <a href="#AppWebsocketPassword1">virtual char * AppWebsocketPassword() { return 0; };</a>
+    <a href="#AppWebsocketPassword2">virtual char * AppWebsocketPassword(const char * domain) { return NULL; };</a>
+    <a href="#AppWebsocketInstanceDomain">virtual const char * AppWebsocketInstanceDomain() { return NULL; };</a>
+    <a href="#AppWebsocketMessage">virtual void AppWebsocketMessage(class json_io & msg, word base, const char * mt, const char * src) = 0;</a>
+    <a href="#AppWebsocketBinaryMessage">virtual void AppWebsocketBinaryMessage(void * buffer, int len) { };</a>
+    <a href="#AppWebsocketAppInfo">virtual void AppWebsocketAppInfo(const char * app, class json_io & msg, word base) { }</a>
+    <a href="#AppWebsocketServiceInfo">virtual void AppWebsocketServiceInfo(const char * app, class json_io & msg, word base) { }</a>
+    <a href="#AppWebsocketDeviceAppType">virtual const char * AppWebsocketDeviceAppType(const char * app) { return 0; }</a>
+    <a href="#AppWebsocketLogin">virtual void AppWebsocketLogin(class json_io & msg, word info) { };</a>
+    <a href="#AppWebsocketConnectComplete">virtual bool AppWebsocketConnectComplete(class json_io & msg, word info) { return true; }</a>
+    <a href="#AppWebsocketClosed">virtual void AppWebsocketClosed()</a> = 0;
+    <a href="#AppWebsocketApiPermission">virtual bool AppWebsocketApiPermission(const char * api) { return true; }</a>
+    <a href="#AppWebsocketSendResult">virtual void AppWebsocketSendResult()</a> = 0;
+    <a href="#AppWebsocketCheckLogin">virtual void AppWebsocketCheckLogin(const char * src, const char * app, const char * challenge, const char * digest) { AppWebsocketCheckLoginComplete(src, app, challenge, digest, AppWebsocketPassword()); };</a>
+
+    <a href="#AppWebsocketLoginComplete">bool AppWebsocketLoginComplete(const char * password, char * key = 0, unsigned keyLen = 0);</a>
+    <a href="#AppWebsocketCheckLoginComplete">void AppWebsocketCheckLoginComplete(const char * src, const char * app, const char * challenge, const char * digest, const char * password);</a>
+    <a href="#AppWebsocketMessageComplete">void AppWebsocketMessageComplete();</a>
+    <a href="#AppWebsocketMessageSend">void AppWebsocketMessageSend(class json_io & msg, char * buffer);</a>
+    <a href="#AppWebsocketMessageSendText">void AppWebsocketMessageSendText(const char * buffer);</a>
+    <a href="#AppWebsocketMessageSendBinary">void AppWebsocketMessageSendBinary(char * buffer, int len);</a>
+    <a href="#AppWebsocketClose">void AppWebsocketClose();</a>
+
+    <a href="#AppWebsocketEncrypt">void AppWebsocketEncrypt(const char * seed, const char * data, char * out, size_t outLen);</a>
+    <a href="#AppWebsocketDecrypt">void AppWebsocketDecrypt(const char * seed, const char * data, char * out, size_t outLen);</a>
+    <a href="#AppWebsocketHash">void AppWebsocketHash(const char * seed, const char * data, char * out, size_t outLen);</a>
+
+    <a href="#AppWebsocketIsEncryptedConnection">bool AppWebsocketIsEncryptedConnection() { return websocket->IsEncryptedConnection(); };</a>
+
+    <a href="#RegisterJsonApi">void RegisterJsonApi(class JsonApi * api) override;</a>
+    <a href="#UnRegisterJsonApi">void UnRegisterJsonApi(class JsonApi * api) override;</a>
+    <a href="#JsonApiMessage">void JsonApiMessage(class json_io & msg, char * buffer) override;</a>
+    <a href="#JsonApiMessageComplete">void JsonApiMessageComplete() override;</a>
+    <a href="#JsonApiPermission">bool JsonApiPermission(const char * api) override { return AppWebsocketApiPermission(api); };</a>
+
+    char * domain;
+    char * sip;
+    char * guid;
+    char * dn;
+    char * app;
+    char key[65];
+};</code></pre>
+
+    <p>
+        Base class for incoming AppWebsocket sessions. It provides public functions which may
+        be called by the application and virtual function, which may be overridden for the
+        signaling of events on the protocol.
+    </p>
+
+    <div class="fnhead" id="AppWebsocket">virtual AppWebsocket</div>
+    
+    <dd>
+        Contructor used to initialize the class.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">IWebserverPlugin * <b>plugin</b></td>
+                <td>
+                    The IWebserverPlugin object passed in the WebserverWebsocketListenResult function.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class IInstanceLog * const <b>log</b></td>
+                <td>
+                    The log is used to log dependent of the log flag LOG_APP_WEBSOCKET.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class JsonApiContext * <b>jsonApiContext</b></td>
+                <td>
+                    Optional parameter, needed if other libraries, based on the JsonApi mechanism
+                    are used (e.g. <a href="config.htm">config.h</a>).
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketPassword1">virtual AppWebsocketPassword (overloaded)</div>
+    <dd>
+        Called by the library to read the shared secret, which is part of the App instance
+        configuration.
+
+        <h4>Return value</h4>
+            The app instance password. If null is returned, the function AppWebsocketLogin is
+            called to start assynchronous athentication.
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketPassword2">virtual AppWebsocketPassword (overloaded)</div>
+    
+    <dd>
+        Called by the library to read another domain dependent shared secret, if the first shared secret failed.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>domain</b></td>
+                <td>
+                    The domain name.
+                </td>
+            </tr>
+        </table>
+        <h4>Return value</h4>
+            The domain password, if defined. If null is returned, the function AppWebsocketLogin is
+            called to start assynchronous athentication.
+        </dd>
+
+    <div class="fnhead" id="AppWebsocketInstanceDomain">virtual AppWebsocketInstanceDomain</div>
+    
+    <dd>
+        Called by the library to read the App Instance domain. It is sent within the AppLoginResult
+        message as property "domain".
+    
+        <h4>Return value</h4>
+            The domain name of the instance.
+        </dd>
+
+    <div class="fnhead" id="AppWebsocketConnectComplete">virtual AppWebsocketConnectComplete</div>
+    
+    <dd>
+        Will be called after the connection / authentication process had been completed and with
+        that the AppWebsocket connection had been established.
+        The default implementation is just an empty function, which returns true
+
+        <h4>Return value</h4>
+
+            The application should return true to indicate, that it is ready
+            to receive messages. If false is returned, a call to AppWebsocketMessageComplete() is needed
+            to receive messages.
+        </dd>
+
+    <div class="fnhead" id="AppWebsocketMessage">virtual AppWebsocketMessage</div>
+
+    <dd>
+        Called by the library on received messages. The message is json decoded.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    The message as JSON data structure.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">word <b>base</b></td>
+                <td>
+                    indicates the location of message inside the
+                    JSON structure
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>src</b></td>
+                <td>
+                    The "src" member of the message. This should be sent back with any response. It is
+                    used on the Javascript side to route the message to the object, which sent the request.
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketBinaryMessage">virtual AppWebsocketBinaryMessage</div>
+
+    <dd>
+        Called by the library on received binary messages.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">void * <b>buffer</b></td>
+                <td>
+                    The message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">int <b>len</b></td>
+                <td>
+                    The length of the message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>src</b></td>
+                <td>
+                    The "src" member of the message. This should be sent back with any response. It is
+                    used on the Javascript side to route the message to the object, which sent the request.
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketMessageComplete">virtual AppWebsocketMessageComplete</div>
+
+    <dd>
+        Function to be called to acknowledge the last message. Unless this function is called no
+        further message is received.
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketMessageSend">virtual AppWebsocketMessageSend</div>
+    
+    <dd>
+        Function which can be called to send a message. buffer should be a buffer big enough to
+        hold the complete message. It is used only during the call to this function.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    The message as JSON data structure.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>buffer</b></td>
+                <td>
+                    A buffer that shall be used for encoding the message. Must be big enough to contain the whole message.
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketSendResult">virtual AppWebsocketSendResult</div>
+
+    <dd>
+        Called by the library when the message is sent. The App should not send further messages
+        unless this call is received, if the App wants to have flow control for bulk data. If flow
+        control on application level is done, this function needs not to be implemented.
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketClose">AppWebsocketClose</div>
+
+    <dd>
+        Can be called to request closing of the websocket connection
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketClosed">virtual AppWebsocketClosed</div>
+
+    <dd>
+        Called when the websocket connection is closed. It can be used to delete the App session
+        (e.g. delete this).
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketAppInfo">virtual AppWebsocketAppInfo</div>
+
+    <dd>
+        Called by the library to get information of the specified app. This includes for
+        example if the app is hidden and which client APIs are provided by the app.
+        The application is supposed to encode a JSON structure containing the information.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>app</b></td>
+                <td>
+                    The name of the app for which the information is requested.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    A JSON structure to put the information.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">word <b>base</b></td>
+                <td>
+                    The position inside the JSON structure where to put the information.
+                </td>
+            </tr>
+        </table>
+        <h4>Information that can be published in the JSON</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param"><b>hidden</b></td>
+                <td>
+                    <code>true</code> if the app is an API provider without a UI. Hidden apps are run in the background without displaying them to the user.
+                </td>
+            </tr>
+            <tr>
+                <td class="param"><b>presence</b></td>
+                <td>
+                    <code>true</code> if the app instance provides presence for badge counts on the AppWebsocket connection using the PbxSignal API.
+                </td>
+            </tr>
+            <tr>
+                <td class="param"><b>apis</b></td>
+                <td>
+                    An object that should contain an object for each client API that is provided by the app. Please see the <a href="#ExampleAppInfo">Example</a>.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead" id="AppWebsocketServiceInfo">virtual AppWebsocketServiceInfo</div>
+
+    <dd>
+        Called by the library to get information about the websocket services of a certain app instance.
+        The application is supposed to encode a JSON structure containing the information.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>app</b></td>
+                <td>
+                    The name of the app for which the information is requested.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    A JSON structure to put the information.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">word <b>base</b></td>
+                <td>
+                    The position inside the JSON structure where to put the information.
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketDeviceAppType">virtual AppWebsocketDeviceAppType</div>
+
+    <dd>
+        Called by the library to get information about the device app type. This happens when an
+        AppInfo message is received.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>app</b></td>
+                <td>
+                    The name of the app for which the information is requested.
+                </td>
+            </tr>
+        </table>
+        <h4>Return Value</h4>
+            A string, which is sent as "deviceapp" property in the AppInfoResult message.
+        </dd>
+
+    <div class="fnhead" id="AppWebsocketLogin">virtual AppWebsocketLogin</div>
+
+    <dd>
+        Called by the library if null is returned on AppWebsocketPassword, so that the
+        Login can be handled assynchronously in the application
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    Json data which contains the AppLogin message
+                </td>
+            </tr>
+            <tr>
+                <td class="param">word <b>info</b></td>
+                <td>
+                    Handle of the info object inside the AppLogin message.
+                </td>
+            </tr>
+        </table>
+        <h4>Return Value</h4>
+            A string, which is sent as "deviceapp" property in the AppInfoResult message.
+        </dd>
+
+    <div class="fnhead" id="AppWebsocketApiPermission">virtual AppWebsocketApiPermission</div>
+
+    <dd>
+        Called by the library when the function JsonApiPermission is called by an JsonApi
+        implementation, so that the application can check if the use of the Api is allowed
+        in the context of this session.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>api</b></td>
+                <td>
+                    The Api id.
+                </td>
+            </tr>
+        </table>
+        <h4>Return Value</h4>
+
+            Return true to allow the use of the Api.
+        </dd>
+
+
+    <div class="fnhead" id="AppWebsocketCheckLogin">virtual AppWebsocketCheckLogin</div>
+
+    <dd>
+        Called by the library when the message AppCheckLogin is received. This can be used
+        to check if a login is valid. The PBX Manager uses this function to verify if the
+        passwords stored in App objects are valid.
+
+        The default implementation calls AppWebsocketCheckLoginComplete with AppWebsocketPassword,
+        so that this check works in case the AppWebsocketPassword function is used for the password.
+
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>src</b></td>
+                <td>
+                    The src property as received
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * app<b>app</b></td>
+                <td>
+                    The app propery as received
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>challenge</b></td>
+                <td>
+                    The challenge property as received
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>digest</b></td>
+                <td>
+                    The digest propery as received
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketLoginComplete">virtual AppWebsocketLoginComplete</div>
+
+    <dd>
+        Called by the application to complete a login process started with the AppWebsocketLogin
+        call
+
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>password</b></td>
+                <td>
+                    The password used to check the login
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>key</b></td>
+                <td>
+                    Optional buffer to copy the session key into.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned <b>keyLen</b></td>
+                <td>
+                    Length of the key buffer.
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketCheckLoginComplete">virtual AppWebsocketCheckLoginComplete</div>
+
+    <dd>
+        Called by the application to complete a check login process started with the
+        AppWebsocketCheckLogin call
+
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>src</b></td>
+                <td>
+                    The src as received in AppWebsocketCheckLogin
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>app</b></td>
+                <td>
+                    The app as received in AppWebsocketCheckLogin
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>challenge</b></td>
+                <td>
+                    The challenge as received in AppWebsocketCheckLogin
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>digest</b></td>
+                <td>
+                    The digest as received in AppWebsocketCheckLogin
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>password</b></td>
+                <td>
+                    The password to be used for the check
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketMessageSendText">virtual AppWebsocketMessageSendText</div>
+
+    <dd>
+        Can be used to send a plain text message
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b>buffer</b></td>
+                <td>
+                    Zero terminated string which is sent
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketMessageSendBinary">virtual AppWebsocketMessageSendBinary</div>
+
+    <dd>
+        Can be used to send a binary message
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">char * <b>buffer</b></td>
+                <td>
+                    Buffer containing the binary message.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">int <b>len</b></td>
+                <td>
+                    Length of the message in bytes.
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketEncrypt">AppWebsocketEncrypt</div>
+
+    <dd>
+        Can be used to encrypt a text send on the AppWebsocket connection, using the session
+        key
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * seed<b>seed</b></td>
+                <td>
+                    Seed, which can be used so that the result of the encryption is different even
+                    if the data is the same.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>data</b></td>
+                <td>
+                    Buffer containing the data to be encrypted as zero terminated string
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>out</b></td>
+                <td>
+                    Buffer for the encrypted output as hex string.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">size_t <b>outLen</b></td>
+                <td>
+                    Length of the buffer for the output. Must be 2 times the length of
+                    the data string.
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketDecrypt">AppWebsocketDecrypt</div>
+
+    <dd>
+        Can be used to dencrypt a text send on the AppWebsocket connection, using the session
+        key
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * seed<b>seed</b></td>
+                <td>
+                    Seed, which can be used so that the result of the encryption is different even
+                    if the data is the same.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>data</b></td>
+                <td>
+                    Buffer containing the hex string of encryped data
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>out</b></td>
+                <td>
+                    Buffer for the decrypted output
+                </td>
+            </tr>
+            <tr>
+                <td class="param">size_t <b>outLen</b></td>
+                <td>
+                    Length of the buffer for the output. Must be half the length of
+                    the data string.
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="AppWebsocketHash">AppWebsocketHash</div>
+
+    <dd>
+        Calculate a SHA256 hash using the session key
+    
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * seed<b>seed</b></td>
+                <td>
+                    Seed, which can be used so that the result of the encryption is different even
+                    if the data is the same.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>data</b></td>
+                <td>
+                    Buffer containing a zero terminated string over which the hash shall be calculated
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>out</b></td>
+                <td>
+                    Buffer for the hash
+                </td>
+            </tr>
+            <tr>
+                <td class="param">size_t <b>outLen</b></td>
+                <td>
+                    Length of the buffer for the output. Must be 64 bytes, 2* HASH_SIZE_SHA256
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="AppWebsocketIsEncryptedConnection">AppWebsocketIsEncryptedConnection</div>
+
+    <dd>
+        Returns true if a TLS connection is used
+    </dd>
+
+    <div class="fnhead" id="RegisterJsonApi">RegisterJsonApi</div>
+
+    <dd>
+        Used by an Api implementation to register the Api to the session. Needed to receive
+        messages with the matching "api" property. This is usually called when the Api
+        implementation is called with JsonApiRequested, when a new api value is received
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class JsonApi * <b>api</b></td>
+                <td>
+                    The class for the Api implementation
+                </td>
+            </tr>
+        </table></dd>
+
+    <div class="fnhead" id="UnRegisterJsonApi">UnRegisterJsonApi</div>
+
+    <dd>
+        Used by an Api implementation to unregister the Api from the session.
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class JsonApi * <b>api</b></td>
+                <td>
+                    The class for the Api implementation
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="JsonApiMessage">JsonApiMessage</div>
+
+    <dd>
+        Used by a JsonApi implementation to send a message
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class json_io & <b>msg</b></td>
+                <td>
+                    The message to be sent
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>buffer</b></td>
+                <td>
+                    buffer big enough to contain the message
+                </td>
+            </tr>
+        </table></dd>
+
+
+    <div class="fnhead" id="JsonApiMessageComplete">JsonApiMessageComplete</div>
+
+    <dd>
+        Used by a JsonApi implementation to acknowledge a received message so that the
+        next message is received
+    </dd>
+
+    <div class="fnhead" id="JsonApiPermission">JsonApiPermission</div>
+
+    <dd>
+        Used by a JsonApi implementation to check if the use of the Api is allowed for
+        this session
+
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">const char * <b></b></td>
+                <td>
+                    The name of the api.
+                </td>
+            </tr>
+        </table>
+        <h4>Return value</h4>
+            Return true to allow the use of the Api.
+        </dd>
+
+    <h1>Code Examples</h1>
+
+    <h2 id="ExampleAppInfo">Publishing app information</h2>
+    
+    <pre class="sample" style="height:250px;"><code class="language-cpp">void MySession::AppWebsocketAppInfo(const char * app, class json_io & msg, word base)
+{
+    if (!strcmp(app, "my-searchprovider")) {
+        // general app info
+        msg.add_bool(base, "hidden", true); // app is hidden
+        msg.add_bool(base, "presence", true); // app provides presence (badge counts)
+        
+        // apis
+        word apis = msg.add_object(base, "apis");
+        word search = msg.add_object(apis, "com.innovaphone.search");
+        word info = msg.add_object(search, "info");
+        msg.add_string(info, "someattr", "somevalue");
+    }
+}</code></pre>
+
+    <h2 id="ExampleServiceInfo">Publishing service information</h2>
+
+    <pre class="sample" style="height:250px;"><code class="language-cpp">void MySession::AppWebsocketServiceInfo(const char * app, class json_io & msg, word base)
+{
+    if (!strcmp(app, "my-channels-service")) {
+        word apis = msg.add_object(base, "apis");
+        msg.add_object(apis, "com.innovaphone.channels");
+    }
+}</code></pre>
+
+</body>
+</html>

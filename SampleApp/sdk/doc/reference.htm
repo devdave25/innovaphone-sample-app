@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>App Service Interfaces</title>
+    <link rel="stylesheet" href="../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Reference</h1>
+    <h2>Overview</h2>
+    The innovaphone has 3 parts a developer needs to know to create own apps for the app platform: The C++ library to develop the app-service for the app platform itself, the JavaScript library top
+    develop the UI which runs in a browser or inside the myApps client and the messages used for the communication between the app-service and the UI.<br>
+    <table>
+        <tr><td><b><a href="#CPP_library">C++ library for App Services</a></b></td><td>Used to develop the app-service for the app platform itself.</td></tr>
+        <tr><td><b><a href="#JS_library">JavaScript library for Apps</a></b></td><td>A library to create the JavaScript UI for an app (if there is any).</td></tr>
+        <tr><td><b><a href="#APIs">APIs</a> </b></td><td>There are different kinds of APIs that can be used for communication between different components of the system (app, app service, PBX).</td></tr>
+        <tr><td><b><a href="#How_to">How to use the AppStore</a> </b></td><td>The AppStore can be used to publish apps.</td></tr>
+    </table>
+
+    <a name="CPP_library"></a><h2>C++ library for App Services</h2>
+    The C++ library of the innovaphone SDK is a set of interfaces and classes used to create C++ apps to run on the app platform. The services provide everything an app needs to be registered into the app manager, access
+    the a database, manage configuration, communicate with a PBX, have access to the outside world by using sockets or an HTTP client, be accessed from outside by registering itself as kind of a plugin into
+    the app platforms webserver and more. Even if standard C++ will be used to develop an app, the app must use the interfaces to work proberly within the app platorm.<br>
+    The following interfaces and classes are provided by the C++ library:<br><br>
+
+    <a name="CPP_AppServiceInterfaces"></a><h3>App Service Interfaces</h3>
+    <h4>Fundamentals</h4>
+    <table>
+        <tr><td><b><a href="../common/os/iomux.htm">iomux</a></b></td><td>Runtime for asynchronous programming model using callbacks and timers, providing the main loop for the app service.</td></tr>
+        <tr><td><b><a href="../common/lib/appservice.htm">appservice</a></b></td><td>Base classes for any App Service and App Instance. Handles the connection to the app platform manager that is used to start and stop instances and for logging.</td></tr>
+    </table>
+    <h4>Basic interfaces</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/task.htm">task</a></b></td><td>Base class for encapsulating complex flows into single asynchronous tasks.</td></tr>
+        <tr><td><b><a href="../common/interface/callback.htm">callback</a></b></td><td>A helper interface to hide implementation details about callbacks from the using code.</td></tr>
+        <tr><td><b><a href="../common/os/debug.htm">debug</a></b></td><td>Class for debug output and logging.</td></tr>
+        <tr><td><b><a href="../common/interface/valgrind.htm">valgrind</a></b></td><td>Interface to check if valgrind is active.</td></tr>
+    </table>
+    <br>
+
+    <a name="CPP_AppPlatformInterfaces"></a><h3>App Platform Interfaces</h3>
+    These interfaces provide access to core components of the App Platform, such as webwerver, database, sockets and system inferfaces.
+    <h4>Platform interfaces</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/webserver_plugin.htm">webserver_plugin</a></b></td><td> Attach to the webserver to receive incoming websocket connections and HTTP requests.</td></tr>
+        <tr><td><b><a href="../common/interface/database.htm">database</a></b></td><td>Access to the database of the app instance.</td></tr>
+    </table>
+    <h4>System interfaces</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/socket.htm">socket</a></b></td><td>Sockets (Local, UDP, TCP, TLS).</td></tr>
+        <tr><td><b><a href="../common/interface/dns.htm">dns</a></b></td><td>Resolve DNS names.</td></tr>
+        <tr><td><b><a href="../common/interface/ethernet.htm">ethernet</a></b></td><td>Get local MAC addresses.</td></tr>
+        <tr><td><b><a href="../common/interface/network.htm">network</a></b></td><td>Get local IP addresses.</td></tr>
+        <tr><td><b><a href="../common/interface/file.htm">file</a></b></td><td>File and directory operations.</td></tr>
+        <tr><td><b><a href="../common/interface/command.htm">command</a></b></td> <td> Running commands on the operating system </td> </tr>
+        <tr><td><b><a href="../common/interface/random.htm">random</a></b></td><td> Random number generator.</td></tr>
+        <tr><td><b><a href="../common/interface/time.htm">time</a></b></td><td>Get Date and time</td></tr>
+        <tr><td><b><a href="../common/interface/timezone.htm">timezone</a></b></td><td>Helpful to make timezone relevant time calculation.</td></tr>
+        <tr><td><b><a href="../common/interface/guuid.htm">guuid</a></b></td><td> Create GUIDs.</td></tr>
+        <tr><td><b><a href="../common/interface/process.htm">process</a></b></td><td>Create child processes.</td></tr>
+        <tr><td><b><a href="../common/interface/stask.htm">stask</a></b></td><td>Run tasks in a separate thread with callbacks to the main thread.</td></tr>
+        <tr><td><b><a href="../common/interface/worker.htm">worker</a></b></td><td> Run intensive tasks in a separate process.</td></tr>
+        <tr><td><b><a href="../common/interface/system.htm">system</a></b></td><td>Interface to access system information.</td></tr>
+        <tr><td><b><a href="../common/interface/users.htm">users</a></b></td><td>System user tools.</td></tr>
+    </table>
+
+    <a name="CPP_AppPlatformLibraries"></a><h3>App Platform Libraries</h3>
+    The libraries provide complex functionality that is often needed using App Platform interfaces.
+    <h4>Webserver</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/httpfile.htm">httpfile</a></b></td><td>Base class for static httpfiles that are part of the app binary.</td></tr>
+        <tr><td><b><a href="../common/lib/httpfiles_unzip.htm">httpfiles_unzip</a></b></td><td>Library for static httpfiles that are provided in a separate ZIP file.</td></tr>
+        <tr><td><b><a href="../common/lib/appwebsocket.htm">appwebsocket</a></b></td> <td>Base class for incoming AppWebsocket sessions (from the app or the PBX). </td> </tr>
+        <tr><td><b><a href="../common/lib/app_updates.htm">app_updates</a></b></td> <td> Library for sending continous updates to the app sessions over the AppWebsocket connections.  </td> </tr>
+        <tr><td><b><a href="../common/lib/webdavservice.htm">webdavservice.h</a></b></td> <td> WebDAV server implementation using the WebserverPlugin and the DbFiles interface of the app instance. </td> </tr>
+    </table>
+    <h4>Database</h4>
+    <table>
+        <tr><td><b><a href="../common/lib/tasks_postgresql.htm">tasks_postgresql</a></b></td> <td> Initialization of database tables.</td></tr>
+        <tr><td><b><a href="../common/lib/database_switch.htm">database_switch</a></b></td> <td> Share a database connection between many users. </td> </tr>
+        <tr><td><b><a href="../common/interface/dbfiles.htm">dbfiles</a></b></td> <td> Store and read files from the database of the app instance. </td> </tr>
+        <tr><td><b><a href="../common/lib/config.htm">config</a></b></td> <td> Configuration of app instances.  </td> </tr>
+    </table>
+    <h4>Network</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/websocket_client.htm">websocket_client</a></b></td> <td> Websocket connections to other servers. </td></tr>
+        <tr><td><b><a href="../common/interface/appwebsocket_client.htm">appwebsocket_client</a></b></td> <td> Connect to other app services using the AppWebsocket protocol. </td> </tr>
+        <tr><td><b><a href="../common/interface/appwebsocket_authenticator.htm">appwebsocket_authenticator</a></b></td> <td> Connect to other app services using the AppWebsocket protocol.  </td> </tr>
+        <tr><td><b><a href="../common/interface/http_client.htm">http_client</a></b></td> <td> HTTP requests to other servers. </td> </tr>
+        <tr><td><b><a href="../common/interface/smtp.htm">common/interface/smtp</a></b></td> <td> Sending emails  </td> </tr>
+        <tr><td><b><a href="../common/interface/alarm_client.htm">alarm_client</a></b></td><td>Interface for sending alarms and events (via POST) to an alarm server..</td></tr>
+    </table>
+    <h4>Files</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/files.htm">files</a></b></td> <td> Read additional files that belong to the app service.  </td> </tr>
+        <tr><td><b><a href="../common/lib/tasks_file.htm">tasks_file</a></b></td> <td> Task-based library for reading and writing files.</td></tr>
+    </table>
+    <h4>Libraries for Appwebsocket APIs</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/json_api.htm">json_api</a></b></td><td>Classes to hook into an appwebsocket connection to provide a JSON api interface.</td></tr>
+        <tr><td><b><a href="../common/interface/pbx.htm">pbx</a></b></td> <td> Implementation of the PbxApi on AppWebsocket connections from the PBX.  </td> </tr>
+        <tr><td><b><a href="../common/interface/pbx_admin.htm">pbx_admin</a></b></td> <td> Implementation of the PbxAdmin API on AppWebsocket connections from the PBX.  </td> </tr>
+        <tr><td><b><a href="../common/interface/replication.htm">replication</a></b></td> <td> Implementation of the Replication API on AppWebsocket connections from the PBX.  </td> </tr>
+        <tr><td><b><a href="../common/lib/badgecount_signaling.htm">badgecount_signaling</a></b></td> <td> Accept subscriptions for badge counts on AppWebsocket connections using the "PbxSignal" API.  </td> </tr>
+    </table>
+    <h4>Libraries for launcher services (myApps launcher only)</h4>
+    <table>
+        <tr><td><b><a href="../common/interface/media.htm">media</a></b></td><td>Access to audio / video.</td></tr>
+        <tr><td><b><a href="../common/interface/appsharing.htm">appsharing</a></b></td><td>Access to application sharing.</td></tr>
+        <tr><td><b><a href="../common/interface/ringer.htm">ringer</a></b></td><td>Playback and configuration of ringtones.</td></tr>
+        <tr><td><b><a href="../common/lib/apiwebsocket_client.htm">apiwebsocket_client</a></b></td><td>A base class for providing and consuming client APIs in local services.</td></tr>
+    </table>
+
+    <a name="CPP_StandaloneLibraries"></a><h3>Standalone Libraries</h3>
+    <h4>Parsing / encoding</h4>
+    <table>
+        <tr><td><b><a href="../common/ilib/json.htm">json</a></b></td><td>A lightweight class to parse and create JSON.</td></tr>
+        <tr><td><b><a href="../common/ilib/xml.htm">xml</a></b></td><td>A lightweight class to parse and create XML data.</td></tr>
+        <tr><td><b><a href="../common/ilib/asn1.htm">asn1</a></b></td><td>Base classes for ASN.1 data structures.</td></tr>
+        <tr><td><b><a href="../common/ilib/asn1_ber.htm">asn1_ber</a></b></td><td>Encoder / decoder library for the ASN.1 Basic Encoding Rules</td></tr>
+        <tr><td><b><a href="../common/ilib/asn1_per.htm">ans1_per</a></b></td><td>Encoder / decoder library for the ASN.1 Packed Encoding Rules</td></tr>
+        <tr><td><b><a href="../common/ilib/base64.htm">base64</a></b></td><td>Tools to encode / decode base64.</td></tr>
+        <tr><td><b><a href="../common/ilib/uri.htm">uri</a></b></td><td>An URI parser.</td></tr>
+        <tr><td><b><a href="../common/ilib/http_query_args.htm">http_query_args</a></b></td><td>Tools to parse HTTP query arguments.</td></tr>
+        <tr><td><b><a href="../common/lib/httplib.htm">httplib</a></b></td><td>A set of classes to parse and create HTTP headers.</td></tr>
+        <tr><td><b><a href="../common/interface/pdf.htm">pdf</a></b></td><td>Creation of PDF documents.</td></tr>
+        <tr><td><b><a href="../common/interface/certificates.htm">certificates</a></b></td><td>Class to handle certificates.</td></tr>
+    </table>
+
+    <h4>Data types and structures</h4>
+    <table>
+        <tr><td><b><a href="../common/ilib/str.htm">str</a></b></td><td>A set helper functions for UTF-8 strings.</td></tr>
+        <tr><td><b><a href="../common/ilib/btree.htm">btree</a></b></td><td>Bass class for binary trees.</td></tr>
+        <tr><td><b><a href="../common/ilib/ilist.htm">ilist</a></b></td><td>A ligthweight, stl::list like template to create lists.</td></tr>
+    </table>
+
+    <h4>Encryption / hashes / checksums</h4>
+    <table>
+        <tr><td><b><a href="../common/ilib/cipher.htm">cipher</a></b></td><td>Library for basic encryption which supports AES, DES and RC4.</td></tr>
+        <tr><td><b><a href="../common/ilib/hash.htm">hash</a></b></td><td>Can be used to compute hash values and HMACs.</td></tr>
+        <tr><td><b><a href="../common/ilib/crc.htm">crc</a></b></td><td>Tools to handle crc32 checksum.</td></tr>
+    </table>
+
+    <h4>Other</h4>
+    <table>
+        <tr><td><b><a href="../common/lib/language.htm">language</a></b></td><td>Library for translated texts in app services.</td></tr>
+    </table>
+
+    <a name="JS_library"></a><h2>JavaScript library for Apps</h2>
+    <p>
+        While the app-service, running on the app-platform, will be developed using C++, the UI for a service itself will be developed using JavaScript. The benefit is, that the UI
+        runs inside a browser and the myApps client, the desktop or mobile devices. That also means, that the UI must be developed in a way to dynamically fit into the available size.
+        For some of the base functionalities (like communication with the app-service, authenticating, loading of configuration, creating nodes), the JavaScript library provides some
+        tools.
+    </p>
+    <table>
+        <tr><td><b><a href="../web1/lib1/lib1.htm">lib1</a></b></td><td>The fundamental library that is needed for all apps. It defines that start object that is the interface to the app runtime inside myApps. It also includes functions for translated texts and events.</td></tr>
+        <tr><td><b><a href="../web1/appwebsocket/appwebsocket.htm">appwebsocket</a></b></td><td>Library for authentication and communicating with the app service using a websocket connection.</td></tr>
+        <tr><td><b><a href="../web1/common/common.htm">crypto</a></b></td><td>Library for encryption, decryption and hashes.</td></tr>
+        <tr><td><b><a href="../web1/config/config.htm">config</a></b></td><td>Library for configuration of the app.</td></tr>
+        <tr><td><b><a href="../web1/countries/countries.htm">countries</a></b></td><td>List of country names in English and in the local language.</td></tr>
+    </table>
+    <p>
+        For building user interface using Javascript the SDK provides a slim library for creating and handling HTML elements.
+    </p>
+    <table>
+        <tr><td><b><a href="../web1/ui1.lib/ui1.lib.htm">ui1.lib</a></b></td><td>Defines the node prototype that is used for all UI classes. Also it defines classes for simple items (div, input, checkbox) and a library for color schemes and dynamic translated UI texts.</td></tr>
+        <tr><td><b><a href="../web1/ui1.svg/ui1.svg.htm">ui1.svg</a></b></td><td>SVG image</td></tr>
+        <tr><td><b><a href="../web1/ui1.autocompleteinput/ui1.autocompleteinput.htm">ui1.autocompleteinput</a></b></td><td>Input field with auto-comletion</td></tr>
+        <tr><td><b><a href="../web1/ui1.editor/ui1.editor.htm">ui1.editor</a></b></td><td>Editor for HTML content</td></tr>
+        <tr><td><b><a href="../web1/ui1.file/ui1.file.htm">ui1.file</a></b></td><td>File selection dialog</td></tr>
+        <tr><td><b><a href="../web1/ui1.listview/ui1.listview.htm">ui1.listview</a></b></td><td>Sortable list</td></tr>
+        <tr><td><b><a href="../web1/ui1.player/ui1.player.htm">ui1.player</a></b></td><td>Audio player</td></tr>
+        <tr><td><b><a href="../web1/ui1.radiobutton/ui1.radiobutton.htm">ui1.radiobutton</a></b></td><td>Radio button</td></tr>
+        <tr><td><b><a href="../web1/ui1.scrolling/ui1.scrolling.htm">ui1.scrolling</a></b></td><td>Container with styled scrollbar</td></tr>
+        <tr><td><b><a href="../web1/ui1.switch/ui1.switch.htm">ui1.switch</a></b></td><td>On/off switch</td></tr>
+        <tr><td><b><a href="../web1/ui1.popup/ui1.popup.htm">ui1.popup</a></b></td><td>Popup</td></tr>
+        <tr><td><b><a href="../web1/fonts/fonts.htm">fonts</a></b></td><td>Collection of fonts used in the innovaphone apps.</td></tr>
+    </table>
+
+    <a name="APIs"></a><h2>APIs</h2>
+    <a name="APIs_Client"></a><h3>Client APIs</h3>
+    <p>
+        Client APIs are used for communication between (web-)apps running in myApps. HTML5 Window messaging is used for transport between the IFrames.
+        Each API defines an identifier (like com.innovaphone.phone), an API model and messages. Each Provider can has its own model that can be used to publish status information.
+        Each app can provide and consume APIs. Hidden apps can be used for providing APIs in the background, without an UI being shown to the user.
+        There is a bridge between the myApps webclient and the launcher, so that client APIs can also be provided or consumed by components of the launcher.
+        Permission to client APIs is granted per user by allowing access to the corresponding
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.client/lib1_api_client.htm">com.innovaphone.client</a></b></td>
+            <td>
+                User details (display name, sip, phone number, email address, guid)
+                Tiles on the home screen, Available phone apps, Profile app
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.launcher/com.innovaphone.launcher.htm">com.innovaphone.launcher</a></b></td>
+            <td>
+                Push token, User activity status (auto apear offline),
+                Support for popup windows (only on computers, not on smartphones)
+                URLs and passwords for launcher services, Touch support,
+                Locking state of smartphones
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.search/lib1_api_search.htm">com.innovaphone.search</a></b></td>
+            <td>
+                Search for contact details
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.phone/com.innovaphone.phone.htm">com.innovaphone.phone</a></b></td>
+            <td>
+                See registration status and current calls; Start calls; Provide call-related information to phone-app
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.phoneinfo/com.innovaphone.phoneinfo.htm">com.innovaphone.phoneinfo</a></b></td>
+            <td>
+                Recv information about current calls in real-time
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.chat/com.innovaphone.chat.htm">com.innovaphone.chat</a></b></td>
+            <td>
+                Start chats
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.avatar/lib1_api_avatar.htm">com.innovaphone.avatar</a></b></td>
+            <td>
+                Base URL for profile picture, domain of the provider
+                Key for authentication
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.calllist/lib1_api_calllist.htm">com.innovaphone.calllist</a></b></td>
+            <td>
+                Get recent calls
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.devices/com.innovaphone.devices.htm">com.innovaphone.devices</a></b></td>
+            <td>
+                Find/configure devices
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.devicesui/com.innovaphone.devicesui.htm">com.innovaphone.devicesui</a></b></td>
+            <td>
+                Show device (by MAC address or name)
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.manager/com.innovaphone.manager.htm">com.innovaphone.manager</a></b></td>
+            <td>
+                Find app platforms, configure app platforms
+            </td>
+        </tr>
+
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.files/com.innovaphone.files.htm">com.innovaphone.files</a></b></td>
+            <td>
+                Get shared announcements
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="../web1/com.innovaphone.discussion/com.innovaphone.discussion.htm">com.innovaphone.discussion</a></b></td>
+            <td>
+                Create an iframe containing a discussion
+            </td>
+        </tr>
+    </table>
+
+    <a name="APIs_Service"></a><h3>App Service APIs</h3>
+    <p>
+        Service APIs are used for communication <b>between App Services</b>. Websocket is used for transport.
+        Each API defines an identifier (like com.innovaphone.devices) and messages.
+        The PBX API "Services" can be used to find Service PBX APIs and authenticate against them.
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="service/Devices.htm">com.innovaphone.devices</a></b></td>
+            <td>
+                Used to create provisioning codes.
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="service/Channels.htm">com.innovaphone.channels</a></b></td>
+            <td>
+                Used by the PBX to find a channels app service providers.
+            </td>
+        </tr>
+    </table>
+
+    <a name="APIs_launcher"></a><h3>Launcher services</h3>
+    <p>
+        Launcher services accept websocket connections from apps.
+        Apps can find and authenticate against launcher services using the Client API com.innovaphone.launcher.
+        We used launcher services for call functionality that might be too load-intensive in a Client API (signalling, starting ring tones).
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="launcher/Media.htm">Media</a></b></td>
+            <td>
+                Audio, video, appSharing, headset buttons
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="launcher/Ringer.htm">Ringer</a></b></td>
+            <td>
+                Play ringtones
+        </tr>
+    </table>
+
+
+
+    <a name="APIs_PBX"></a><h3>PBX APIs</h3>
+    <p>
+        The following APIs can be used with all <a href="appwebsocket/AppWebsocket.htm">AppWebsocket</a> connections with the PBX. A permission for
+        the API needs to be enabled at the app object.
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="appwebsocket/Signal.htm">Signal</a></b></td>
+            <td>
+                This is the generic JSON signaling signaling protocol, which is mapped by the PBX to any standard
+                Voip Signaling like SIP or H.323
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/PbxSignal.htm">PbxSignal</a></b></td>
+            <td>
+                Protocol to register to the PBX and do signaling with the JSON signaling protocol
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/EpSignal.htm">EpSignal</a></b></td>
+            <td>
+                This protocol allows to attach to a device registered to the innovaphone PBX and intercept
+                all signaling to and from this device
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/RCC.htm">RCC</a></b></td>
+            <td>
+                Perform remote call control operations with registered endpoints
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/PbxMessages.htm">PbxMessages</a></b></td>
+            <td>
+                The protocol to retrieve stored chat messages
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/PbxApi.htm">PbxApi</a></b></td>
+            <td>
+                Presence monitoring and management of favourites
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/PbxAdminApi.htm">PbxAdminApi</a></b></td>
+            <td>
+                Configuration of the PBX and pseudo objects
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/Replication.htm">Replication</a></b></td>
+            <td>
+                Replication of tables. Use "api":"PbxTableUsers" to replicate the PBX user objects to your app service.
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="appwebsocket/Services.htm">Services</a></b></td>
+            <td>
+                Finding and authenticating against other app services
+            </td>
+        </tr>
+    </table>
+    <p>
+        Separate from that the PBX supports the following websocket protocols that are not related to AppWebsocket connections.
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="appwebsocket/myApps.htm">myApps</a></b></td>
+            <td>
+                The protocol of the myApps client.
+            </td>
+        </tr>
+    </table>
+
+    <h3>PBX REST and SOAP APIs</h3>
+    <p>
+        There are some REST and SOAP APIs that are supported by the PBX.
+    </p>
+    <table>
+        <tr>
+            <td><b><a href="pbx/soap.htm">SOAP</a></b></td>
+            <td>
+                The PBX provides an Api for call-control and administration features with the standard SOAP
+                protocol. With a wsdl file this SOAP API can be integrated in many development environment.
+                In the future this legacy API will be ported to a Websocket interface. Implementations based
+                in the current SOAP interface will remain working.
+            </td>
+        <tr>
+            <td><b><a href="pbx/cdr.htm">CDR</a></b></td>
+            <td>
+                The PBX creates Call Details records, which may be delivered using several methods. These CDRs
+                are XML documents created for individual users/objects of the PBX describing a call as seen by
+                this user.
+            </td>
+        </tr>
+        <tr>
+            <td><b><a href="pbx/recording.htm">Recording</a></b></td>
+            <td>
+                In phones as in gateway media-relay interfaces a recording URL can be configured, which
+                is used to write media data of any calls to a HTTP server.
+            </td>
+        </tr>
+    </table>
+
+    <a name="How_to"></a><h2>How to use the AppStore</h2>
+    <p>
+        After an app has been built, it can be published on the AppStore. <a href="howto/AppStore.htm">Here</a> you can find how to use the AppStore for this.
+    </p>
+
+</body>
+</html>

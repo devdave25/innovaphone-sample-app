@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - STasks</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+
+    <h1>STasks</h1>
+
+    <p>
+        The stask library is used to implement tasks, which need to be executed in a seperate thread,
+        but can be used as normal asynchronous tasks. This is useful for functions, for which in the
+        respective operating system environment, no assynchronus APIs are available.
+    </p>
+    <p>
+        The tasks_file library uses this library
+    </p>
+    <p>
+        The implementation to handle the seperate threads is operating system dependend. For linux
+        this implementation is done in linux/stask/stask_threas.cpp/h
+    </p>
+
+    <h2>File information</h2>
+
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/stask.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#STask">STask</a><br/>
+                <a href="#STaskContext">STaskContext</a><br/>
+                <a href="#STaskThread">STaskThread</a><br/>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <h1>Classes</h1>
+
+    <h2 id="STask">STask</h2>
+    
+    <pre><code class="language-cpp">class STask : public ITask, public UIoExec {
+    void IoExec(void * execContext);
+
+    class STaskContext * context;
+    dword progress;
+
+protected:
+    void TaskComplete();
+    void TaskFailed();
+    void TaskProgress(dword progress = 0);
+
+    class STaskThread * thread;
+
+public:
+    STask(class STaskContext * context);
+    void Start(class UTask * user);
+    virtual void SStart() = 0;
+};</code></pre>
+
+    <p>
+        This class is used as base class for the implementation of the synchronous task. It provides
+        the standard ITask interface.
+    </p>
+
+    <div class="fnhead">STask(class STaskContext * context)</div>
+
+    <p>
+        Contruktor of the task. It needs a pointer to a STaskContext, which must be allocated in the
+        application, typically as base class to the instance class.
+    </p>
+
+    <div class="fnhead">void Start(class UTask * user)</div>
+
+    <p>
+        The Start function is called by the application to start the task (same as with task.h). It
+        is implemented operating system dependend to allocate a thread to execute the task. For Linux
+        it is implemented in common/linux/stask_theads.cpp/h.
+    </p>
+
+    <div class="fnhead">virtual void SStart() = 0</div>
+
+    <p>
+        Virtual function implemented for the specific task. This function is called in the context
+        of a worker thread to do the synchronous execution of the task.
+    </p>
+
+    <div class="fnhead">void TaskComplete(), void TaskFailed(), void TaskProgress(dword progress = 0)</div>
+
+    <p>
+        These functions are implemented operating system dependent and are called by the synchrounus
+        implementation of the task so that the respective class UTask functions are called in the
+        context of the instance thread.
+    </p>
+
+    <h2 id="STaskContext">STaskContext</h2>
+
+    <pre><code class="language-cpp">class STaskContext {
+public:
+    STaskContext(class IIoMux * iomux) {
+        this->iomux = iomux;
+    };
+
+    class IIoMux * iomux;
+    istd::list&lt;STaskThread&gt; threadsIdle;
+    istd::list&lt;STaskThread&gt; threadsBusy;
+}</code></pre>
+
+    <p>
+        STask internal task, used to manage the available threads. Typically used as base class of the
+        instance class
+    </p>
+
+    <h2 id="STaskThread">STaskThread</h2>
+
+    <pre><code class="language-cpp">class STaskThread : public istd::listElement&lt;STaskThread&gt; {
+public:
+    virtual void startTask(class STask * task) = 0;
+    virtual void wait() = 0;
+    virtual void cont() = 0;
+}</code></pre>
+
+    <p>
+        Task used as base class for the operating system dependend task management.
+    </p>
+</body>
+</html>
+

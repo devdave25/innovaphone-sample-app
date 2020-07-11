@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - devices UI api</title>
+    <link rel="stylesheet" href="../doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../doc/vs.css">
+    <script src="../doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>com.innovaphone.devicesui</h1>
+
+    <p>
+        The com.innovaphone.devicesui api enables apps to open a specific device in the Devices App.
+	</p>
+
+	<a name="consumeApi"><h2>consumeApi</h2></a>
+    
+    <p>
+        The client consumeApi function is used to access the Api:
+    </p>
+
+	<pre><code class="json">var devicesUiApi = start.consumeApi("com.innovaphone.devicesui")</code></pre><br/>
+
+    <h2>Messages</h2></a>
+    <a href="#OpenDevice" style="text-decoration:none;">OpenDevice</a><br/>
+    
+    <a name="OpenDevice"><h3>OpenDevice</h3></a>
+
+    <p>
+        Opens the specified device in the Devices App.
+    </p>
+    <pre><code class="javascript">devicesUiApi.send({ mt: "OpenDevice", hwId: "009033010101" });</code></pre><br/>
+    <h4>Parameters</h4>
+    <table style="margin-left:-12px">
+        <tr><td class="param">string <b>hwId </b></td><td>The hardware ID aka MAC address aka serial number of the device.</td></tr>
+    </table>    
+    
+</body>
+</html>

@@ -1,0 +1,579 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - AppSharing interface</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+</head>
+
+<body>
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <h1>AppSharing interface</h1>
+    <p>
+        FrameBuffer: Interface to capture desktop or application bitmaps, find differences between bitmaps, generate blocks and compressing them.
+    </p>
+    <p>
+        Canvas: Interface to decompress blocks and display them.
+    </p>
+
+    <h2>File information</h2>
+    <table style="margin-left:-12px">
+        <tr><td><b>File</b></td><td>common/interface/appsharing.h<br><br></td></tr>
+        <tr>
+            <td><b>Classes</b></td>
+            <td>
+                <a href="#IFrameBuffer">IFrameBuffer</a><br>
+                <a href="#UFrameBuffer">UFrameBuffer</a><br>
+                <a href="#CompressedBlock">CompressedBlock</a><br>
+                <a href="#CompressedBlockNode">CompressedBlockNode</a><br>
+                <a href="#ICanvas">ICanvas</a><br>
+                <a href="#UCanvas">UCanvas</a><br>
+                <br>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Block with the classes -->
+    <h1>Classes</h1>
+    <a name="IFrameBuffer"><h2>IFrameBuffer</h2></a>
+    <pre><code class="C++">class IFrameBuffer {
+public:
+    static IImageBuffer * CreateImageBuffer(class IIoMux * const iomux, class UFrameBuffer * const user, class IInstanceLog * const log, class MediaConfiguration * mediaConfiguration);
+    virtual ~IFrameBuffer() {};
+    virtual void Capture(unsigned int appId) = 0;  // MakeCapture, CreateDiffBlocks and CompressDiffBlocks
+    virtual bool Mark(unsigned int appId, int coorX, int coorY, int dimX, int dimY) = 0;
+    virtual void Clean(unsigned int appId) = 0;
+    virtual void SubscribeApplications(void) = 0;
+    virtual void UnsubscribeApplications(void) = 0;
+    virtual void SetMousePosition(int coorX, int coorY) = 0;
+    virtual void CloseFrameBuffer(void) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for the frame buffer interface.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">CreateFrameBuffer</div>
+    <dd>
+        Creates an instance of the frame buffer.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class IIoMux * const <b>iomux</b></td>
+                <td>
+                    iomux is the IIoMux instance of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class UFrameBuffer * const <b>user</b></td>
+                <td>
+                    UFrameBuffer instance that will receive the callbacks from the frame buffer.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class IInstanceLog * const <b>log</b></td>
+                <td>
+                    The IInstanceLog interface provides AppInstance related logs which are controlled by the log flag LOG_APPSHARING.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Capture</div>
+    <dd>
+        Capture a bitmap of application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Mark</div>
+    <dd>
+        Mark area in the bitmap for retransmission.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">int <b>coorX</b></td>
+            </tr>
+            <tr>
+                <td class="param">int <b>coorY</b></td>
+            </tr>
+            <tr>
+                <td class="param">int <b>dimX</b></td>
+            </tr>
+            <tr>
+                <td class="param">int <b>dimY</b></td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Clean</div>
+    <dd>
+        Clean saved information about a previous capture.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">SubscribeApplications</div>
+    <dd>
+        Request the frame to provide a list of available applications and future updates.
+    </dd>
+
+    <div class="fnhead">UnsubscribeApplications</div>
+    <dd>
+        Stop receiving updates of the applications.
+    </dd>
+
+    <div class="fnhead">RequestNewPicture</div>
+    <dd>
+        Send a whole new picture of an application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">CloseFrameBuffer</div>
+    <dd>
+        Close the frame buffer.
+    </dd>
+
+    <a name="UFrameBuffer"><h2>UFrameBuffer</h2></a>
+    <pre><code class="C++">class UFrameBuffer {
+public:
+    virtual void Add(unsigned int id, const char * name, const char * description, const char * icon,  const char * thumbnail, void * handle) {};
+    virtual void Update(unsigned int id, const char * name, const char * description, const char * icon,  const char * thumbnail) {};
+    virtual void Remove(unsigned int id) {};
+    virtual void Event(void * buf, size_t len) {};
+    virtual void HasData(unsigned int id) {};
+    virtual void CloseComplete() {};
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that receives updates from the frame buffer interface.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">Add</div>
+    <dd>
+        Provide information about an application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>name</b></td>
+                <td>
+                    Name of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>description</b></td>
+                <td>
+                    Description of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>icon</b></td>
+                <td>
+                    Icon for the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>thumbnail</b></td>
+                <td>
+                    Thumbnail of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">void * <b>handle</b></td>
+                <td>
+                    Platform dependent handle for the application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Update</div>
+    <dd>
+        Update information about an application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>name</b></td>
+                <td>
+                    Name of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>description</b></td>
+                <td>
+                    Description of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>icon</b></td>
+                <td>
+                    Icon for the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">const char * <b>thumbnail</b></td>
+                <td>
+                    Thumbnail of the application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Remove</div>
+    <dd>
+        Remove application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">HasData</div>
+    <dd>
+        Frame Buffer has data to send for an application.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    id of an application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">CloseComplete</div>
+    <dd>
+        Frame Buffer was closed.
+    </dd>
+
+    <a name="CompressedBlock"><h2>CompressBlock</h2></a>
+    <pre><code class="C++">class CompressedBlock {
+public:
+    CompressedBlock() {
+        this->buf = NULL;
+        this->len = 0;
+        this->first = false;
+        this->last = false;
+    };
+    ~CompressedBlock() { if(this->buf) free(this->buf); };
+    int coorX;
+    int coorY;
+    int dimX;
+    int dimY;
+    int picW;
+    int picH;
+    word seq;
+    enum CompressionType compressionType;
+    enum BlockType blockType;
+    int numEqBlocks;
+    unsigned char *buf;
+    int len;
+    int msg;
+    bool first;
+    bool last;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Provides all the information about a compress block.
+
+    <a name="CompressedBlock"><h2>CompressedBlockNode</h2></a>
+    <pre><code class="C++">class CompressedBlockNode {
+public:
+    int userId;
+    int appId;
+    bool retransmissions;
+public:
+    CompressedBlockNode(class CompressedBlock *pCompBlock, int userId, int appId, bool retransmissions) {
+        this->pCompBlock = pCompBlock;
+        this->retransmissions = retransmissions;
+        this->appId = appId;
+        this->userId = userId;
+    };
+    ~CompressedBlockNode() {
+        if(pCompBlock) delete pCompBlock;
+    }
+    int GetUserId(void) { return userId; };
+    int GetAppId(void) { return appId; };
+    bool GetRetransmissions(void) { return retransmissions; };
+    class CompressedBlock *pCompBlock;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Compress block for a user and application id.
+
+    <a name="ICanvas"><h2>ICanvas</h2></a>
+    <pre><code class="C++">class ICanvas {
+public:
+    static ICanvas * CreateCanvas(class IIoMux * const iomux, class UCanvas * const user, class IInstanceLog * const log);
+    virtual ~ICanvas() {};
+    virtual void PutBlock(unsigned int userId, unsigned int appId, class CompressedBlock * block) = 0;
+    virtual void DrawMouse(unsigned int userId, unsigned int appId, enum MouseType mouse, int coorX, int coorY) = 0;
+    virtual void Add(unsigned int userId, char * userName, unsigned int appId, char * appName, char * appDesc) = 0;
+    virtual void Update(unsigned int userId, char * userName, unsigned int appId, char * appName, char * appDesc) = 0;
+    virtual void Remove(unsigned int userId, unsigned int appId) = 0;
+    virtual void CloseCanvas(void) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    Base class for the canvas interface.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">CreateCanvas</div>
+    <dd>
+        Creates an instance of the canvas interface.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">class IIoMux * const <b>iomux</b></td>
+                <td>
+                    iomux is the IIoMux instance of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class UCanvas * const <b>user</b></td>
+                <td>
+                    UCanvas instance that will receive the callbacks from the canvas.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class IInstanceLog * const <b>log</b></td>
+                <td>
+                    The IInstanceLog interface provides AppInstance related logs which are controlled by the log flag LOG_APPSHARING.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">PuBlock</div>
+    <dd>
+        Pass a compress block to the canvas interface.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>userId</b></td>
+                <td>
+                    Blocks belongs to user id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    Blocks belongs to application id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">class CompressedBlock * <b>block</b></td>
+                <td>
+                    Compress block.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">DrawMouse</div>
+    <dd>
+        Draw mouse type at the specific position.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>userId</b></td>
+                <td>
+                    Blocks belongs to user id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    Blocks belongs to application id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">enum MouseType <b>mouse</b></td>
+                <td>
+                    Mouse to display.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">int <b>coorX</b></td>
+            </tr>
+            <tr>
+                <td class="param">int <b>coorY</b></td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Add</div>
+    <dd>
+        Compress Blocks for a new application received.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>userId</b></td>
+                <td>
+                    Blocks belongs to user id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>userName</b></td>
+                <td>
+                    Name of the user.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    Blocks belongs to application id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>appName</b></td>
+                <td>
+                    Name of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>appDesc</b></td>
+                <td>
+                    Description of the application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Update</div>
+    <dd>
+        New information for an application received.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>userId</b></td>
+                <td>
+                    Blocks belongs to user id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>userName</b></td>
+                <td>
+                    Name of the user.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    Blocks belongs to application id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>appName</b></td>
+                <td>
+                    Name of the application.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">char * <b>appDesc</b></td>
+                <td>
+                    Description of the application.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">Remove</div>
+    <dd>
+        Application was Removed.
+        <h4>Parameters</h4>
+        <table style="margin-left:-12px">
+            <tr>
+                <td class="param">unsigned int <b>userId</b></td>
+                <td>
+                    Blocks belongs to user id.
+                </td>
+            </tr>
+            <tr>
+                <td class="param">unsigned int <b>appId</b></td>
+                <td>
+                    Blocks belongs to application id.
+                </td>
+            </tr>
+        </table>
+    </dd>
+
+    <div class="fnhead">CloseCanvas</div>
+    <dd>
+        Close canvas interface
+    </dd>
+
+    <a name="UCanvas"><h2>UCanvas</h2></a>
+    <pre><code class="C++">class UCanvas {
+public:
+    virtual bool IsDesktopShared() = 0;
+    virtual bool IsSharing(void) = 0;
+    virtual bool GetApplicationPosition(unsigned int appId, int * coorX, int * coorY) = 0;
+    virtual void SetWindowFront(unsigned int appId, int coorX, int coorY) = 0;
+    virtual void Event(void * buf, size_t len) = 0;
+    virtual void Send(void * buf, size_t len) = 0;
+    virtual void SendTo(void * buf, size_t len, unsigned short senderId) = 0;
+    virtual void Resend(unsigned short seq, unsigned short senderId) = 0;
+    virtual void CloseComplete(void) = 0;
+};</code></pre>
+
+    <h3>Overview</h3>
+    A class that receives updates from the canvas interface.
+
+    <h3>Public functions</h3>
+    <div class="fnhead">CloseComplete</div>
+    <dd>
+        Canvas interface was closed
+    </dd>
+
+</body>
+</html>

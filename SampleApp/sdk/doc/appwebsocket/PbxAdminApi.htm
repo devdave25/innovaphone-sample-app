@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone SDK - EpSignal protocol</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+    <link rel="stylesheet" href="../../web1/doc/vs.css">
+    <script src="../../web1/doc/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+    <h1>PbxAdminApi</h1>
+
+    <p>
+        The PbxAdminApi protocol is available on AppWebsocket connections to innovaphone PBX objects, if
+        the object is enabled for the PbxAdminApi. It allows the App to perform all kind of
+        administration and configuration tasks.
+	</p>
+
+	<a name="General structure"><h2>General structure</h2></a>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "src": string,
+    "mt": string,
+}</code></pre><br/>
+
+    <dl>
+        <dt>api</dt>
+        <dd>
+            To address this interface the value "PbxAdminApi" has tp be used for the api property
+        </dd>
+        <dt>src</dt>
+        <dd>
+            The AppWebsocket src mechanism is supported on the interface. So a src
+            property may be used
+        </dd>
+        <dt>mt</dt>
+        <dd>
+            The message type identifies the requested operation
+        </dd>
+    </dl>
+
+    <p>
+        In general operatios are performed by sending a message with a message type &lt;name&gt; to the
+        PBX. The result is retured with a message with message type &lt;name&gt;Result. If the operation
+        turns on monitoring of some kind the updates are sent with messages with message type &lt;name&gt;Info.
+    </p>
+
+	<u>Operations</u>
+
+	<ul>
+		<li><a href="#MonitorAdminObject">MonitorAdminObject</a> - monitor the PBX Admin object</li>
+		<li><a href="#MonitorConfig">MonitorConfig</a> - monitor the local PBX config changes</li>
+		<li><a href="#UpdateObject">UpdateObject</a> - Update/create a PBX object</li>
+		<li><a href="#GetObject">GetObject</a> - Read config of an object</li>
+		<li><a href="#GetPbxConfig">GetPbxConfig</a> - Read local PBX config</li>
+		<li><a href="#GetPhoneConfig">GetPhoneConfig</a> - Read phone config stored at an object</li>
+		<li><a href="#GetRegs">GetRegs</a> - Read current registrations</li>
+		<li><a href="#DeleteObject">DeleteObject</a> - Delete an object</li>
+		<li><a href="#GetAppObjects">GetAppObjects</a> - Read App objects base on some filters</li>
+		<li><a href="#GetConfigObjects">GetConfigObjects</a> - Read config templates</li>
+		<li><a href="#GetPseudoObjects">GetPseudoObjects</a> - Read pseudo objects of a given type</li>
+		<li><a href="#SearchUsers">SearchUsers</a> - Search users by cn</li>
+		<li><a href="#GetAppLogin">GetAppLogin</a> - Get digest for App Service login</li>
+		<li><a href="#GetGroup">GetGroup</a> - Read group members</li>
+		<li><a href="#GetRPs">GetRPs</a> - Read configured RPs</li>
+		<li><a href="#GetNodes">GetNodes</a> - Read all nodes and locations</li>
+		<li><a href="#GetConfigs">GetConfigs</a> - Read config templates</li>
+		<li><a href="#GetFilters">GetFilters</a> - Read list of configured filters</li>
+		<li><a href="#GetGroups">GetGroups</a> - Read availabe Groups</li>
+		<li><a href="#GetBooleans">GetBooleans</a> - Read available Booleans</li>
+		<li><a href="#GetPush">GetPush</a> - Read configured Push objects</li>
+		<li><a href="#GetMessages">GetMessages</a> - Read configured Messages objects</li>
+		<li><a href="#GetStun">GetStun</a> - Read STUN config</li>
+		<li><a href="#GetAppLics">GetAppLics</a> - Read available App Lics</li>
+	</ul>
+
+    <div><a href="#Objects">Objects</a> - recurring definitions</div>
+
+	<h2><a name="MonitorAdminObject">MonitorAdminObject</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorAdminObject"
+}</code></pre>
+
+    <p>
+        Start monitoring of the admin object. The admin object is used to store the pwd key pair
+        used to encrypt all passwords inside PBX objects
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorAdminObjectResult"
+}</code></pre>
+
+    <p>
+        Message sent back to confirm start of the monitoring
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorAdminObjectInfo"
+    "pwd": string
+    "key": string
+}</code></pre>
+
+    <p>
+        Message sent back whenever the admin object changes
+    </p>
+
+    <dl>
+        <dt>pwd</dt>
+        <dd>
+            The password of the admin object, encrypted using 'key'
+        </dd>
+        <dt>key</dt>
+        <dd>
+            The key used to encrypt all passwords, encrypted with 'pwd'
+        </dd>
+    </dl>
+
+	<h2><a name="MonitorConfig">MonitorConfig</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorConfig",
+    "stop": boolean
+}</code></pre>
+
+    <p>
+        Start/stop monitoring of the local PBX config.
+    </p>
+
+    <dl>
+        <dt>stop</dt>
+        <dd>
+            If present and true, it stops a monitoring started before
+        </dd>
+    </dl>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorConfigResult"
+}</code></pre>
+
+    <p>
+        Message sent back to confirm start of the monitoring
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "MonitorConfigInfo"
+    "domain": string
+    "pbx": string
+    "dns": string
+    "ip4": string
+}</code></pre>
+
+    <p>
+        Message whenever the local config changes
+    </p>
+
+    <dl>
+        <dt>pbx</dt>
+        <dd>
+            The PBX name
+        </dd>
+        <dt>dns</dt>
+        <dd>
+            The PBX DNS name as configured.
+        </dd>
+        <dt>ip4</dt>
+        <dd>
+            The local PBX ip4 address.
+        </dd>
+    </dl>
+
+	<h2><a name="UpdateObject">UpdateObject</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "UpdateObject",
+    "guid": string,
+    "cn": string,
+    "dn": string,
+    "h323": string,
+    "e164": string,
+    "pwd": string,
+    "loc": string,
+    "node": string,
+    "config": string,
+    "apps": string,
+    "filter": string,
+    "cd-filter": string,
+    "push": string,
+    "messages": string,
+    "hide": boolean,
+    "cfnr": unsigned,
+    "colr": bool,
+    "uclic": bool,
+    "voicemail": bool,
+    "fax": bool,
+    "mobility": bool,
+    "mypbx": bool,
+    "video": bool,
+    "app-sharing": bool,
+    "reporting": bool,
+    "devices": [<a href="#device">device</a>],
+    "grp": [<a href="#group">group</a>],
+    "presence": [<a href="#presence">presence</a>],
+    "cds": [<a href="#diversion">diversion</a>],
+    "pseudo": <a href="#pseudo">pseudo</a>,
+    "phone": <a href="#phone">phone</a>,
+    "copyPwd": string
+}</code></pre>
+
+    <p>
+        Update or create a PBX object. Any property present in the message updates the respective
+        information of the PBX object. Properties not present are left unchanged.
+    </p>
+    <p>
+        If bool properties are sent as integers (e.g -1), the parameter is deleted, which means the
+        value inherited from a config template is used
+    </p>
+
+    <dl>
+        <dt>guid</dt>
+        <dd>
+            The guid of the object as hexstring. Must be present when updating the object. If the object
+            is to be created, it can be omitted. There are special values for the guid:
+            <dl>
+                <dt>*</dt>
+                <dd>
+                    This means the cn is used to identify an object, which shall be updated
+                </dd>
+                <dt>?</dt>
+                <dd>
+                    This means the cn is used to identify an object, which shall be updated, or if
+                    no object is found a new object shall be created.
+                </dd>
+            </dl>
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            The 'cn' or 'Long Name'.
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name.
+        </dd>
+        <dt>h323</dt>
+        <dd>
+            The H.323 id or SIP URI user part.
+        </dd>
+        <dt>e164</dt>
+        <dd>
+            The number.
+        </dd>
+        <dt>pwd</dt>
+        <dd>
+            The password encrypted by key of the admin object
+        </dd>
+        <dt>loc</dt>
+        <dd>
+            The PBX to which this object is assigned
+        </dd>
+        <dt>node</dt>
+        <dd>
+            The numbering node
+        </dd>
+        <dt>config</dt>
+        <dd>
+            Name of the config template used by the object.
+        </dd>
+        <dt>apps</dt>
+        <dd>
+            Comman seperated list of all Apps, which can be accessed by this user.
+        </dd>
+        <dt>filter</dt>
+        <dd>
+            Name of the filter, which shall be applied to calls made by this user
+        </dd>
+        <dt>cd-filter</dt>
+        <dd>
+            Name of the filter, which shall be applied by call diversions made by this user
+        </dd>
+        <dt>push</dt>
+        <dd>
+            Name of the Push object, to be used for calls to this object.
+        </dd>
+        <dt>messages</dt>
+        <dd>
+            Name of the Messages object, to be used to store chat messages of this user.
+        </dd>
+        <dt>hide</dt>
+        <dd>
+            The object is marked as "Hide from LDAP".
+        </dd>
+        <dt>cfnr</dt>
+        <dd>
+            No response timeout.
+        </dd>
+        <dt>colr</dt>
+        <dd>
+            If true no connected number is sent for calls to this object.
+        </dd>
+        <dt>uclic</dt>
+        <dd>
+            A UC license shall be acquired for this object.
+        </dd>
+        <dt>voicemail</dt>
+        <dd>
+            A Voicemail license shall be acquired for this object.
+        </dd>
+        <dt>fax</dt>
+        <dd>
+            A Fax license shall be acquired for this object.
+        </dd>
+        <dt>mobility</dt>
+        <dd>
+            A Mobility license shall be acquired for this object.
+        </dd>
+        <dt>mypbx</dt>
+        <dd>
+            A myPBX license shall be acquired for this object.
+        </dd>
+        <dt>video</dt>
+        <dd>
+            A Video license shall be acquired for this object.
+        </dd>
+        <dt>app-sharing</dt>
+        <dd>
+            A App Sharing license shall be acquired for this object.
+        </dd>
+        <dt>reporting</dt>
+        <dd>
+            A Reporting license shall be acquired for this object.
+        </dd>
+        <dt>devices</dt>
+        <dd>
+            Array of device configurations
+        </dd>
+        <dt>grp</dt>
+        <dd>
+            Array of group configurations
+        </dd>
+        <dt>presence</dt>
+        <dd>
+            Array of presence informations
+        </dd>
+        <dt>cds</dt>
+        <dd>
+            Array of call diversion configurations
+        </dd>
+        <dt>pseudo</dt>
+        <dd>
+            Pseudo object configuration
+        </dd>
+        <dt>phone</dt>
+        <dd>
+            Phone configuration
+        </dd>
+        <dt>copyPwd</dt>
+        <dd>
+            If set, the password for this object is set the same as the password identified by this
+            property as h323. This can not be used for objects of type "user" (no pseudo configuration) or
+            executive.
+        </dd>
+    </dl>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "UpdateObjectResult"
+}</code></pre>
+
+    <p>
+        Sent, when the object is updated, which means it is written to the database and the update is
+        in effect in the PBX
+    </p>
+
+    <h2><a name="GetObject">GetObject</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetObject",
+    "guid": string,
+    "cn": string
+}</code></pre>
+
+    <p>
+        Request the configuration data for an object
+    </p>
+    <dl>
+        <dt>guid</dt>
+        <dd>
+            Hex string of the guid of the object
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            If no guid is present, the cn can be used to identify the object.
+        </dd>
+    </dl>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetObjectResult",
+    "guid": string,
+    "cn": string,
+    "dn": string,
+    "h323": string,
+    "e164": string,
+    "pwd": string,
+    "loc": string,
+    "node": string,
+    "config": string,
+    "apps": string,
+    "filter": string,
+    "cd-filter": string,
+    "push": string,
+    "messages": string,
+    "hide": boolean,
+    "cfnr": unsigned,
+    "colr": bool,
+    "uclic": bool,
+    "voicemail": bool,
+    "fax": bool,
+    "mobility": bool,
+    "mypbx": bool,
+    "video": bool,
+    "app-sharing": bool,
+    "reporting": bool,
+    "devices": [<a href="#device">device</a>],
+    "grp": [<a href="#group">group</a>],
+    "presence": [<a href="#presence">presence</a>],
+    "cds": [<a href="#diversion">diversion</a>],
+    "pseudo": <a href="#pseudo">pseudo</a>,
+    "phone": <a href="#phone">phone</a>,
+    "copyPwd": string
+}</code></pre>
+
+    <p>
+        Update or create a PBX object. Any property present in the message updates the respective
+        information of the PBX object. Properties not present are left unchanged.
+    </p>
+
+    <dl>
+        <dt>guid</dt>
+        <dd>
+            The guid of the object as hexstring.
+        </dd>
+        <dt>cn</dt>
+        <dd>
+            The 'cn' or 'Long Name'.
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            The display name.
+        </dd>
+        <dt>h323</dt>
+        <dd>
+            The H.323 id or SIP URI user part.
+        </dd>
+        <dt>e164</dt>
+        <dd>
+            The number.
+        </dd>
+        <dt>pwd</dt>
+        <dd>
+            The password encrypted by key of the admin object
+        </dd>
+        <dt>loc</dt>
+        <dd>
+            The PBX to which this object is assigned
+        </dd>
+        <dt>node</dt>
+        <dd>
+            The numbering node
+        </dd>
+        <dt>config</dt>
+        <dd>
+            Name of the config template used by the object.
+        </dd>
+        <dt>apps</dt>
+        <dd>
+            Comman seperated list of all Apps, which can be accessed by this user.
+        </dd>
+        <dt>filter</dt>
+        <dd>
+            Name of the filter, which shall be applied to calls made by this user
+        </dd>
+        <dt>cd-filter</dt>
+        <dd>
+            Name of the filter, which shall be applied by call diversions made by this user
+        </dd>
+        <dt>push</dt>
+        <dd>
+            Name of the Push object, to be used for calls to this object.
+        </dd>
+        <dt>messages</dt>
+        <dd>
+            Name of the Messages object, to be used to store chat messages of this user.
+        </dd>
+        <dt>hide</dt>
+        <dd>
+            The object is marked as "Hide from LDAP".
+        </dd>
+        <dt>cfnr</dt>
+        <dd>
+            No response timeout.
+        </dd>
+        <dt>colr</dt>
+        <dd>
+            If true no connected number is sent for calls to this object.
+        </dd>
+        <dt>uclic</dt>
+        <dd>
+            A UC license shall be acquired for this object.
+        </dd>
+        <dt>voicemail</dt>
+        <dd>
+            A Voicemail license shall be acquired for this object.
+        </dd>
+        <dt>fax</dt>
+        <dd>
+            A Fax license shall be acquired for this object.
+        </dd>
+        <dt>mobility</dt>
+        <dd>
+            A Mobility license shall be acquired for this object.
+        </dd>
+        <dt>mypbx</dt>
+        <dd>
+            A myPBX license shall be acquired for this object.
+        </dd>
+        <dt>video</dt>
+        <dd>
+            A Video license shall be acquired for this object.
+        </dd>
+        <dt>app-sharing</dt>
+        <dd>
+            A App Sharing license shall be acquired for this object.
+        </dd>
+        <dt>reporting</dt>
+        <dd>
+            A Reporting license shall be acquired for this object.
+        </dd>
+        <dt>devices</dt>
+        <dd>
+            Array of device configurations
+        </dd>
+        <dt>cds</dt>
+        <dd>
+            Array of call diversion configurations
+        </dd>
+        <dt>pseudo</dt>
+        <dd>
+            Pseudo object configuration
+        </dd>
+    </dl>
+
+	<h2><a name="GetPbxConfig">GetPbxConfig</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPBXConfig",
+}</code></pre>
+
+    <p>
+        Request some of the local PBX config info
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPBXConfigResult",
+    "loc": string
+}</code></pre>
+
+    <dl>
+        <dt>loc</dt>
+        <dd>
+            The name of the local PBX
+        </dd>
+    </dl>
+
+	<h2><a name="GetPhoneConfig">GetPhoneConfig</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPhoneConfig",
+    "guid": string,
+    "cn": string
+}</code></pre>
+
+    <p>
+        Request the phone config from an object identified by guid, or if not present by cn
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPhoneConfigResult",
+    "phone": <a href="#phone">phone</a>
+}</code></pre>
+
+    <p>
+        Returns the phone config
+    </p>
+
+	<h2><a name="GetRegs">GetRegs</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetRegs",
+    "guid": string,
+    "cn": string
+}</code></pre>
+
+    <p>
+        Request the current registrations to an object identified by guid, or if not present by cn
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetRegsResult",
+    "regs": [<a href="#reg">reg</a>],
+    "cn": string
+}</code></pre>
+
+    <p>
+        Returns an array of objects decribing the registrations
+    </p>
+
+	<h2><a name="DeleteObject">DeleteObject</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "DeleteObject",
+    "guid": string
+}</code></pre>
+
+    <p>
+        Request to delete an object identified by guid.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "DeleteObjectResult"
+}</code></pre>
+
+    <p>
+        Returned when the delete request was accepted.
+    </p>
+
+	<h2><a name="GetAppObjects">GetAppObjects</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppObjects",
+    "uri": string,
+    "pseudo": string
+}</code></pre>
+
+    <p>
+        Request a list of objects, providing an App, based on URL and type. Only some basic information is
+        returned in the list to keep data volume low even with many objects.
+    </p>
+
+    <dl>
+        <dt>uri</dt>
+        <dd>
+            If present only the App objects with a matching URL are returned. To determine if the URL
+            matches a headmatch is performed
+        </dd>
+        <dt>pseudo</dt>
+        <dd>
+            If present only App objects of this pseudo type are returned.
+        </dd>
+    </dl>
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppObjectsResult",
+    "objects": [<a href="#app">app</a>]
+}</code></pre>
+
+    <p>
+        Returns array of app objects
+    </p>
+
+	<h2><a name="GetConfigObjects">GetConfigObjects</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetConfigObjects"
+}</code></pre>
+
+    <p>
+        Request a list of all config templates available in the PBX. Only some basic information is
+        returned in the list to keep data volume low even with many templates.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetConfigObjectsResult",
+    "objects": [<a href="#template">template</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of template objects
+    </p>
+
+	<h2><a name="GetPseudoObjects">GetPseudoObjects</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPseudoObjects",
+    "pseudo": string
+}</code></pre>
+
+    <p>
+        Requests a list of pseudo objects of a given type. Care must be taken not to use this operation too
+        much, because a scan of all configured pseudo objects is done to find the requested objects. Only
+        some basic information is returned in the list to keep data volume low even with many templates.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPseudoObjectsResult",
+    "objects": [<a href="#object-id">object-id</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of objects ids for the requested pseudo objects
+    </p>
+
+	<h2><a name="SearchUsers">SearchUsers</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "SearchUsers",
+    "cn": string
+}</code></pre>
+
+    <p>
+        Searches for users, based on the cn (Long Name) provided. Returns a list of up to 20 users starting
+        from the position in the list of users identified by cn. Only objects of the type user or executive
+        are returned.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "SearchUsersResult",
+    "user": [<a href="#user-id">user-id</a>]
+}</code></pre>
+
+    <p>
+        Returns an array obj user ids.
+    </p>
+
+	<h2><a name="GetAppLogin">GetAppLogin</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppLogin",
+    "app": string,
+    "challenge": string
+}</code></pre>
+
+    <p>
+        Request the digest, which can be used to login to an App service. The main purpose is to verify that
+        the shared secret of an App object is correct. It can be tested, by sending the returned parameter
+        with AppCheckLogin to the App service. In this case an arbitrary challenge may be used.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppLoginResult",
+    "app": string,
+    "digest": string
+}</code></pre>
+
+    <p>
+        Return the digest for the login.
+    </p>
+
+	<h2><a name="GetGroup">GetGroup</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetGroup",
+    "grp": string
+}</code></pre>
+
+    <p>
+        Request a list of members of a group identified by grp. The list is limited to 64 users
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetGroupResult",
+    "member": [<a href="#member">member</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of member objects
+    </p>
+
+	<h2><a name="GetRPs">GetRPs</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetRPs"
+}</code></pre>
+
+    <p>
+        Request a list of Reverse Proxies configured in the local PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetRPsResult",
+    "addr": string,
+    "hw": string,
+    "dns": string,
+    "rp": [<a href="#rp">rp</a>]
+}</code></pre>
+
+    <p>
+        Returns a list of rp objects together with some more information interesting in this context
+    </p>
+
+    <dl>
+        <dt>addr</dt>
+        <dd>
+            The default IP4 address of the local PBX
+        </dd>
+        <dt>hw</dt>
+        <dd>
+            The hardware id (MAC) of the local PBX
+        </dd>
+        <dt>dns</dt>
+        <dd>
+            The configured DNS name of the local PBX
+        </dd>
+        <dt>rp</dt>
+        <dd>
+            Array of rp objects
+        </dd>
+    </dl>
+
+	<h2><a name="GetNodes">GetNodes</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetNodes"
+}</code></pre>
+
+    <p>
+        Request a list of all nodes and locations
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetNodesResult",
+    "nodes":[<a href="#node">node</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of objects describing the nodes
+    </p>
+
+	<h2><a name="GetConfigs">GetConfigs</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetConfigs"
+}</code></pre>
+
+    <p>
+        Request a list of configured config templates.
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetConfigsResult",
+    "configs":[string]
+}</code></pre>
+
+    <p>
+        Returns an array of names of config templates
+    </p>
+
+	<h2><a name="GetFilters">GetFilters</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetFilters"
+}</code></pre>
+
+    <p>
+        Request a list of call filters defined in the local PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetFiltersResult",
+    "filter": [string]
+}</code></pre>
+
+    <p>
+        Returns an array of filter names
+    </p>
+
+	<h2><a name="GetGroups">GetGroups</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetGroups"
+}</code></pre>
+
+    <p>
+        Request a list of groups defined in the PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetGroupsResult",
+    "groups":[string]
+}</code></pre>
+
+    <p>
+        Returns an array of group names
+    </p>
+
+	<h2><a name="GetBooleans">GetBooleans</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetBooleans"
+}</code></pre>
+
+    <p>
+        Request a list of booleans defined in the PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetBooleansResult",
+    "booleans":[<a href="#boolean">boolean</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of objects identifying the booleans
+    </p>
+
+	<h2><a name="GetPush">GetPush</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPush"
+}</code></pre>
+
+    <p>
+        Request a list of push objects defined in the PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetPushResult",
+    "push":[<a href="#push">push</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of objects identifying the push objects
+    </p>
+
+	<h2><a name="GetMessages">GetMessages</a></h2>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetMessages"
+}</code></pre>
+
+    <p>
+        Request a list of messages objects defined in the PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetMessagesResult",
+    "messages":[<a href="#messages">messages</a>]
+}</code></pre>
+
+    <p>
+        Returns an array of objects identifying the messages objects
+    </p>
+
+	<h2><a name="GetStun">GetStun</a></h2>
+	
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetStun"
+}</code></pre>
+
+    <p>
+        Request the local configured STUN parameters, published by this PBX
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetStunResult",
+    "stun": string,
+    "turn": string,
+    "turnUsr": string,
+    "turnPwd": string,
+    "stunSlow": boolean
+}</code></pre>
+
+    <p>
+        Returns the STUN parameter
+    </p>
+
+    <dl>
+        <dt>stun</dt>
+        <dd>
+            The STUN server(s)
+        </dd>
+        <dt>turn</dt>
+        <dd>
+            The TURN server(s)
+        </dd>
+        <dt>turnUsr,turnPwd</dt>
+        <dd>
+            The TURN credentials
+        </dd>
+        <dt>stunSlow</dt>
+        <dd>
+            Activate workaround for slow STUN servers
+        </dd>
+    </dl>
+
+	<h2><a name="GetAppLics">GetAppLics</a></h2>
+	
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppLics"
+}</code></pre>
+
+    <p>
+        Request the available App Licenses
+    </p>
+
+	<pre><code class="json">{
+    "api": "PbxAdminApi",
+    "mt": "GetAppLicsResult",
+    "lic": [<a href="#app-lic">app-lic</a>]
+}</code></pre>
+
+    <p>
+        Returns the available App licenses
+    </p>
+
+	<h2><a name="Objects">Objects</a></h2>
+
+    <a name="device"><div class="fnhead">device</div></a>
+
+	<pre><code class="json">{
+    "hw": string,
+    "text": string,
+    "app": string,
+    "admin": bool,
+    "no-filter": bool,
+    "tls": bool,
+    "no-mob": bool,
+    "trusted": bool
+}</code></pre>
+
+    <dl>
+        <dt>hw</dt>
+        <dd>
+            The hardware id/mac address
+        </dd>
+        <dt>text</dt>
+        <dd>
+            Text displayed in the UI to identify the device
+        </dd>
+        <dt>app</dt>
+        <dd>
+            The phone App associated with the device
+        </dd>
+        <dt>admin</dt>
+        <dd>
+            Only registration with the PBX admin password allowed, no user password
+        </dd>
+        <dt>no-filter</dt>
+        <dd>
+            Registration allowed for endpoints not matching the registration address filter
+        </dd>
+        <dt>tls</dt>
+        <dd>
+            Only registration with verified TLS certificate, or from trusted RP allowed
+        </dd>
+        <dt>no-mob</dt>
+        <dd>
+            Deactivate call thru mobility object, if registration to this device exists
+        </dd>
+        <dt>trusted</dt>
+        <dd>
+            Registration from trusted reverse proxy allowed
+        </dd>
+    </dl>
+
+    <a name="group"><div class="fnhead">group</div></a>
+	<pre><code class="json">{
+    "name": string,
+    "mode": string,
+    "dyn": string
+}</code></pre>
+
+    <dl>
+        <dt>name</dt>
+        <dd>
+            Name of the group
+        </dd>
+        <dt>mode</dt>
+        <dd>
+            A value of "active" indicates that this member is active. Other values are reserved
+        </dd>
+        <dt>dyn</dt>
+        <dd>
+            If present, this is a dynamic group membership. A value of "in" means the user is currently
+            member, a value of "out" the user is currently not member
+        </dd>
+    </dl>
+
+    <a name="presence"><div class="fnhead">presence</div></a>
+
+	<pre><code class="json">{
+    "c": string,
+    "a": string,
+    "n": string
+}</code></pre>
+
+    <dl>
+        <dt>c</dt>
+        <dd>
+            Contact URI. There are predefined values like "tel:" or "im:", which identify the source of
+            the presence info
+        </dd>
+        <dt>a</dt>
+        <dd>
+            Standard activity strings like "away" or "busy".
+        </dd>
+        <dt>n</dt>
+        <dd>
+            Presence note as entered by the user.
+        </dd>
+    </dl>
+
+    <a name="diversion"><div class="fnhead">diversion</div></a>
+
+	<pre><code class="json">{
+    "type": string,
+    "bool": string,
+    "bool-not": string,
+    "ep": [ { "e164": string, "h323": string } ],
+    "src" [ { "type": string, "ep": [ { "ext": string, "fwd": string, "e164": string, "h323": string } ] } ]
+}</code></pre>
+
+    <dl>
+        <dt>type</dt>
+        <dd>
+            The type of the call diversion definition. Can be "cfu", "cfb" or "cfnr".
+        </dd>
+        <dt>bool</dt>
+        <dd>
+            Optional boolean object, the call diversion should depend on
+        </dd>
+        <dt>bool-not</dt>
+        <dd>
+            If present and not "false", indicates the diversion should only be executed, if the boolean
+            object is not active
+        </dd>
+        <dt>ep</dt>
+        <dd>
+            Destination of the diversion. Only the first member of the array is used.
+            <dl>
+                <dt>e164</dt>
+                <dd>
+                    Number
+                </dd>
+                <dt>h323</dt>
+                <dd>
+                    H.323 Id/SIP URI
+                </dd>
+            </dl>
+        </dd>
+        <dt>src</dt>
+        <dd>
+            Otional filter for source of the call. Only the first member of the array is used.
+            <dl>
+                <dt>type</dt>
+                <dd>
+                    Values are "do" - execute if source of call matches, or "dont" - execute if source
+                    of the call does not match
+                </dd>
+                <dt>ep</dt>
+                <dd>
+                    Sources of the call identified by name (h323) or number (e164). It can be defined that
+                    only external calls should match by adding a ext property, or the type of the source can
+                    be defined as "fwd" - forwarding endpoint, "clid" - calling party, "both" - fowarding or
+                    calling party
+                </dd>
+            </dl>
+        </dd>
+    </dl>
+    <a name="pseudo"><div class="fnhead">pseudo</div></a>
+
+	<pre><code class="json">{
+    "type": string,
+    ...
+}</code></pre>
+
+    <dl>
+        <dt>type</dt>
+        <dd>
+            The type of the pseudo object.
+        </dd>
+    </dl>
+
+    <a name="phone"><div class="fnhead">phone</div></a>
+
+    <p>
+        The XML phone config translated to JSON.
+    </p>
+
+    <a name="reg"><div class="fnhead">reg</div></a>
+
+	<pre><code class="json">{
+    "hw": string,
+    "addr": string
+}</code></pre>
+
+    <dl>
+        <dt>hw</dt>
+        <dd>
+            The hw id of the device used for the registration
+        </dd>
+        <dt>addr</dt>
+        <dd>
+            Address
+        </dd>
+    </dl>
+
+    <a name="app"><div class="fnhead">app</div></a>
+
+	<pre><code class="json">{
+    "title": string,
+    "app": string,
+    "url": string,
+    "connected": bool,
+    "guid": string,
+    "sip": string,
+    "pseudo": string
+}</code></pre>
+
+    <dl>
+        <dt>title</dt>
+        <dd>
+            Configured display name of the App
+        </dd>
+        <dt>app</dt>
+        <dd>
+            App SIP URI
+        </dd>
+        <dt>url</dt>
+        <dd>
+            URL to the App Service
+        </dd>
+        <dt>connected</dt>
+        <dd>
+            Indicates that the App object has established a AppWebsocket connection to the App Service
+        </dd>
+        <dt>sip</dt>
+        <dd>
+            SIP URI of the App object if available
+        </dd>
+        <dt>pseudo</dt>
+        <dd>
+            Pseudo type of the App object if available
+        </dd>
+    </dl>
+
+    <a name="template"><div class="fnhead">template</div></a>
+
+	<pre><code class="json">{
+    "cn": string,
+    "config": [string]
+}</code></pre>
+
+    <dl>
+        <dt>cn</dt>
+        <dd>
+            Config template name
+        </dd>
+        <dt>config</dt>
+        <dd>
+            Up to four references to other config templates
+        </dd>
+    </dl>
+
+    <a name="object-id"><div class="fnhead">object-id</div></a>
+
+	<pre><code class="json">{
+    "cn": string,
+    "guid": string
+}</code></pre>
+
+    <dl>
+        <dt>cn</dt>
+        <dd>
+            Long Name
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            guid
+        </dd>
+    </dl>
+
+    <a name="user-id"><div class="fnhead">user-id</div></a>
+
+	<pre><code class="json">{
+    "cn": string,
+    "dn": string,
+    "guid": string,
+    "h323":string
+}</code></pre>
+
+    <dl>
+        <dt>cn</dt>
+        <dd>
+            Long Name
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            guid
+        </dd>
+        <dt>h323</dt>
+        <dd>
+            H.323 Id/SIP URI
+        </dd>
+    </dl>
+
+    <a name="member"><div class="fnhead">member</div></a>
+
+	<pre><code class="json">{
+    "cn": string,
+    "dn": string,
+    "guid": string,
+    "pseudo": string,
+    "active": bool,
+    "dyn": string
+}</code></pre>
+
+    <dl>
+        <dt>cn</dt>
+        <dd>
+            Long Name
+        </dd>
+        <dt>dn</dt>
+        <dd>
+            Display name
+        </dd>
+        <dt>guid</dt>
+        <dd>
+            guid
+        </dd>
+        <dt>pseudp</dt>
+        <dd>
+            Pseudo type
+        </dd>
+        <dt>active</dt>
+        <dd>
+            Active member
+        </dd>
+        <dt>dyn</dt>
+        <dd>
+            Dynamic member, "in" or "out"
+        </dd>
+    </dl>
+
+    <a name="rp"><div class="fnhead">rp</div></a>
+
+	<pre><code class="json">{
+    "addr": string,
+    "cert": string,
+    "cert2": string
+}</code></pre>
+
+    <dl>
+        <dt>addr</dt>
+        <dd>
+            Address of the RP
+        </dd>
+        <dt>cert</dt>
+        <dd>
+            Mac address of the RP, which can also be used as certificate name
+        </dd>
+        <dt>cert2</dt>
+        <dd>
+            Alternate certificate name
+        </dd>
+    </dl>
+
+    <a name="boolean"><div class="fnhead">boolean</div></a>
+
+	<pre><code class="json">{
+    "guid": string,
+    "name": string,
+    "on": bool,
+    "reason": string
+}</code></pre>
+
+    <dl>
+        <dt>guid</dt>
+        <dd>
+            guid
+        </dd>
+        <dt>name</dt>
+        <dd>
+            Name
+        </dd>
+        <dt>on</dt>
+        <dd>
+            Indicates if the boolean is currently on
+        </dd>
+        <dt>reason</dt>
+        <dd>
+            undefined/manual/automatic
+        </dd>
+    </dl>
+
+    <a name="push"><div class="fnhead">push</div></a>
+
+	<pre><code class="json">{
+    "name": string
+}</code></pre>
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name of the push object
+        </dd>
+    </dl>
+
+    <a name="messages"><div class="fnhead">messages</div></a>
+
+	<pre><code class="json">{
+    "name": string
+}</code></pre>
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name of the messages object
+        </dd>
+    </dl>
+
+    <a name="app-lic"><div class="fnhead">app-lic</div></a>
+
+	<pre><code class="json">{
+    "name": string,
+    "version": string,
+    "count": string,
+    "used": string,
+    "local": string,
+    "slaves": string,
+    "key": string
+}</code></pre>
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name of the license
+        </dd>
+    </dl>
+
+    <a name="node"><div class="fnhead">node</div></a>
+
+	<pre><code class="json">{
+    "name": string,
+    "node": string,
+    "loc": string
+}</code></pre>
+    <dl>
+        <dt>name</dt>
+        <dd>
+            The name (SIP) of the node
+        </dd>
+        <dt>node</dt>
+        <dd>
+            The parent node of this node
+        </dd>
+        <dt>loc</dt>
+        <dd>
+            Present if the node is also a PBX. Indicates the parent PBX.
+        </dd>
+    </dl>
+</body>
+</html>

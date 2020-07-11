@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone App Platform</title>
+    <link rel="stylesheet" href="../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>The App Platform</h1>
+
+    <p>
+        The innovaphone App Platform is a Linux based system, which may run on a innovaphone gateway
+        or in a virtualized PC environment. An App Platform manager allows to install, start, stop and
+        update innovaphone App Services.
+        <br/>
+        For an App Service an abstract operating environment is provided, so that App Services can be
+        implemented completely operating system independet. For developing an innovaphone App no
+        Linux knowlege is needed.
+    </p>
+
+    <h2>Table of content</h2>
+    <ul>
+        <li><a href="#Manager">The App Platform Manager</a></li>
+        <li><a href="#Webserver">The App Platform Webserver</a></li>
+        <li><a href="#Database">The App Platform Database</a></li>
+        <li><a href="#AppService">The App Service</a></li>
+        <li><a href="#App">The App</a></li>
+        <li><a href="#Conventions">Conventions</a></li>
+    </ul>
+
+    <a name="Manager"><h2>The App Platform Manager</h2></a>
+    <p>
+        The manager is responsible for managing the App services and instances (see below).
+        There is the place where each service and instance can be stopped or started, Apps can be installed
+        and removed, backups can be created and restored, the logs of the apps cen be shows, the app itself
+        can be configured (Webserver path, database name, ...) and so on.
+        The manager is the place to go also to access the innovaphone App Store to download and install
+        new apps.
+        The manager	also creates a sandbox environment for each app for security reasons. So an app
+        can only access and modify their own data.
+    </p>
+
+    <a name="Webserver"><h2>The App Platform Webserver</h2></a>
+    <p>
+        The webserver is the entrance to the world for each app. An app will register itself to the webserver
+        buy using an plugin system of the SDK. When registering, the app will use a path which can be accessed
+        by a HTTP client. (The path will be defined in the App instance setting inside the Manager).
+        There are three types of access the app can register: HTTP, Websocket and Passthrough. HTTP means,
+        that under the path to register an client can access HTTP files. This files can
+        be static files (statically linked to the app) or dynamic files, the app will build up on runtime.
+        Registering as websocket means, that the app will receivie incomming websocket connections.
+        And Passthrough gives the full responsibility of the access to the app. So the App needs to know
+        what to to with the HTTP protocol, so it is recommended to use passthrough only, if you have to!
+    </p>
+
+    <a name="Database"><h2>The App Platform Database</h2></a>
+    <p>
+        Even if the SDK supports two database systems (mySQL and PostgreSQL), PostgreSQL is the database
+        used for the apps. So it is recommended to use it for your application, too.
+        The database is not only used for application related data, also the configuration as well as
+        files (only when created using  the IDbFiles interface) are stored inside the database.
+        Each App instance has it's own database and database connection, which will be shared between
+        all of the instances session (see below).
+        When creating a backup of an instance, the complete database for that instance will be saved
+        and restored, if you're going to restore the backup. This makes creating a Backup of the apps data easy.
+    </p>
+
+    <a name="AppService"><h2>The App Service</h2></a>
+    <p>
+        The App Service ia an in C++ written application running on the App Platform.
+        The SDK provides a set of interfaces for everything needed to created an app for the
+        innovaphone App Platform. This includes database access, include the app into
+        the webserver like a plugin, a HTTP client, sockets, file storage and so on.
+    <p>
+        It will be managed by the app manager, where an instance of that application will be set up.
+        Other instances can be created, too. Because of that mechanism, each App Service must have
+        a subclass of AppService. There, the AppService::CreateInstance()
+        must be implemented to return a new instance SubClass of AppInstance, each time the CreateInstance()
+        function will be called. And the AppInstance itself needs to create an instance of subclass
+        of AppSession each time an incomming websocket
+        request from a new UI session comes in. The procedure is as follows:
+    </p>
+    <p>
+        <ul>
+            <li>
+                The manager loads the app into the memory.
+            </li>
+            <li>
+                The app creates an AppService, which will report to the manager, that the app had been loaded.
+            </li>
+            <li>
+                The manager now sends a message to the app to create an instance of AppInstance.
+            </li>
+            <li>
+                The created AppInstance will start to listen to incoming websocket request.
+            </li>
+            <li>
+                If a websocket request for a new session comes in, the AppInstance will create an instance
+                of an AppSession and assigns the websocket connection to that instance.
+            </li>
+        </ul>
+    </p>
+    <p>
+        So finally, each app has only one AppService instance, which is the part of the app that communicates
+        with the Manager. It also is responsible to create the AppInstance, the manager calls to create
+        (depending how many app	instances had been configured). The AppInstance itself is responsible
+        for listening to incomming websocket requests and create a AppSession for each websocekt connection
+        that comes from an Apps JavaScript UI. That	AppSession is the core of the application, because it
+        handles the user input, sent from the UI to the session, returns results, reads and writes from and
+        to the database, etc.
+    </p>
+    <p>
+        The App Platform Manager can start multiple instances within an App Service, to support different
+        configurations or even different customers. The different Instances run within the same process
+        context.
+    </p>
+
+    <a name="App"><h2>The App</h2></a>
+    <p>
+        The App is the component, which runs in the myApps client. It is written in Javascript. Of course
+        an App typically needs an backend service to provide useful functionality, so the App is mostly just
+        the User Interface.
+    </p>
+    <p>
+        To create the UI, the SDK provides some JavaScript files that handles all of the App Service / App
+        communcation. This communication happens over the websocket connection, sending JSON messages
+        back an forth. So the AppSession needs to implement the messages it will receive from and send
+        to the UI, while the UI must handle the same messages, too. The SDK also provides some base and
+        extended JavaScript UI controls, as well as everything needed to localize the
+        app and use the themes of the innovaphone App Client. But the developer still needs knowledge
+        of JavaScript and HTML to create the UI.
+    </p>
+    <p>
+        The files for that UI will be linked as static files into the binary of the App Service.
+        Each request to one of those files will be handled automatically by the IWebserverPlugin,
+        so the App Service itself do't need to handled that by itself. The good side effect
+        of this is, that no one can change the files because there are not sotred seperatly on an hard disk.
+    </p>
+
+    <a name="Conventions"><h2>Conventions</h2></a>
+    <dl>
+        <dt>Assynchrounse programming environment</dt>
+        <dd>
+            The innovaphone SDK is designed to completly work in an asynchronous, non-blocking way.
+            Each IO operation is asynchronous. Same for timers and exec callbacks, used to to call a
+            function asynchronous. All of that is controlled by the IIoMux instance of an AppInstance.
+            Because of this, the IIoMux instance must be passed to nearly all interfaces on creation.
+            The interface will take care of registering and unregistering itself to the IIoMux instance.
+        </dd>
+        <dd>
+            So each apps needs to be design with the same manner, too. That means, that the app must
+            implement good flowcontrol to not loose control of what is going on. Because of this, each
+            nearly Interface has also a User class
+            (generally with the same name as the interface, only starts with 'U' instead of 'I' - e. G.
+            ISocket and USocket). The app must provide classes that will be subclasses of an user
+            class and pass an instance of that user to the Interface when
+            creating. So for example, if an application creates an instance of IHTTPClient,
+            it must pass an instance of a subclass of UHTTPClient. That subclass needs to implement
+            all callback functions that are of interest for the app. More informations of what functions
+            must be overwritten and what functions having default implementation, can be found at the
+            description of the interfaces.
+        </dd>
+        <dd>
+            Generally, each asynchronous function will lead in an result callback function
+            (e. G. Send() -> SendResult()). If an app calls Send() of an interface that provides
+            a Send() function, the app should wait until the SendResult() callback had
+            been called before sending the nexxt part. Doing this helps to have non blockng operations.
+            The same is for Recv(), wich will call a RecvResult() callback function if data had been
+            received. While waiting for data to receive, the application can still handled other
+            stuff (e. g. Recive a Websocket message). Each application instance has an IIoMux instance,
+            wich finally will handle each type of connection, inform each interface of data that
+            is available, handles timers and Execute-Callbacks, which can be used to call a function
+            asynchronous.
+        </dd>
+    </dl>
+</body>
+
+</html>

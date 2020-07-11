@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone Protocols</title>
+    <link rel="stylesheet" href="../../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Protocols implemented by the innovaphone PBX and Apps</h1>
+    <hr/>
+    <h2>Overview</h2>
+    <p>
+        There are various protocols used by the innovaphone PBX and Apps to communicate. These protocols
+        are mostly based on JSON messages transmitted over a Websocket connection
+    </p>
+    <dl>
+        <dt><a href="AppWebsocket.htm">AppWebsocket</a></dt>
+        <dd>
+            This is the basis of most communication between Apps and the PBX or App Services
+        </dd>
+        <dt><a href="Signal.htm">Signal</a></dt>
+        <dd>
+            This is the generic JSON signaling signaling protocol, which is mapped by the PBX to any standard
+            Voip Signaling like SIP or H.323
+        </dd>
+        <dt><a href="PbxSignal.htm">PbxSignal</a></dt>
+        <dd>
+            Protocol to register to the PBX and do signaling with the JSON signaling protocol
+        </dd>
+        <dt><a href="EpSignal.htm">EpSignal</a></dt>
+        <dd>
+            This protocol allows to attach to a device registered to the innovaphone PBX and intercept
+            all signaling to and from this device
+        </dd>
+        <dt><a href="Messages.htm">Messages</a></dt>
+        <dd>
+            The protocol to retrieve stored chat messages
+        </dd>
+        <dt><a href="myApps.htm">myApps</a></dt>
+        <dd>
+            The protocol the myApps client uses to communicate with the PBX
+        </dd>
+    </dl>
+</body>
+</html>

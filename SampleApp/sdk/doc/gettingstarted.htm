@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>innovaphone App Platform</title>
+    <link rel="stylesheet" href="../web1/doc/innovaphone.doc.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Visual Studio integration</h1>
+    <h2>Table of content</h2>
+    <h4><a href="#getting_started">Getting started</a></h4>
+    <ul>
+        <li><a href="#fixvs2017">Fix Visual Studio 2017 intellisense</a></li>
+        <li><a href="#start">Run Visual Studio</a></li>
+        <li><a href="#new_project">Creating an new project</a></li>
+        <li><a href="#remoteconnection">Assign a remote connection</a></li>
+        <li><a href="#addremoteconnection">Add remote connection</a></li>
+        <li><a href="#newappplatformconnection">New AppPlatform connection</a></li>
+        <li><a href="#runanddebug">Run and debug your application</a></li>
+        <li><a href="#additional_tools">Additional helpers for development</a></li>
+    </ul>
+
+    <h4><a href="#the_extension">The innovaphone SDK extension</a></h4>
+    <ul>
+        <li><a href="#menu_items">The menu items</a></li>
+        <li><a href="#connection_manager">The Connection Manager</a></li>
+    </ul>
+
+    <h4><a href="#faq">FAQ</a></h4>
+
+    
+    <br/>
+    <h2><a name="getting_started">Getting started</a></h2>
+    <p>
+        To start developing apps using innovaphone SDK, we highly recommnend to use Visual Studio 2017 or newer. While you can use what ever IDE or environment you want to use,
+        the benefit of using Visual Studio is our integration. The innovaphone SDK comes with a Visual Studio extension to integrate everything you need into the IDE. So managing
+        connections to the PBX or the AppPlatform itself will be handled by the extension. It also offers a template which can be used as an example or as basis for your own app.<br/>
+        <br/>
+        If you havn't done yet, download Visual Studio from the Microsoft page. Depending on your company it could be, that you even can use the free Communmity Edition of Visual Studio.
+        Look at the Microsoft Visual Studio homepage for more information. It is important to select the Workload "Linux development with C++":<br/><br/>
+        <img src="pics/VSE_Install_Linux_Tools.png">
+        <br/><br/>
+        <b>NOTE:</b> Due a bug in some version of Visual Studio 2017, make sure to install at least version 15.9.6 or newer!
+    </p>
+    <p>
+        After installing Visual Studio, run the innovaphone SDK setup (or run it again if already done), to install the Visual Sutdio extension. If everything had been installed, you
+        are ready to go. The following guide shows you, how to setup the environment and start producing Apps. Please note that the following documentation is based on the usage for
+        Visual Studio 2017, but should be the same on newer version (more or less, depending on how much Microsoft has changed the UI).
+    </p>
+    <p>
+        The following parts will guide you step-by-step through the process from creating an app, setting up the connections needed and run your app to debug it. It is recommended
+        to read this document to understand how to use the innovaphone SDK and the Visual Studio integration. <br/>
+    </p>
+    
+    <br/>
+    <h3><a name="fixvs2017">Fix Visual Studio 2017 intellisense</a></h3>
+    <p>
+        Intellisense for Linux nmake projects is broken in VS2017 due to a buggy file of the installation. This bug is fixed in VS2019. If you're running VS2017, backup the following file and edit the original:<br>
+        <i>C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Application Type\Linux\1.0\Linux.Makefile.targets</i> (the installation directory may vary of course) <br/><br/>
+        Search for <b>&#x3C;Target Name=&#x22;_FixupRemoteIntelliSenseIncludes&#x22;</b> and replace the inner <b>ComputeHeaders</b> tag with:<br/><br/> 
+    &#x3C;ComputeHeaders<br/> 
+      &nbsp;&nbsp;ProjectDir=&#x22;$(ProjectDir)&#x22; <br/> 
+      &nbsp;&nbsp;RemoteProjectDir=&#x22;$(RemoteProjectDir)&#x22; <br/> 
+      &nbsp;&nbsp;TargetLinuxPlatform=&#x22;$(TargetLinuxPlatform)&#x22; <br/> 
+      &nbsp;&nbsp;WiringPiIncludePath=&#x22;$(wiringPiIncludePath)&#x22; <br/> 
+      &nbsp;&nbsp;IncludePath=&#x22;$(NMakeIncludeSearchPath)&#x22; <br/> 
+      &nbsp;&nbsp;LinuxIncludePath=&#x22;$(LinuxIncludePath)&#x22; <br/> 
+      &nbsp;&nbsp;RemoteTargetId=&#x22;$(ResolvedRemoteTargetId)&#x22; <br/> 
+      &nbsp;&nbsp;Sources=&#x22;@(ClCompile)&#x22;&#x3E; <br/> 
+      &nbsp;&nbsp;&nbsp;&nbsp;&#x3C;Output TaskParameter=&#x22;CIntelliSenseIncludePath&#x22; PropertyName=&#x22;CIntelliSenseIncludePath&#x22;/&#x3E; <br/> 
+      &nbsp;&nbsp;&nbsp;&nbsp;&#x3C;Output TaskParameter=&#x22;CppIntelliSenseIncludePath&#x22; PropertyName=&#x22;CppIntelliSenseIncludePath&#x22;/&#x3E; <br/> 
+    &#x3C;/ComputeHeaders&#x3E;
+    </p>
+    
+    <br/>
+    <h3><a name="start">Run Visual Studio</a></h3>
+    <p>
+        After you start Visual Studio you should wait for the innovaphone SDK extension to be initialized. Visual Studio wants the extension to be loaded asynchronously
+        and there is no way to tell, that this extension need to be loaded before the user can open a project using the innovaphone SDK. But normaly it only takes a couple
+        of seconds. However, you <i>can</i> open a solution or create a new project before the extension has been initialized, but this will lead to a delayed initialization
+        of the extension and with that maybe some dialogs that will be displayed while you already start typing. And also some menu items will be disabled until initialization
+        is completed. So finally you need to wait, so it may be better to wait before opening an innovaphone SDK project.
+    </p>
+    <p>
+        You can verify that the extension had been loaded by checking the output pane (View - Output - Show output from: innovaphone SDK).
+        This pane also is your place to go to get additional information on what is going on in an case of an error. Every message will be posted as a log message to the it. <br/>
+        After the extension had been initialized it should look like the screenshot below:
+        look similary to the screenshot below:<br/><br/>
+        <img src="pics/VSE_Output_Pane.png"/>
+    </p>
+
+    <br/>
+    <h3><a name="new_project">Create a new project</a></h3>
+    <p>
+        Now you're ready to start your first innovaphone SDK project. For this, create a new project (File - New - Project). The innovaphone SDK app template can be found under
+        Installed - Visual C++, innovaphone App. Enter a name for the app and click on ok. While you're free to give what ever name you want, it is recommended to not
+        use spaces or special characters, because that name will be used inside the source code as name for the classes and Visual Studio will replace spaces and special chars
+        by an underline. Technically it works, but it looks aweful. Also let create Visual Studio a directory for the solution (which will be enabled by default).<br/>
+        <br/>
+        <img src="pics/VSE_New_Project.png">
+    </p>
+    <p>
+        After the project has been created, you must install the SDK to the project. That means, that the SDK files will be copied to the source of the new created app. The innovaphone
+        SDK extension will do that for you, so just click on start. You can also cancel it, but your app won't compile (however, this also can be done later, see menu items). After the
+        files had been copied, your will be lead to the next step which is defining the connections you need to run.<br/>
+        <br/>
+        <img src="pics/VSE_Install_SDK.png">
+        <br/>        
+    </p>
+    
+    <br/>
+    <h3><a name="remoteconnection">Assign a remote connection</a></h3>
+    <p>
+        Before creating your own app, you must at first understand, how an app for the innovaphone AppPlatform works. This is important to understand, how you need to setup the
+        connections in Visual Studio used during development.<br/>
+        <br/>
+        An app generally has two parts: the UI, written with JavaScript/CSS/HTML, executed using a web browser or myApps, and the service which is written in C++. The C++ part will be
+        cross-compiled on your Windows development machine using gcc shipped with the innovaphone SDK. Compiling on other platforms like macOS or Linux is not supported
+        (even if the service itself will run on a Linux OS). However, a service must have at least one instance. The instance is finally that part the UI will connect to.<br/>
+        <br/>
+        To run the app and make the UI available on myApps, the PBX and the AppPlatform must be configured for your app and the app itself must be deployed to the AppPlatform.
+        While this can be done manually, the innovaphone SDK extension helps out a lot managing that stuff. This is why you need to setup a bunch of "connections". There
+        are three types of connections:
+    </p>
+        <ul>
+            <li><b>AppPlatform connection:</b> This is the connection to the AppPlatform, technically a TCP connection to the AppPlatforms Linux OS.</li>
+            <li><b>PBX connection:</b> To use the app on myApps or with a web browser, an PBX object for your app must be created. For this, the PBX connection is needed which
+            is the IP address of the PBX that connects to the service / AppPlatform.</li>
+            <li><b>Remote connection:</b> This is the connection to the service, based on the AppPlatform connection. Actually this is the user / password for an AppPlatform connection
+            to login using SSH. This is why it is called remote connection..</li>
+        </ul>
+    <p>
+        The remote connection toghether with the AppPlatform connection is the information the innovaphone SDK extension needs to get access to the AppPlatform, configure the
+        service, add an instance, deploy the binary and access the service using SSH to be able to debug it from within Visul Studio. While the PBX connection is used to setup the
+        PBX app object, that is necessary for the UI to work and to let the PBX connect to your service via websocket. Please note that this also will enable the developer mode on
+        both, the PBX as well as the AppPlatform.
+    </p>
+    <p>
+        The following graph give you an overview. You can see, how the innovaphone SDK extension uses the AppPlatform connection communicates with the AppPlatform manager, while
+        using the remote connection together with the AppPlatform connection to deploy the application (the service, named "Service 2") and communicate with it for debugging purposes.
+        The extension also uses the remote connection (actually the name of the service) to setup the PBX (using the address for the PBX given while setting up the AppPlatform connection).
+        And finally the PBX itself will communicate with the instance of the service autonomous.<br/>
+        <br/>
+        <img src="pics/VSE_Connection_Graph.PNG"/>
+        <br/>
+    </p>                                                
+                                                                                                                                                                                                                                         
+    <p>
+        So the first of that connections your'll be asked about, is the remote connection. The name of this connection - which is the name of the service and because of this should always
+        be the same as the name of the project - will also be used to setup the database system. So if there is a connection with the same name as your project available, this connection
+        will be selected by default. If not, you need to create a new one by opening the drop down box and clicking on "Create new connection":<br/><br/>
+        <img src="pics/VSE_Add_Remote_Connection.png">
+    </p>
+    <p>
+        <b>NOTE:</b> Connections only be avlaiable for debug builds and depends on the selected platform (arm or x64).
+    </p>
+    
+    <br/>
+    <h3><a name="addremoteconnection">Add remote connection</a></h3>
+    <p>
+        To add a new remote connection for your app, you must select the AppPlatform used for the app. If there is an already configured AppPlatform for the same platform type as
+        your app (arm, x64), that one will be selected automatically. If not, you must create a new AppPlatform connection by clicking on "New AppPlatform connection". (Look below to
+        learn about howto add a new AppPlatform connection). After adding a new AppPlatform connection, it will automatically be selected in the dialog.
+    </p>
+    <p>
+        After selecting the AppPlatform connection, or in case that the connection has been selected automatically, all services the AppPlatform knows will be placed int the combo box
+        "Service name". If there is a service compinging with the name of your new app, that name will be selected automatically. If not, do not use an other service name. Generally the
+        service name (which finally will be the remote connection) must be the same as the name of your app. Note that some names are reserved. In that case, you will get an error message
+        and need to change the name of your project.
+    </p>
+    <p>
+        Also make sure that "Assign PBX AppObject" is selected. (If you can not select it, there is no PBX connection assigned with the AppPlatform connection). The available app objects
+        will be listed in the "AppObjct name" dropdown box and - you might guess it - if one of them combines with the name of your app, it will be selected. If not, enter a name (and yes,
+        again use the same as the name of your object). The AppObject URI will be entered automatically buy using the IP address of the AppPlatform and the name of your app. You can change
+        it, if you want by editing the app object in the PBX admin page.<br/><br/>
+        <img src="pics/VSE_Add_Remote_Connection.png"><br/>
+        <br/>
+        <b>NOTE:</b> There are some names for your service aka project and the needed connection, that youre not allowed to use. In case you're using one of that names, the extension will
+        show an error message. You need to change the name of the project in Visual Studio to continue.
+    </p>
+    
+    <br/>
+    <h3><a name="newappplatformconnection">New AppPlatform connection</a></h3>
+    <p>
+        Adding a new AppPlatform connection is quite simple. Only a couple of data must be given. This is a unique name for the connection, the IP address of the AppPlatform and the password
+        (generally the administration password given during the installation of the pbx - is the same needed when accessing the app manager using a browser). Even if you can create such
+        a connection withouth a PBX connection, it generally is not a good idea. So also enter the IP address of PBX with the admin user name (generally admin, if not changed) and the password
+        (also set during installation).<br/><br/>
+        <img src="pics/VSE_New_AppPlatform_Connection.png">
+    </p>
+    <p>
+        To finalize click on connect. The innovaphone SDK extension will now establish a connection to the AppPlatform and PBX, enable developer mode for both of them and save the AppPlatform
+        connection, which can now be used. In case of an error, you will get an message telling you why the connection could not be established.
+    </p>
+    <p>
+        <b>IMPORTANT NOTE:</b> The innovaphone SDK extension uses the Visual Studio Linux development layer to save and load the connection information. Because of this, that connections
+        are visible if you go to "Tools - Options - Crossplatform". But <b>never ever</b> delete or edit them there! This can break up the whole connection managment of the extension and
+        your app no longer can be deployed and debugged. If you want to delete connections (or add new ones), use the Connection Manager that is part of the innovaphone SDK extension (see below).
+    </p>
+
+    <br/>
+    <h3><a name="runanddebug">Run and debug your application</a></h3>
+    <p>
+        After setting up everything, you're ready to compile and debug your app. Just set a breakpoint and click on run (or press F5) to go. If everything is allright, Visual Studio will
+        compile the app, deploy the binary and start debugging it using GDB over SSH. More about debugging with Visual Studio can be found in the Visual Studio documentation.
+    </p>
+
+    <br/>
+    <h3><a href="#additional_tools">Additional tipps development</a></h3>
+    <p>
+        Beside the debugging capatilities, here are some additional tipps:
+    </p>
+    <p>
+        <b><u>Use logging:</u></b><br/>
+        The innovaphone SDK provides a interface to log messages from your app. This can be done by using the IInstanceLog class. This class is not only useful during development, also after
+        development a user can activate logging for your app. Beside this, all innovaphone SDK inferfaces using this logging system, helping you to find out what's going on. You can also use
+        debug->printf(), but this type of logging isn't instance dependend and thus only should be used during development. More more information, read the
+        <a href="../common/os/debug.htm">debug documentation</a>.<br/>
+        <br/>
+        <b><u>Use valgrind</u></b><br/>
+        Valgrind is a tool to find memory related problems in an app. While the drawback is, that your app will run very slow (up to 40% slower), but only during the debugging session using valgrind.
+        An other drawback is, that you need to run valgrind manually. You need to connect to the AppPlatform using a SSH terminal and use the user for your app to login. The user and password normaly
+        is the same as the name of your app, all in lower case. You also can use the innovaphone SDK menus to start a SSH terminal session (see below). When logged in, use the following commands to
+        start valgrind with your app (replacing "appname" with the name of your application):<br/>
+    </p>
+    <p>
+        <i>chmod +x /apps/appname/appname</i><br/>
+        <i>valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 /apps/appname/appname</i>
+    </p>
+    <p>
+        Valgrind now will start executing your app, catching all memory related operations. Doing this, it will find different kind of memory related errors: writing out of bound (even 1 byte),
+        accessing previously release memory (including object instances), not releasing memory, etc. This helps a lot to write clean progrems that takes care of a good memory management.
+        A sample of an error can look like this (this is a synthetic error log for demonstration reason, because releasing the debug object
+        is handled by the SDK):
+    </p>
+    <pre>        ==1506== HEAP SUMMARY:
+        ==1506==     in use at exit: 20,601 bytes in 4 blocks
+        ==1506==   total heap usage: 422 allocs, 418 frees, 174,870 bytes allocated
+        ==1506==
+        ==1506== 9 bytes in 1 blocks are still reachable in loss record 1 of 4
+        ==1506==    at 0x4835474: malloc (vg_replace_malloc.c:299)
+        ==1506==    by 0x4B2A8D3: strdup (in /lib/libc-2.22.so)
+        ==1506==
+        ==1506== 16 bytes in 1 blocks are still reachable in loss record 2 of 4
+        ==1506==    at 0x4835C58: operator new(unsigned int) (vg_replace_malloc.c:328)
+        ==1506==    by 0x2AF8B: IDebug::Create() (debug.cpp:371)
+        ==1506==    by 0x2AFF3: __static_initialization_and_destruction_0(int, int) (debug.cpp:51)
+        ==1506==    by 0x2B02B: _GLOBAL__sub_I_debug (debug.cpp:372)
+        ==1506==    by 0x5961F: __libc_csu_init (in /mnt/sda2/apps/sysadmin)
+        ==1506==
+        ==1506== 352 bytes in 1 blocks are still reachable in loss record 3 of 4
+        ==1506==    at 0x4835474: malloc (vg_replace_malloc.c:299)
+        ==1506==    by 0x4B1021F: ??? (in /lib/libc-2.22.so)
+        ==1506==    by 0x2A61F: Debug::OpenFile() (debug.cpp:208)
+        ==1506==    by 0x2990B: Debug::Debug() (debug.cpp:69)
+        ==1506==    by 0x2AF9B: IDebug::Create() (debug.cpp:371)
+        ==1506==    by 0x2AFF3: __static_initialization_and_destruction_0(int, int) (debug.cpp:51)
+        ==1506==    by 0x2B02B: _GLOBAL__sub_I_debug (debug.cpp:372)
+        ==1506==    by 0x5961F: __libc_csu_init (in /mnt/sda2/apps/sysadmin)
+        ==1506==
+        ==1506== 20,224 bytes in 1 blocks are still reachable in loss record 4 of 4
+        ==1506==    at 0x4835474: malloc (vg_replace_malloc.c:299)
+        ==1506==    by 0x490EE2F: ??? (in /usr/lib/libstdc++.so.6.0.21)
+        ==1506==
+        ==1506== LEAK SUMMARY:
+        ==1506==    definitely lost: 0 bytes in 0 blocks
+        ==1506==    indirectly lost: 0 bytes in 0 blocks
+        ==1506==      possibly lost: 0 bytes in 0 blocks
+        ==1506==    still reachable: 20,601 bytes in 4 blocks
+        ==1506==         suppressed: 0 bytes in 0 blocks
+        ==1506==
+        ==1506== For counts of detected and suppressed errors, rerun with: -v
+        ==1506== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0
+    </pre>
+    <p>
+        For more information, look to the <a href="http://www.valgrind.org/docs/">valgrind documentation</a>.
+    </p>
+    
+    <p>
+        <b><u>Read the SDK documentation</u></b><br/>
+        The innovaphone SDK works in an asynchronously way. This maybe a form of programming you're not used to it, so it will be a good idea to read the documentation carefully to know which call
+        will lead to which callback, what to take care of, how to create instances of the interfaces, when to release them, etc. There are some examples that help you using the SDK.<br/>
+        <br/>
+        <b><u>Visit our forum</u></b><br/>
+        In our forum at <a href="http://forum.innovaphone.com/" target="_blank">http://forum.innovaphone.com/</a>, there is an area for the SDK development. This will be the best place to talk
+        to other developers (including the ones from innovaphone), exchange ideas, solutions, knowhow and get support. We're looking forward to hear from you to and your experience with the innovaphone SDK.
+    </p>
+    
+    
+    <!--------------------------------------------------------------->
+    <h2><a name="the_extension">The innovaphone SDK extension</a></h2>
+    <p>
+        The innovaphone SDK extension provides some menu items (Tools - innovaphone SDK) to help you during development of your app as well as managing the connections. There is also a toolbar (if the toolbar is not
+        visible, right click on the toolbar section and select innovaphone SDK). The meaning of the icons of the toolbar can be show by puting the mouse over them and wait for the tooltip
+        or by comparing them with the items in the innovaphone SDK menu:<br/>
+        <br/>
+        <img src="pics/VSE_Menu.png">
+    </p>
+    
+    <br/>
+    <h3><a name="menu_items">The menu items</a></h3>
+    <p>
+        You can access the following functionality using the menu / toolbar:
+    </p>
+    <ul>
+        <li><b>Connection manager:</b> Here you can manage the connections used by the extension (see below).</li>
+        <li><b>Show documentation:</b> Will open the innovaphone SDK documentation.</li>
+        <li><b>Install / Update SDK:</b> Using this menu item will open the dialog to install or update the SDK into your project. This can also be used to reinstall the SDK if you accidentally delete some files of the SDK.</li>
+        <li><b>Assign remote connection:</b> This is to assign (which also means change) the remote connection used for the project.</li>
+        <li><b>AppPlatform admin:</b> This will open the AppPlatform manager where you can manage the available services and instances.</li>
+        <li><b>PBX admin:</b> This will open the PBX UI where you can manage the PBX which also includes the managment of the available PBX app objects, users, etc.</li>
+        <li><b>Linux terminal:</b> This will open PuTTY (or KiTTY) to give you access to a SSH terminal. This option will be grayed out if not SSH terminal application had been
+                                   defined buy the innovaphone SDK setup. You can run the setup again to define or change it (e. G. from PuTTY to KiTTY).</li>
+        <li><b>WinSCP (current app):</b> Will open WinSCP to connect to the AppPlatform. The user for the connection is the one for your app (the same as used by the remote connection). This
+                                         helps copying additional files to your apps directory, if need. With this, you only have access to your apps directory.</li>
+        <li><b>WinSCP (Admin):</b> Will open WinSCP to connect to the AppPlatform. The user for the connection is the admin user giving you access to nearly all files. Note that it is the
+                                   admin user of the AppPlatform and not the root user from the underlying Linux OS.</li>
+    </ul>
+    
+    <br/>
+    <h3><a name="connection_manager">The Connection Manager</a></h3>
+    <p>
+        The innovaphone Connection Manager is the place where you can edit and add Remote Connections as well as AppPlatform Connections. You have two tabs The first one is "Remote Connection", where you
+        can remove and test connections as well as add new ones. The second one is "AppPlatform Connections". Beside removing, testing and addin new connections, you can also access the AppPlatform
+        manager of a selected connection as well as the PBX UI assigned to it. Not that whatever changed had been made, they only will be saved when closing the Connetion Manager by clicking on Accept.
+        If the Connection Manager will be closed by pressing ESC or clicking on the X of the windows, changes made will be discarded.
+    </p>
+    
+    <br/>
+    <h4><a name="faq">FAQ</a></h4>
+    <p>
+        Q: I installed everything and started Visual Studio, but cannot find the innovaphone App template when creating a new project.<br/>
+        A: Somethimes Visual Studio needs to take its time. So close all Visual Studio instances and reopen it. Then the template should apear.<br/>
+        <br/>
+
+        Q: How can I get the latest version of the SDK.<br/>
+        A: Run the innovaphone SDK setup to get the latest version. The next time you're opening an innophaone SDK project, the extension will check the version of the installed SDK and the available one and
+           in case that a newer had been detected, ask for updating the SDK in your project.<br/>
+        <br/>
+        Q: The app won't compile because some files of the SDK cannot be found.<br/>
+        A: Reinstall the SDK by using the innovaphone SDK menu item.<br/>
+        <br/>
+        Q: When updateing or installing the SDK, I got an error message that some files cannot be copied or deleted because they are accessed by an other process.<br/>
+        A: This happens sometimes. In that case, close ALL open Visual Studio instances, make sure that no other process has acces to the directory of files of your project, reopen Visual Studio, open
+           your project and try it again. Alternativly you can copy the files manually.<br/>
+        <br/>
+        Q: I click on "Assign Remote Connection", but nothing happens.<br/>
+        A: Make sure that you have selected the debug profile. For release builds remote connections cannot be assigned.<br/>
+        <br/>
+        Q: I want to backup the connection settings, how can I do that?<br/>
+        A: Well, the files are stored under %APPDATA%\innovaphone\VisualStudioPackage. Make a backup of the while VisualStudioPackage directory. But you also need to backup the connections managed
+           by the Visual Studio Linux development layer. This files can be found under %LOCALAPPDATA%\Microsoft\Linux\User Data\3.0\store.xml. When restoring, make sure that the directory structure
+           of the later is correct.<br/>
+        <br/>
+        Q: Everything works, but it seems that there is not VisualStudioPackage directory under %APPDATA%\innovaphone.<br/>
+        A: Maybe that directory for the connection store had been changed. Look to the registry under HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\innovaphone\innovaphoneSDK, the key AppPlatformStore. Be
+           careful to not edit the values in the registry until you're completly know what you're doing.<br/>
+        <br/>
+        Q: I've accidentally deleted the connection info in the Visual Studio options unter cross platform. What can I do now?<br/>
+        A: Open the innovaphone SDK Connection Manager, delete every entry depending on the deleted Linux connection and create them again. Note that you also need to reasign that connection to
+           your project.<br/>
+        <br/>
+        Q: The menu items or toolbar buttons for opening a Linux SSH terminal or using WinSCP are grayed out.<br/>
+        A: You must define the applications to use for them during the innovaphone SDK setup. Just run the setup again to change that settings.<br/>
+        <br/>
+        Q: I've created a project an not assigned a remote connection. But according to the Visual Studio run button, there is an assigned connection but it doesn't work.<br/>
+        A: When not assigning a remote connection, Visual Studio will take the first connection available. But this won't work, so you need to assign it before you try to run and debug your app.<br/>
+        <br/>
+        Q: When I try to run the app, it take a long time trying to upload the binary and finally I get an error message.<br/>
+        A: Make sure the AppPlatform is available. Also the Developermode must be enabled. To check this, open the AppPlatform Admin (using the innovaphone SDK menu in Visual Studio - the default apssword is pwd), go to Settings - General and check, if 'Enable developer mode' and 'Disable App security' are checked (note that 'Disable App security is only evailable, until 'Enable developer mode' has been enabled and the change had been saved).<br/>
+        <br/>
+        Q: I run the app, but in myApps on my developer PBX, the app is not available.<br/>
+        A: Maybe the app is not connected to the PBX or not assinged to the PBX user you use for development. Open the PBX Admin (using the innovaphone SDK menu in Visual Studio), go to PBX - Objects and click on show. Click on the user you're using for development, select Apps and make sure, that the app you're want to use is selected. If not, click on OK (maybe you need to scrill down a little). Note: If you're opening the PBX Admin and there is the install UI, select on manuall configuration and click on continue.<br/>
+        <br/>
+        Q: I've some problems or other questions regarding the innovaphone SDK or the Visual Studio extension, so where can I ask them?<br/>
+        A: Go to the innovaphone forum at <a href="http://forum.innovaphone.com/">http://forum.innovaphone.com</a> - there is a forum for the SDK. Be welcome, we're glad to hear from you.<br/>
+        <br/>
+        Q: Something goes wrong during the installation or I want to get rid of the SDK. What can I do?<br/>
+        A: Go to your system settings to the list of installed programs and run the uninstaller. If that won't work, you need to remove the files manually by performing the following steps (note that
+        an error during install can lead to an inconsistent installation with some files missing):
+    </p>
+    <ul>
+        <li>Remove the registry-key by running regedit.exe and deleting the key HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\innovaphone\innovaphoneSDK.</li>
+        <li>Delete the Visual Studio Extension (if already insatlled) from within the Visual Studio IDE. Go to "Tools - Extensions and Updates...", select the entry "innovaphone SDK" and click on uninstall.</li>
+        <li>Delete all SDK files from the installation directory.</li>
+        <li>Delete the program group from the start menu.</li>
+        <li>Finally delete the environment variable INNOVAPHONE-SDK from your system.</li>
+    </ul>
+
+</body>
+
+</html>
