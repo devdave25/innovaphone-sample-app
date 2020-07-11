@@ -137,7 +137,6 @@ plugin.reinforce.SampleAppManager = reinforce.SampleAppManager || function (star
     }
 
     function SampleApp(obj) {
-
         if (obj.type == undefined) {
             obj.type = 0;
             if (obj.url.slice(obj.url.lastIndexOf("/")) == typeUrl[0]) obj.type = 0;

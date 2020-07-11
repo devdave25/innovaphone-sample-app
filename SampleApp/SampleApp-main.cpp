@@ -32,10 +32,10 @@ int main(int argc, char *argv[])
     IDatabaseProvider * databaseProvider = CreatePostgreSQLDatabaseProvider();
 
     AppServiceArgs  serviceArgs;
-    serviceArgs.serviceID = "sampleapp";
+    serviceArgs.serviceID = "SampleApp";
     serviceArgs.Parse(argc, argv);
     AppInstanceArgs instanceArgs;
-    instanceArgs.appName = "sampleapp";
+    instanceArgs.appName = "Sample App";
     instanceArgs.appDomain = "example.com";
     instanceArgs.appPassword = "pwd";
     instanceArgs.webserver = "/var/run/webserver/webserver";

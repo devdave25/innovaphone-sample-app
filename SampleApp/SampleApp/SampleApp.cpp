@@ -230,6 +230,17 @@ void SampleAppSession::AppWebsocketMessage(class json_io & msg, word base, const
     else if (!strcmp(mt, "IncrementCount")) {
         currentTask = new IncrementCount(this, instance->database, sip, dn);
     }
+    else if (!strcmp(mt, "PutContacts")) {
+        debug->printf("HERE PutContacts ------------------------------------");
+
+        /*instance->service
+
+        class IService* service = services.GetService("com.innovaphone.provisioning");
+        if (service) {
+            appWebsocketClient->Connect(service->GetWebsocketUrl(), service->GetName(), servicesApi->CreateAuthenticator());
+        }*/
+
+    }
     else if (!strcmp(mt, "ResetCount")) {
         if (adminApp) currentTask = new ResetCount(this, instance->database, sip, dn);
         else AppWebsocketClose();
